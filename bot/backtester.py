@@ -219,6 +219,7 @@ def _summarize(trades: list[dict]) -> dict:
     sharpe = 0.0
     sortino = 0.0
     calmar = 0.0
+    final_eq = equities[-1]
     
     if trades:
         try:
@@ -243,7 +244,7 @@ def _summarize(trades: list[dict]) -> dict:
             if not np.isnan(neg_std) and neg_std != 0:
                 sortino = (daily_returns.mean() / neg_std) * np.sqrt(365)
             elif len(neg_returns) == 0 and len(daily_returns) > 0:
-                sortino = 100.0  # arbitrary high number
+                sortino = 100.0 if daily_returns.mean() > 0 else 0.0
                 
             calmar = annual_ret / (max_dd / 100) if max_dd > 0 else 100.0
         except Exception:

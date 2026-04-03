@@ -82,6 +82,8 @@ TP3_CLOSE_PCT = 0.10
 
 RISK_PER_TRADE_PCT = 3.0   # % of equity risked per trade
 MAX_SIMULTANEOUS = 999     # effectively unlimited for paper trading
+MAX_OPEN_POSITIONS_PER_PASSPORT = 50
+MAX_OPEN_POSITIONS_PER_SYMBOL = 1
 INITIAL_EQUITY = 1000.0    # for backtesting
 
 # BTC anomaly
@@ -97,6 +99,10 @@ BTC_TREND_WEIGHTS = {
     "Downtrend": 1.0,   # trade (75% WR historically)
     "Uptrend": 0.5,     # reduce confidence by 50%
 }
+
+# Tactical guardrail for Reversal until a full regime classifier exists.
+REVERSAL_SIDEWAYS_CONFIDENCE_THRESHOLD = 80
+REVERSAL_SIDEWAYS_MAX_OPEN_POSITIONS_PER_PASSPORT = 5
 
 # ============================================================
 # DATA SETTINGS

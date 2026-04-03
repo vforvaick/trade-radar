@@ -18,6 +18,8 @@
             "candle_direction": 1.0
         },
         "USE_ATR_EXITS": true,
-        "USE_TRAILING_STOP": true
+        "USE_TRAILING_STOP": true,
+        "MAX_OPEN_POSITIONS_PER_PASSPORT": 50,
+        "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
     }
 }

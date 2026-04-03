@@ -1,7 +1,13 @@
 .cache/
 .venv/
+.env
 __pycache__/
 *.pyc
-state.db
+*.egg-info/
+pumpradar_session.session
 *.session
+*.session-journal
+*.session-shm
+*.session-wal
+state.db
 .worktrees/

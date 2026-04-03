@@ -2,9 +2,11 @@
 Main entry point for Pumpradar Replication Bot.
 Runs the continuous scanning and position management loop.
 """
-import time
 import argparse
+import os
+import time
 from datetime import datetime
+
 import pandas as pd
 
 from bot import config
@@ -13,6 +15,20 @@ from bot.executor import PaperExecutor, LiveExecutor
 from bot.notifier import TelegramNotifier
 from bot.position_manager import PositionManager
 from bot.data_fetcher import fetch_klines
+
+
+def resolve_telegram_credentials(tg_token: str = None, tg_chat: str = None) -> tuple[str, str]:
+    """Resolve Telegram credentials from CLI overrides or the environment."""
+    token = (tg_token or os.environ.get("PUMPRADAR_TG_TOKEN") or "").strip() or None
+    chat = (tg_chat or os.environ.get("PUMPRADAR_TG_CHAT") or "").strip() or None
+    if token is None and chat is None:
+        return None, None
+    if token is None or chat is None:
+        raise SystemExit(
+            "Missing Telegram credentials. Set PUMPRADAR_TG_TOKEN and PUMPRADAR_TG_CHAT "
+            "or pass --tg-token and --tg-chat, or omit both to disable Telegram."
+        )
+    return token, chat
 
 
 def run_bot(mode: str, interval: str = "1h", tg_token: str = None, tg_chat: str = None):
@@ -68,7 +84,7 @@ def run_bot(mode: str, interval: str = "1h", tg_token: str = None, tg_chat: str 
                 signals = scanner.scan_all()
                 
                 for sig in signals:
-                    if position_manager.can_open():
+                    if position_manager.can_open(sig):
                         # Execute trade
                         success = executor.execute_signal(sig, equity)
                         if success:
@@ -78,7 +94,10 @@ def run_bot(mode: str, interval: str = "1h", tg_token: str = None, tg_chat: str 
                             msg_id = notifier.send_signal(sig)
                             notifier.store_signal_message_id(sig.symbol, msg_id)
                     else:
-                        print(f"[Main] Ignored {sig.symbol} - Max positions reached.")
+                        print(
+                            f"[Main] Ignored {sig.symbol} - blocked by position guardrail "
+                            f"(passport cap or same-symbol cap)."
+                        )
                 
                 last_scan_time = now
 
@@ -123,4 +142,5 @@ if __name__ == "__main__":
     parser.add_argument("--tg-chat", default=None, help="Telegram Chat ID")
     
     args = parser.parse_args()
-    run_bot(args.mode, args.interval, args.tg_token, args.tg_chat)
+    tg_token, tg_chat = resolve_telegram_credentials(args.tg_token, args.tg_chat)
+    run_bot(args.mode, args.interval, tg_token, tg_chat)

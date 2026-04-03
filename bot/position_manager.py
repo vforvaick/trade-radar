@@ -43,12 +43,32 @@ class PositionManager:
     def open_count(self):
         return len(self.positions)
 
-    def can_open(self) -> bool:
-        return self.open_count < config.MAX_SIMULTANEOUS
+    def can_open(self, signal: Optional[Signal] = None) -> bool:
+        passport_cap = getattr(
+            config,
+            "MAX_OPEN_POSITIONS_PER_PASSPORT",
+            config.MAX_SIMULTANEOUS,
+        )
+        if self.open_count >= passport_cap:
+            return False
+
+        if signal is None:
+            return True
+
+        symbol_cap = getattr(config, "MAX_OPEN_POSITIONS_PER_SYMBOL", 0)
+        if symbol_cap <= 0:
+            return True
+
+        symbol_open_count = sum(
+            1
+            for pos in self.positions
+            if pos.signal.symbol == signal.symbol
+        )
+        return symbol_open_count < symbol_cap
 
     def open_position(self, signal: Signal, equity: float) -> Optional[Position]:
         """Open a new position from a signal."""
-        if not self.can_open():
+        if not self.can_open(signal):
             return None
 
         risk_amount = equity * (config.RISK_PER_TRADE_PCT / 100)

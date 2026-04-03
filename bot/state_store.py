@@ -1,12 +1,33 @@
+import os
 import sqlite3
 import json
 from dataclasses import asdict
 from datetime import datetime
 from typing import Optional
 
+
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+
+def _json_default(value):
+    """Serialize datetime and numpy scalar values from Signal payloads."""
+    if hasattr(value, "item"):
+        return value.item()
+    if isinstance(value, datetime):
+        return value.isoformat()
+    raise TypeError(f"Unsupported JSON value: {type(value)!r}")
+
+
+def _resolve_db_path(db_path=None) -> str:
+    candidate = db_path or os.environ.get("PUMPRADAR_STATE_DB", "state.db")
+    if os.path.isabs(candidate):
+        return candidate
+    return os.path.abspath(os.path.join(_REPO_ROOT, candidate))
+
+
 class StateStore:
-    def __init__(self, db_path="state.db"):
-        self.db_path = db_path
+    def __init__(self, db_path=None):
+        self.db_path = _resolve_db_path(db_path)
         self._init_db()
 
     def _init_db(self):
@@ -60,10 +81,7 @@ class StateStore:
     def save_position(self, passport_name: str, signal, equity_at_entry: float, risk_amount: float, tg_msg_id: Optional[int] = None) -> int:
         """Save a new position to the database."""
         sig_dict = asdict(signal)
-        if sig_dict.get('timestamp'):
-            sig_dict['timestamp'] = sig_dict['timestamp'].isoformat()
-        
-        signal_json = json.dumps(sig_dict)
+        signal_json = json.dumps(sig_dict, default=_json_default)
         
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -125,23 +143,22 @@ class StateStore:
             ''', (passport_name, equity))
             conn.commit()
 
-    def get_last_equity(self, passport_name: str) -> float:
+    def get_last_equity(self, passport_name: str) -> Optional[float]:
         """Get the most recent equity snapshot for a passport."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT equity FROM equity_snapshots
                 WHERE passport_name = ?
-                ORDER BY timestamp DESC LIMIT 1
+                ORDER BY timestamp DESC, id DESC LIMIT 1
             ''', (passport_name,))
             row = cursor.fetchone()
             
-            # If no equity exists, we return a default of 0.0 or could be handled upstream
-            return row[0] if row else 0.0
+            return row[0] if row else None
 
     def log_trade(self, passport_name: str, trade_data: dict):
         """Log a trade event/closure."""
-        trade_json = json.dumps(trade_data)
+        trade_json = json.dumps(trade_data, default=_json_default)
         
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()

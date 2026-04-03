@@ -52,7 +52,7 @@ class Signal:
 
 
 def generate_signal(symbol: str, entry_price: float, score_result: dict,
-                    timestamp: datetime = None, config_overrides: dict = None) -> Optional[Signal]:
+                    timestamp: datetime = None) -> Optional[Signal]:
     """
     Generate a full trade signal from scorer output.
 
@@ -72,20 +72,24 @@ def generate_signal(symbol: str, entry_price: float, score_result: dict,
     rr = score_result["risk_reward"]
     lev = score_result["leverage"]
 
-    use_atr = config_overrides.get('USE_ATR_EXITS', False) if config_overrides else False
+    use_atr = getattr(config, "USE_ATR_EXITS", False)
     atr_val = score_result.get('atr')
 
     if use_atr and atr_val:
+        sl_atr = atr_val * 2.0
+        tp1_atr = atr_val * 4.0
+        tp2_atr = tp1_atr * config.TP2_RATIO
+        tp3_atr = tp2_atr * config.TP3_RATIO
         if direction == "LONG":
-            sl = entry_price - (atr_val * 1.5)
-            tp1 = entry_price + (atr_val * 2.0)
-            tp2 = entry_price + (atr_val * 3.5)
-            tp3 = entry_price + (atr_val * 5.0)
+            sl = entry_price - sl_atr
+            tp1 = entry_price + tp1_atr
+            tp2 = entry_price + tp2_atr
+            tp3 = entry_price + tp3_atr
         else:
-            sl = entry_price + (atr_val * 1.5)
-            tp1 = entry_price - (atr_val * 2.0)
-            tp2 = entry_price - (atr_val * 3.5)
-            tp3 = entry_price - (atr_val * 5.0)
+            sl = entry_price + sl_atr
+            tp1 = entry_price - tp1_atr
+            tp2 = entry_price - tp2_atr
+            tp3 = entry_price - tp3_atr
     else:
         # Calculate SL distance based on R:R tier
         sl_dist_pct = _estimate_sl_distance(rr)

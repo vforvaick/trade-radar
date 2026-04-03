@@ -35,6 +35,12 @@ def score_confluence(df, btc_trend="Sideways"):
     press_dir, press_pct = indicators.calc_pressure(df)
     candle_dir = indicators.calc_candle_direction(df)
 
+    active_weights = getattr(config, 'INDICATOR_WEIGHTS', {})
+    is_reversal = active_weights.get('REVERSAL_MODE', False)
+
+    if is_reversal and rsi_dir not in ("LONG", "SHORT"):
+        rsi_dir = "NEUTRAL"
+
     # Collect all directional votes
     votes = {
         "ema_trend": ema_dir,
@@ -64,32 +70,32 @@ def score_confluence(df, btc_trend="Sideways"):
     total_weight = 0.0
 
     # Get optional overrides if passed by backtester, else use config
-    active_weights = getattr(config, 'INDICATOR_WEIGHTS', {})
-    is_reversal = active_weights.get('REVERSAL_MODE', False)
-
     for indicator, direction in votes.items():
         w = active_weights.get(indicator, 1.0)
-        
+
         if is_reversal:
             if indicator in ["ema_trend", "macd_signal"]:
                 w = 0.0
-            if indicator == "rsi_position":
-                direction = "LONG" if rsi_val < 35 else ("SHORT" if rsi_val > 65 else "NONE")
-        total_weight += w
+            if indicator == "rsi_position" and direction not in ("LONG", "SHORT"):
+                direction = "NEUTRAL"
+
+        if indicator != "volume_spike":
+            total_weight += w
+
         if direction == "LONG":
             long_score += w
         elif direction == "SHORT":
             short_score += w
 
     # Volume spike is a confirmation multiplier, not directional
-    vol_bonus = 0
     if vol_spike:
         vol_w = active_weights.get("volume_spike", 1.0)
-        total_weight += vol_w
         # If volume confirms the dominant direction
         if long_score > short_score:
+            total_weight += vol_w
             long_score += vol_w
         elif short_score > long_score:
+            total_weight += vol_w
             short_score += vol_w
 
     # Determine direction and raw confidence

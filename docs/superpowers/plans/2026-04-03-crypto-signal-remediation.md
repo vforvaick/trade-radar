@@ -8,11 +8,21 @@
 
 **Tech Stack:** Python, SQLite, systemd, pytest, Binance Futures HTTP API, Telegram Bot API, Telethon scripts, shell over SSH.
 
+**Verification note:** Before any `pytest` invocation below, install the local dev/test dependencies in the repo venv first, for example:
+
+```bash
+.venv/bin/python -m pip install -e '.[dev]'
+```
+
+If the project uses a different extras name in `pyproject.toml`, use the matching editable install command instead.
+
 ---
 
 ## Production Findings Snapshot
 
-These findings were verified directly on `fight-tres` via one-shot SSH and `journalctl`:
+Historical note: this snapshot captures the **pre-v2** server state that motivated the remediation work. It is retained as incident context, not as the current post-cutover service state; use `ops/fight-tres-runbook.md` and `docs/crypto_signal_handover.md` for the latest deployment status.
+
+These findings were verified directly on `fight-tres` via one-shot SSH and `journalctl` before the v2 cutover:
 
 - `pumpradar.service` has been active since `2026-03-31 11:46:01 UTC` and runs `/home/vforvaick/pumpradar-bot/.venv/bin/python -m bot.main_multi --interval=1h ...` from `/home/vforvaick/pumpradar-bot`.
 - Server code is still the old in-memory version: `/home/vforvaick/pumpradar-bot/bot/state_store.py` is absent, `/home/vforvaick/pumpradar-bot/state.db` is absent, and server `bot/passport_runner.py` does not restore positions/equity from SQLite.
@@ -177,7 +187,7 @@ These findings were verified directly on `fight-tres` via one-shot SSH and `jour
   Run:
 
   ```bash
-  python3 -m pytest tests/test_state_store.py -q
+  .venv/bin/python -m pytest tests/test_state_store.py -q
   ```
 
   Expected before fix: failure when signal JSON contains numpy scalar types or if import/package wiring is still broken.
@@ -289,7 +299,7 @@ These findings were verified directly on `fight-tres` via one-shot SSH and `jour
   Run:
 
   ```bash
-  python3 -m pytest tests/test_state_store.py tests/test_passport_runner_resume.py tests/test_notifier.py -q
+  .venv/bin/python -m pytest tests/test_state_store.py tests/test_passport_runner_resume.py tests/test_notifier.py -q
   ```
 
   Expected: all pass.
@@ -424,7 +434,7 @@ These findings were verified directly on `fight-tres` via one-shot SSH and `jour
   Run:
 
   ```bash
-  python3 -m pytest tests/test_backtester_summary.py tests/test_discovery_config_mapping.py tests/test_signal_exit_modes.py -q
+  .venv/bin/python -m pytest tests/test_backtester_summary.py tests/test_discovery_config_mapping.py tests/test_signal_exit_modes.py -q
   ```
 
   Expected: all pass.
@@ -508,7 +518,7 @@ These findings were verified directly on `fight-tres` via one-shot SSH and `jour
   Run:
 
   ```bash
-  python3 -I -m pytest tests/test_import_smoke.py -q
+  .venv/bin/python -I -m pytest tests/test_import_smoke.py -q
   ```
 
   Expected: pass after packaging/import fixes.
@@ -728,7 +738,8 @@ These findings were verified directly on `fight-tres` via one-shot SSH and `jour
   Run:
 
   ```bash
-  python3 -m pytest -q
+  .venv/bin/python -m pip install -e '.[dev]'
+  .venv/bin/python -m pytest -q
   ```
 
   Expected: all tests pass.
@@ -746,11 +757,11 @@ These findings were verified directly on `fight-tres` via one-shot SSH and `jour
   ssh fight-tres journalctl -u pumpradar.service -n 200 --no-pager -o short-iso
   ```
 
-  Expected: service starts from v2 code, logs a `StateStore` restore message, Reversal is disabled or capped, and no Telegram token is visible in `ExecStart`.
+  Expected: service starts from v2 code, logs startup restore messages from `PassportRunner` and `TelegramNotifier`, Reversal is disabled or capped, and no Telegram token is visible in `ExecStart`.
 
 - [ ] **Step 4: Monitor the first 2 scan cycles after deploy**
 
-  Verify one cycle does not reopen hundreds of Reversal positions, summary counters survive restart, and state DB grows as trades close.
+  Verify one cycle does not reopen hundreds of Reversal positions, open positions/equity/message IDs restore after restart, and state DB grows as trades close. `signal_count` and `trade_count` are still in-memory counters, so they are expected to reset.
 
 - [ ] **Step 5: Commit deployment notes**
 
@@ -758,6 +769,11 @@ These findings were verified directly on `fight-tres` via one-shot SSH and `jour
   git add ops/fight-tres-runbook.md docs/crypto_signal_handover.md
   git commit -m "docs: record v2 deployment and post-restart validation"
   ```
+
+## Generated Artifacts
+
+- `discovery_results.json` and `data/equity_summary.json` are generated artifacts and are not currently ignored.
+- Treat them intentionally in any workflow that produces them: either add them to ignore rules or commit them on purpose, but do not let them drift unnoticed.
 
 ---
 
@@ -773,4 +789,3 @@ Plan complete and saved to `docs/superpowers/plans/2026-04-03-crypto-signal-reme
 
 1. Subagent-Driven (recommended): dispatch one worker per task, review between tasks, keep production-risky changes sequenced.
 2. Inline Execution: execute the tasks in this session with checkpoints after each task.
-

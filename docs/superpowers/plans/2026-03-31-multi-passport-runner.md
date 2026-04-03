@@ -1,10 +1,14 @@
 # Multi-Passport Strategy Runner
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **Historical drift note:** This is a historical plan, not the authoritative current implementation. It may be superseded by live code and [`docs/crypto_signal_handover.md`](../../crypto_signal_handover.md). Current multi-passport behavior is implemented in `bot/passport_runner.py` and `bot/main_multi.py`, with JSON passport configs and notifier methods that should be verified against the live code before reuse.
 
 **Goal:** Enable the bot to run multiple strategy "passports" simultaneously in paper-trading mode, each with its own indicator weights and exit rules, with all signals tagged by passport name in Telegram.
 
 **Architecture:** A new `PassportRunner` orchestrator reads passport config files from `pumpradar-passports/configs/`, runs each one through the existing `scanner → scorer → signal` pipeline with config overrides, and sends tagged Telegram alerts. Existing single-passport behavior is preserved as the default fallback.
+
+Current-state caveat: the live code uses `score_confluence()` plus `cfg_override` plumbing, and passport outputs are JSON artifacts under the passport config directory. The older notion of writing a standalone `send_passport_signal()` helper is stale.
 
 **Tech Stack:** Python 3, existing bot modules, JSON passport config files.
 
@@ -98,8 +102,7 @@ class PassportRunner:
 **Files:**
 - Modify: `bot/notifier.py`
 
-Add a `send_passport_signal(signal, passport_name, passport_emoji)` method that prefixes
-the message with the passport identity:
+Historical draft text below referenced a `send_passport_signal(signal, passport_name, passport_emoji)` helper; that method no longer exists in the live notifier API. Keep passport branding in the caller and route through `send_signal()` / `send_tp_sl_alert()` instead:
 ```
 🚀 [Pumpradar Momentum]
 📊 LONG SIGNAL — BTCUSDT
@@ -108,8 +111,9 @@ TP1: $68,200 | TP2: $69,100 | TP3: $70,500
 SL: $66,800 | Lev: 5x
 ```
 
-- [ ] **Step 1: Add `send_passport_signal` method**
-- [ ] **Step 2: Commit**
+- [ ] **Step 1: Update notifier flow to use `send_signal()` / `send_tp_sl_alert()`**
+- [ ] **Step 2: Keep passport tags in the caller, not a stale dedicated notifier method**
+- [ ] **Step 3: Commit**
 
 ---
 
@@ -124,6 +128,8 @@ New entry point that replaces the single-passport loop with multi-passport rotat
 # Each passport has independent PositionManager
 # Signals tagged and sent to Telegram individually
 ```
+
+Current code note: the live implementation already uses `send_signal()` for entries and `send_tp_sl_alert()` for TP/SL events; do not document `send_passport_signal()` as an existing API.
 
 - [ ] **Step 1: Write `bot/main_multi.py`**
 - [ ] **Step 2: Test locally**

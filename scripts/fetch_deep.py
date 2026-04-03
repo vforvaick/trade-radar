@@ -3,13 +3,14 @@ import asyncio
 import json
 from telethon import TelegramClient
 
-API_ID = 19524776
-API_HASH = "efa9bf74c8c1d961314310df2eda1130"
-SESSION_NAME = "pumpradar_session"
+from scripts.telethon_settings import load_telethon_settings
+
 GROUP_NAME = "Pumpradar Free Signal"
 
+
 async def main():
-    client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
+    api_id, api_hash, session_name = load_telethon_settings()
+    client = TelegramClient(session_name, api_id, api_hash)
     await client.start()
     
     target = None
@@ -149,7 +150,9 @@ async def main():
         print(f"\n=== DATE RANGE ===")
         print(f"Oldest: {messages[-1]['date']}")
         print(f"Newest: {messages[0]['date']}")
-    
+
     await client.disconnect()
 
-asyncio.run(main())
+
+if __name__ == "__main__":
+    asyncio.run(main())

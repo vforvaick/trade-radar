@@ -1,6 +1,8 @@
 # Deep Optimization Pipeline — Pumpradar Strategy
 
 > Design Spec v1.0 | 2026-03-31
+>
+> **Historical drift note:** This spec is a historical design record, not the authoritative implementation state. It may be superseded by current code and [`docs/crypto_signal_handover.md`](../../crypto_signal_handover.md). Current code uses `score_confluence()`/`cfg_override`, JSON passport outputs, and fixed weight profiles in `bot/discovery_engine.py`; treat the sections below as planning context unless you verify them against the live modules.
 
 ## Goal
 
@@ -36,22 +38,24 @@ From initial grid search (30 days × 15 pairs × 1H):
 
 ## Layer 2 — Indicator Weight Optimization
 
-Current approach: **equal weights** for all 8 indicators. This is naive.
+Historical planning assumption: **equal weights** for all 8 indicators. That is not the full current implementation picture.
 
 **New approach:** Assign individual weights per indicator and optimize them.
 
 | Indicator | Weight Range to Test |
 |---|---|
-| Volume Spike | 0.5 – 3.0 |
-| Pressure | 0.5 – 2.0 |
-| MACD | 0.5 – 2.0 |
-| RSI | 0.5 – 2.0 |
-| EMA Trend | 0.5 – 3.0 |
-| Candle Dir | 0.0 – 1.0 |
-| Bollinger | 0.0 – 2.0 |
-| RSI Divergence | 0.0 – 2.0 |
+| `volume_spike` | 0.5 – 3.0 |
+| `pressure` | 0.5 – 2.0 |
+| `ema_trend` | 0.5 – 3.0 |
+| `macd_signal` | 0.5 – 2.0 |
+| `rsi_position` | 0.5 – 2.0 |
+| `bb_position` | 0.0 – 2.0 |
+| `rsi_divergence` | 0.0 – 2.0 |
+| `candle_direction` | 0.0 – 1.0 |
 
 Also test **indicator dropout**: what happens if we remove BB entirely? Or RSI Divergence? Identify which indicators actually carry signal vs noise.
+
+Current code note: discovery uses five fixed weight profiles, including `Equal`, `Volume-Heavy`, `Trend-Purist`, `Reversal`, and `Minimal`, rather than a fully free-form weight search in production.
 
 **Output:** Ranked indicator importance + optimal weight vector.
 
@@ -92,7 +96,7 @@ The 70/20/10 cascade is the **core edge**. But is it optimal?
 | Method | Description |
 |---|---|
 | Current | Fixed R:R multiplier from passport |
-| ATR-based | TP1 = 1.5×ATR, TP2 = 2.5×ATR, TP3 = 4×ATR |
+| ATR-based | Current code uses `SL=2*ATR` and `TP1=4*ATR`; TP2/TP3 are derived from `TP2_RATIO` and `TP3_RATIO` |
 | Fibonacci | TP levels at 1.618, 2.618, 4.236 extensions |
 
 ### 4c: Trailing Stop
@@ -148,6 +152,8 @@ Enter on winning TF only if higher TF (4H or Daily) trend agrees. Expected: fewe
 Result valid ONLY if test performance ≥ 70% of train performance.
 ```
 
+Current code note: [`bot/walk_forward.py`](../../bot/walk_forward.py) does not enforce that 70% rule. It calculates a Sharpe-delta style `overfit_score` and returns `KEEP` when `overfit_score < 0.3` with positive test return, `TUNE` when `overfit_score <= 0.6` with positive test return, otherwise `KILL`.
+
 ### 6b: Monte Carlo Simulation
 
 Randomize trade execution order 1000× times. If strategy is robust, the distribution of returns should be tight (low variance).
@@ -175,10 +181,10 @@ Layer 6 survivors (4-6 strategies)
     │
     ├── Rank by: Sharpe Ratio > Return > Max DD
     │
-    └── Fork top 3 into passport variants:
-        ├── pumpradar-conservative.md  (high WR, low leverage)
-        ├── pumpradar-balanced.md      (current sweet spot)
-        └── pumpradar-aggressive.md    (max return, higher risk)
+        └── Fork top 3 into passport variants:
+        ├── pumpradar-conservative.json  (high WR, low leverage)
+        ├── pumpradar-balanced.json      (current sweet spot)
+        └── pumpradar-aggressive.json    (max return, higher risk)
 ```
 
 ---
@@ -195,6 +201,8 @@ Layer 6 survivors (4-6 strategies)
 | Monte Carlo | — | Trade-order randomization |
 | Results export | stdout | CSV + JSON for analysis |
 | Multi-config batch | 5 combos | 50-100 combos via YAML |
+
+Current code note: generated discovery outputs are JSON records/passports, not Markdown strategy docs. Use the live `bot/discovery_engine.py` and `bot/passport_runner.py` outputs as the implementation reference.
 
 ---
 

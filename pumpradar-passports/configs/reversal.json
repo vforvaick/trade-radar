@@ -1,7 +1,8 @@
 {
     "name": "Pumpradar Reversal",
     "emoji": "🔄",
-    "description": "Mean reversion strategy — buys oversold, shorts overbought, ignores trend indicators",
+    "enabled": false,
+    "description": "Mean reversion strategy kept disabled in production until Tasks 2, 3, and 7 land; quarantine this passport until regime filters and drawdown controls are fixed.",
     "config_overrides": {
         "EMA_FAST": 9,
         "EMA_MID": 21,
@@ -19,6 +20,11 @@
             "candle_direction": 0.0
         },
         "USE_ATR_EXITS": true,
-        "USE_TRAILING_STOP": false
+        "USE_TRAILING_STOP": false,
+        "CONFIDENCE_THRESHOLD": 60,
+        "MAX_OPEN_POSITIONS_PER_PASSPORT": 20,
+        "MAX_OPEN_POSITIONS_PER_SYMBOL": 1,
+        "REVERSAL_SIDEWAYS_CONFIDENCE_THRESHOLD": 80,
+        "REVERSAL_SIDEWAYS_MAX_OPEN_POSITIONS_PER_PASSPORT": 5
     }
 }

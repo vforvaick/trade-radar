@@ -17,6 +17,20 @@ from bot.notifier import TelegramNotifier, TelegramCommandPoller
 from bot.passport_runner import PassportRunner
 
 
+def resolve_telegram_credentials(tg_token: str = None, tg_chat: str = None) -> tuple[str, str]:
+    """Resolve Telegram credentials from CLI overrides or the environment."""
+    token = (tg_token or os.environ.get("PUMPRADAR_TG_TOKEN") or "").strip() or None
+    chat = (tg_chat or os.environ.get("PUMPRADAR_TG_CHAT") or "").strip() or None
+    if token is None and chat is None:
+        return None, None
+    if token is None or chat is None:
+        raise SystemExit(
+            "Missing Telegram credentials. Set PUMPRADAR_TG_TOKEN and PUMPRADAR_TG_CHAT "
+            "or pass --tg-token and --tg-chat, or omit both to disable Telegram."
+        )
+    return token, chat
+
+
 def format_signal_message(signal, passport) -> str:
     """Format a signal with passport branding for Telegram."""
     direction_emoji = "🟢" if signal.direction == "LONG" else "🔴"
@@ -111,7 +125,8 @@ def run_multi_passport(tg_token: str = None, tg_chat: str = None,
                         event=event,
                         realized_pnl=pos.realized_pnl,
                         equity=passport.equity,
-                        passport_name=f"{passport.emoji} [{passport.name}]"
+                        passport_name=passport.name,
+                        display_name=f"{passport.emoji} [{passport.name}]",
                     )
 
             # 2. Run full scan cycle on schedule
@@ -128,9 +143,8 @@ def run_multi_passport(tg_token: str = None, tg_chat: str = None,
                     sig_msg = format_signal_message(sig, passport)
                     print(sig_msg, flush=True)
                     if tg_token:
-                        passport_label = f"{passport.emoji} [{passport.name}]"
                         msg_id = notifier._send(sig_msg)
-                        notifier.store_signal_message_id(sig.symbol, msg_id, passport_label)
+                        notifier.store_signal_message_id(sig.symbol, msg_id, passport.name)
                         if msg_id and pos.pos_id:
                             runner.state_store.update_position(pos.pos_id, tg_msg_id=msg_id)
 
@@ -155,4 +169,5 @@ if __name__ == "__main__":
     parser.add_argument("--tg-chat", default=None, help="Telegram Chat ID")
 
     args = parser.parse_args()
-    run_multi_passport(args.tg_token, args.tg_chat, args.interval)
+    tg_token, tg_chat = resolve_telegram_credentials(args.tg_token, args.tg_chat)
+    run_multi_passport(tg_token, tg_chat, args.interval)

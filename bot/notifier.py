@@ -1,10 +1,15 @@
 """
 Telegram notifier module for trade alerts and command polling.
 """
+import inspect
+import logging
 import requests
 import threading
 import time
 from bot.signals import Signal
+
+
+logger = logging.getLogger(__name__)
 
 
 class TelegramNotifier:
@@ -12,6 +17,7 @@ class TelegramNotifier:
         self.bot_token = bot_token
         self.chat_id = chat_id
         self.enabled = bool(bot_token and chat_id)
+        self.send_error_count = 0
         # Maps (symbol, passport_name) -> message_id for reply threading
         self.signal_message_ids: dict[tuple[str, str], int] = {}
         
@@ -21,7 +27,14 @@ class TelegramNotifier:
             self.signal_message_ids = state_store.load_active_message_ids()
             print(f"[Notifier] Restored {len(self.signal_message_ids)} active signal message threads", flush=True)
         
-    def _send(self, text: str, reply_to_message_id: int = None) -> int | None:
+    def _send(
+        self,
+        text: str,
+        reply_to_message_id: int = None,
+        symbol: str = None,
+        passport_name: str = None,
+        event: str = None,
+    ) -> int | None:
         """Send a message and return the message_id, or None on failure."""
         if not self.enabled:
             return None
@@ -40,7 +53,26 @@ class TelegramNotifier:
             data = resp.json()
             if data.get("ok"):
                 return data["result"]["message_id"]
+            self.send_error_count += 1
+            logger.warning(
+                "Telegram API rejected message chat_id=%s reply_to_message_id=%s symbol=%s passport=%s event=%s response=%s",
+                self.chat_id,
+                reply_to_message_id,
+                symbol,
+                passport_name,
+                event,
+                data,
+            )
         except Exception as e:
+            self.send_error_count += 1
+            logger.exception(
+                "Failed to send Telegram message chat_id=%s reply_to_message_id=%s symbol=%s passport=%s event=%s",
+                self.chat_id,
+                reply_to_message_id,
+                symbol,
+                passport_name,
+                event,
+            )
             print(f"[Notifier] Failed to send TG message: {e}")
         return None
 
@@ -68,7 +100,7 @@ class TelegramNotifier:
         msg += f"🤖 **AI Confluence:** {signal.confidence}%\n"
         
         print(f"[Notifier] Sending signal alert for {signal.symbol}")
-        msg_id = self._send(msg)
+        msg_id = self._send_with_context(msg, symbol=signal.symbol)
         return msg_id
 
     def send_update(self, msg: str):
@@ -82,7 +114,15 @@ class TelegramNotifier:
             key = (symbol, passport_name or "")
             self.signal_message_ids[key] = message_id
 
-    def send_tp_sl_alert(self, signal: Signal, event: str, realized_pnl: float, equity: float, passport_name: str = None):
+    def send_tp_sl_alert(
+        self,
+        signal: Signal,
+        event: str,
+        realized_pnl: float,
+        equity: float,
+        passport_name: str = None,
+        display_name: str = None,
+    ):
         """Format and send a rich TP/SL hit alert."""
         emoji_map = {
             "TP1_HIT": "🎯",
@@ -95,7 +135,7 @@ class TelegramNotifier:
         event_emoji = emoji_map.get(event, "📢")
         direction_emoji = "🟢" if signal.direction == "LONG" else "🔴"
         
-        prefix = passport_name if passport_name else "🚀 **Pumpradar Replica**"
+        prefix = display_name or passport_name or "🚀 **Pumpradar Replica**"
         
         msg = f"{prefix}\n\n"
         msg += f"{event_emoji} **{event.replace('_', ' ')}** — #{signal.symbol}\n"
@@ -139,7 +179,41 @@ class TelegramNotifier:
         reply_to = self.signal_message_ids.get(key)
         
         print(f"[Notifier] Sending {event} alert for {signal.symbol}" + (f" (reply to #{reply_to})" if reply_to else ""))
-        self._send(msg, reply_to_message_id=reply_to)
+        self._send_with_context(
+            msg,
+            reply_to_message_id=reply_to,
+            symbol=signal.symbol,
+            passport_name=passport_name,
+            event=event,
+        )
+
+    def _send_with_context(
+        self,
+        text: str,
+        reply_to_message_id: int = None,
+        symbol: str = None,
+        passport_name: str = None,
+        event: str = None,
+    ) -> int | None:
+        """Call _send with optional context while preserving old subclass overrides."""
+        signature = inspect.signature(self._send)
+        params = signature.parameters
+        accepts_kwargs = any(
+            param.kind == inspect.Parameter.VAR_KEYWORD
+            for param in params.values()
+        )
+
+        kwargs = {}
+        for key, value in {
+            "reply_to_message_id": reply_to_message_id,
+            "symbol": symbol,
+            "passport_name": passport_name,
+            "event": event,
+        }.items():
+            if accepts_kwargs or key in params:
+                kwargs[key] = value
+
+        return self._send(text, **kwargs)
 
 
 class TelegramCommandPoller:
@@ -148,6 +222,7 @@ class TelegramCommandPoller:
     def __init__(self, notifier: TelegramNotifier, passport_runner):
         self.notifier = notifier
         self.runner = passport_runner
+        self.poll_error_count = 0
         self.thread = threading.Thread(target=self._poll_loop, daemon=True)
         
     def start(self):
@@ -181,12 +256,21 @@ class TelegramCommandPoller:
                                 summary = self.runner.get_summary()
                                 self.notifier._send(f"{summary}")
                             elif cmd == "/status":
-                                self.notifier._send("🟢 **Bot Status**\nActively scanning and monitoring positions.")
+                                if hasattr(self.runner, "get_status_report"):
+                                    status = self.runner.get_status_report()
+                                else:
+                                    status = "🟢 **Bot Status**\nActively scanning and monitoring positions."
+                                self.notifier._send(status)
                             elif cmd == "/ping":
                                 self.notifier._send("🏓 Pong! Bot is alive and well.")
                                 
-            except Exception:
-                pass
+            except Exception as e:
+                self.poll_error_count += 1
+                logger.exception(
+                    "Failed to poll Telegram commands chat_id=%s last_update_id=%s",
+                    self.notifier.chat_id,
+                    last_update_id,
+                )
+                print(f"[TelegramPoller] Failed to poll Telegram commands: {e}", flush=True)
                 
             time.sleep(2)
-

@@ -2,19 +2,28 @@
 Binance Futures data access layer.
 Handles OHLCV fetching, rate limiting, and caching.
 """
+import logging
 import time
 import json
 import os
 import requests
-import warnings
 import pandas as pd
 from bot import config
 
-warnings.filterwarnings("ignore", message="Unverified HTTPS request")
+
+logger = logging.getLogger(__name__)
+CACHE_READ_ERROR_COUNT = 0
+CACHE_WRITE_ERROR_COUNT = 0
 
 # Simple disk cache
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", ".cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
+
+
+def _verify_tls() -> bool:
+    """Keep TLS verification enabled unless an explicit proxy escape hatch is set."""
+    raw = os.environ.get("PUMPRADAR_BINANCE_VERIFY_TLS", "true").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
 
 
 def fetch_klines(symbol: str, interval: str = "1h",
@@ -43,7 +52,7 @@ def fetch_klines(symbol: str, interval: str = "1h",
     if end_time:
         params["endTime"] = end_time
 
-    resp = requests.get(url, params=params, verify=False, timeout=15)
+    resp = requests.get(url, params=params, verify=_verify_tls(), timeout=15)
     resp.raise_for_status()
     data = resp.json()
 
@@ -129,7 +138,7 @@ def fetch_btc_trend(interval: str = "4h", lookback: int = 20) -> str:
 def get_all_futures_symbols(min_volume: float = None) -> list[str]:
     """Get all USDT perpetual futures symbols from Binance."""
     url = f"{config.BINANCE_FUTURES_BASE}/fapi/v1/ticker/24hr"
-    resp = requests.get(url, verify=False, timeout=15)
+    resp = requests.get(url, verify=_verify_tls(), timeout=15)
     resp.raise_for_status()
     tickers = resp.json()
 
@@ -154,6 +163,7 @@ def _cache_path(key: str) -> str:
 
 
 def _read_cache(key: str):
+    global CACHE_READ_ERROR_COUNT
     path = _cache_path(key)
     if os.path.exists(path):
         age = time.time() - os.path.getmtime(path)
@@ -161,12 +171,20 @@ def _read_cache(key: str):
             try:
                 return pd.read_parquet(path)
             except Exception:
+                CACHE_READ_ERROR_COUNT += 1
+                logger.exception("Failed to read cache key=%s path=%s", key, path)
                 return None
     return None
 
 
 def _write_cache(key: str, df: pd.DataFrame):
+    global CACHE_WRITE_ERROR_COUNT
     try:
         df.to_parquet(_cache_path(key))
     except Exception:
-        pass  # cache write failure is non-critical
+        CACHE_WRITE_ERROR_COUNT += 1
+        logger.exception(
+            "Failed to write cache key=%s path=%s",
+            key,
+            _cache_path(key),
+        )

@@ -2,6 +2,7 @@
 Scanner module for Phase B Live Trading.
 Scans available Binance Futures pairs, fetches latest OHLCV, and scores confluence.
 """
+import logging
 import time
 import pandas as pd
 from typing import List, Dict, Optional
@@ -12,12 +13,18 @@ from bot.scorer import score_confluence
 from bot.signals import generate_signal, Signal
 
 
+logger = logging.getLogger(__name__)
+
+
 class Scanner:
     def __init__(self, interval: str = "1h", limit: int = 100):
         self.interval = interval
         self.limit = limit
         self.symbols = []
         self.btc_trend = "Sideways"
+        self.symbol_refresh_error_count = 0
+        self.btc_trend_error_count = 0
+        self.scan_error_count = 0
 
     def refresh_symbols(self):
         """Update list of tradable symbols based on volume filters."""
@@ -26,6 +33,8 @@ class Scanner:
             self.symbols = get_all_futures_symbols()
             print(f"[Scanner] Found {len(self.symbols)} tradable pairs.")
         except Exception as e:
+            self.symbol_refresh_error_count += 1
+            logger.exception("Failed to refresh Binance futures symbols")
             print(f"[Scanner] Error fetching symbols: {e}")
 
     def update_btc_trend(self):
@@ -34,6 +43,8 @@ class Scanner:
             self.btc_trend = fetch_btc_trend()
             print(f"[Scanner] BTC Trend: {self.btc_trend}")
         except Exception as e:
+            self.btc_trend_error_count += 1
+            logger.exception("Failed to update BTC trend filter")
             print(f"[Scanner] Error fetching BTC trend: {e}")
             self.btc_trend = "Sideways"
 
@@ -62,7 +73,14 @@ class Scanner:
                         signals.append(sig)
 
             except Exception as e:
-                pass  # Suppress individual pair errors during mass scan
+                self.scan_error_count += 1
+                logger.exception(
+                    "Failed to scan symbol=%s interval=%s btc_trend=%s index=%s",
+                    sym,
+                    self.interval,
+                    self.btc_trend,
+                    i,
+                )
                 
             # small sleep to avoid rate limits
             time.sleep(0.05)

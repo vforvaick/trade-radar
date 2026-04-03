@@ -1,12 +1,16 @@
 # Advanced Optimization Pipeline Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **Historical drift note:** This is a planning artifact from 2026-03-31, not the current implementation source of truth. It may be superseded by live code and [`docs/crypto_signal_handover.md`](../../crypto_signal_handover.md). Treat the references below as historical context unless they are confirmed against current code.
 
 **Goal:** Upgrade the backtesting engine to V2 (supporting weights, new indicators, ATR exits, 180-day walk-forward) and execute 3 massive grid searches to discover hidden gem strategy variants.
 
 **Architecture:** Modifying the existing modular bot components (`indicators.py`, `scorer.py`, `position_manager.py`, `backtester.py`) to accept dynamic injected configurations rather than hardcoded rules, enabling complete programmatic combinatorics.
 
 **Tech Stack:** Python 3, Pandas, Numpy, Binance Futures API.
+
+**Current-state caveat:** Current code uses `score_confluence()` in [`bot/scorer.py`](/Users/faiqnau/fight/trading/crypto-signal/bot/scorer.py), `cfg_override` in [`bot/backtester.py`](/Users/faiqnau/fight/trading/crypto-signal/bot/backtester.py), fixed TP splitting in [`bot/position_manager.py`](/Users/faiqnau/fight/trading/crypto-signal/bot/position_manager.py), and JSON passport artifacts rather than this plan's imagined free-form overrides. Current ATR exits are `SL=2*ATR` and `TP1=4*ATR`; walk-forward verdicts are driven by Sharpe-delta thresholds, not the older 70% train/test heuristic. Local Binance revalidation can still fail with `57/57 fetch_error`; regenerate from an allowed egress host if you need fresh outputs.
 
 ---
 
@@ -20,33 +24,29 @@
 ```python
 # bot/config.py (add after existing thresholds)
 INDICATOR_WEIGHTS = {
-    'volume': 1.0,
+    'volume_spike': 1.0,
     'pressure': 1.0,
-    'macd': 1.0,
-    'rsi': 1.0,
-    'ema': 1.0,
-    'candle': 1.0,
-    'bollinger': 1.0,
-    'divergence': 1.0
+    'ema_trend': 1.0,
+    'macd_signal': 1.0,
+    'rsi_position': 1.0,
+    'bb_position': 1.0,
+    'rsi_divergence': 1.0,
+    'candle_direction': 1.0
 }
 ```
 
 - [ ] **Step 2: Update `scorer.py` to use weights**
 ```python
 # bot/scorer.py (replace the GO/NO-GO logic)
-def evaluate_confluence(df, i, config_overrides=None):
+def score_confluence(df, btc_trend="Sideways"):
     # ... existing code ...
-    weights = config_overrides.get('INDICATOR_WEIGHTS', INDICATOR_WEIGHTS) if config_overrides else INDICATOR_WEIGHTS
+    weights = getattr(config, 'INDICATOR_WEIGHTS', {})
     
     total_weight = sum(weights.values())
-    score = 0
-    
-    # Calculate score using weights
-    if signals['volume_spike']: score += weights.get('volume', 1.0)
-    if signals['pressure_aligned']: score += weights.get('pressure', 1.0)
-    # ... apply to all 8 indicators ...
-    
-    confluence_pct = (score / total_weight) * 100 if total_weight > 0 else 0
+    # Current code scores the canonical keys:
+    # volume_spike, pressure, ema_trend, macd_signal, rsi_position,
+    # bb_position, rsi_divergence, candle_direction
+    # ... apply weighted voting with those keys ...
 ```
 
 - [ ] **Step 3: Commit**
@@ -144,12 +144,12 @@ git commit -m "feat: add ATR-based dynamic exits and trailing stops"
 
 **Files:**
 - Modify: `/Users/faiqnau/fight/trading/crypto-signal/bot/backtester.py`
-- Create: `/Users/faiqnau/fight/trading/crypto-signal/run_exit_opt.py`
+- Create: `/Users/faiqnau/fight/trading/crypto-signal/scripts/run_exit_opt.py`
 
 - [ ] **Step 1: Update Backtester `fetch_data` chunking for 180 days**
 Increase historical fetch window limit in `run_backtest` to properly paginate 6 months of 1H data safely without binance API limits.
 
-- [ ] **Step 2: Write `run_exit_opt.py`**
+- [ ] **Step 2: Write `scripts/run_exit_opt.py`**
 ```python
 import pandas as pd
 from bot.backtester import run_backtest
@@ -168,30 +168,32 @@ combos = [
 
 # Run 180 day grid
 for i, combo in enumerate(combos):
-    res = run_backtest(days=180, config_overrides=combo)
+    res = run_backtest(days=180, cfg_override=combo)
     print(f"Grid {i}: {res}")
 ```
 
+Historical note: current position management keeps the TP split fixed in `bot/position_manager.py`; do not treat `TP_SPLIT` as a live runtime API even though this plan used it for exploration.
+
 - [ ] **Step 3: Commit**
 ```bash
-git add bot/backtester.py run_exit_opt.py
+git add bot/backtester.py scripts/run_exit_opt.py
 git commit -m "feat: expand backtester duration and create exit optimization script"
 ```
 
 ### Task 5: Run Phase 2 (Indicator Lab) & Phase 3 (Twin Bots)
 
 **Files:**
-- Create: `/Users/faiqnau/fight/trading/crypto-signal/run_indicator_lab.py`
-- Create: `/Users/faiqnau/fight/trading/crypto-signal/run_twin_bots.py`
+- Create: `/Users/faiqnau/fight/trading/crypto-signal/scripts/run_indicator_lab.py`
+- Create: `/Users/faiqnau/fight/trading/crypto-signal/scripts/run_twin_bots.py`
 
-- [ ] **Step 1: Write `run_indicator_lab.py`**
-Script runs 10-20 loops randomizing the `INDICATOR_WEIGHTS` dictionary and turning elements on/off to mathematically isolate signal from noise over 180 days.
+- [ ] **Step 1: Write `scripts/run_indicator_lab.py`**
+Script runs 10-20 loops randomizing the current `INDICATOR_WEIGHTS` keys (`volume_spike`, `ema_trend`, etc.) and turning elements on/off to mathematically isolate signal from noise over 180 days.
 
-- [ ] **Step 2: Write `run_twin_bots.py`**
+- [ ] **Step 2: Write `scripts/run_twin_bots.py`**
 Script forces `REVERSAL_MODE=True` (buy when RSI < 30 and BB touches lower band, ignoring EMAs). Runs strict comparison against standard momentum mode.
 
 - [ ] **Step 3: Commit**
 ```bash
-git add run_indicator_lab.py run_twin_bots.py
+git add scripts/run_indicator_lab.py scripts/run_twin_bots.py
 git commit -m "feat: script runners for massive parameter grid searches"
 ```

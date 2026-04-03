@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crypto-signal"
+version = "0.1.0"
+requires-python = ">=3.11"
+dynamic = ["dependencies"]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bot*"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["bot/requirements.txt"] }

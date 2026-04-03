@@ -27,15 +27,15 @@ class StrategyDiscoveryEngine:
         # Weight Profiles
         weight_profiles = [
             # 1. Equal
-            {"w_volume": 1.0, "w_pressure": 1.0, "w_ema": 1.0, "w_macd": 1.0, "w_rsi": 1.0, "w_bb": 1.0, "w_divergence": 1.0, "w_candle": 1.0, "w_support": 1.0},
+            {"volume_spike": 1.0, "pressure": 1.0, "ema_trend": 1.0, "macd_signal": 1.0, "rsi_position": 1.0, "bb_position": 1.0, "rsi_divergence": 1.0, "candle_direction": 1.0},
             # 2. Volume-Heavy
-            {"w_volume": 3.0, "w_pressure": 2.0, "w_ema": 1.0, "w_macd": 1.0, "w_rsi": 1.0, "w_bb": 1.0, "w_divergence": 1.0, "w_candle": 1.0, "w_support": 1.0},
+            {"volume_spike": 3.0, "pressure": 2.0, "ema_trend": 1.0, "macd_signal": 1.0, "rsi_position": 1.0, "bb_position": 1.0, "rsi_divergence": 1.0, "candle_direction": 1.0},
             # 3. Trend-Purist
-            {"w_volume": 0.5, "w_pressure": 0.5, "w_ema": 2.0, "w_macd": 2.0, "w_rsi": 0.5, "w_bb": 0.5, "w_divergence": 0.5, "w_candle": 1.5, "w_support": 0.5},
+            {"volume_spike": 0.5, "pressure": 0.5, "ema_trend": 2.0, "macd_signal": 2.0, "rsi_position": 0.5, "bb_position": 0.5, "rsi_divergence": 0.5, "candle_direction": 1.5},
             # 4. Reversal
-            {"w_volume": 0.0, "w_pressure": 0.0, "w_ema": 0.0, "w_macd": 0.0, "w_rsi": 2.0, "w_bb": 2.0, "w_divergence": 2.0, "w_candle": 0.0, "w_support": 0.0},
+            {"volume_spike": 0.0, "pressure": 0.0, "ema_trend": 0.0, "macd_signal": 0.0, "rsi_position": 2.0, "bb_position": 2.0, "rsi_divergence": 2.0, "candle_direction": 0.0},
             # 5. Minimal (Volume + EMA + BB)
-            {"w_volume": 1.0, "w_pressure": 0.0, "w_ema": 1.0, "w_macd": 0.0, "w_rsi": 0.0, "w_bb": 1.0, "w_divergence": 0.0, "w_candle": 0.0, "w_support": 0.0},
+            {"volume_spike": 1.0, "pressure": 0.0, "ema_trend": 1.0, "macd_signal": 0.0, "rsi_position": 0.0, "bb_position": 1.0, "rsi_divergence": 0.0, "candle_direction": 0.0},
         ]
         
         profile_names = ["Equal", "Volume-Heavy", "Trend-Purist", "Reversal", "Minimal"]
@@ -48,7 +48,7 @@ class StrategyDiscoveryEngine:
                     for ex_idx, ex in enumerate(exit_strategies):
                         cfg = {
                             "VOLUME_SPIKE_THRESHOLD": v,
-                            "MIN_SCORE_THRESHOLD": c,
+                            "CONFIDENCE_THRESHOLD": c,
                             "INDICATOR_WEIGHTS": w,
                             "_profile_name": profile_names[w_idx],
                             "_exit_name": exit_names[ex_idx]

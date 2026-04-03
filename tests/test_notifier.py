@@ -1,54 +1,70 @@
-import sys
-import os
+from __future__ import annotations
 
-# Ensure bot can be imported
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+import pytest
 
 from bot.notifier import TelegramNotifier
 from bot.signals import Signal
 
+
 class MockNotifier(TelegramNotifier):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(bot_token="fake", chat_id="fake")
-        self.sent_messages = []
-        
-    def _send(self, text: str, reply_to_message_id: int = None):
-        print("\n" + "="*50)
-        print("TELEGRAM MESSAGE PREVIEW")
-        print("="*50)
-        print(text)
-        print("="*50 + "\n")
-        self.sent_messages.append(text)
+        self.calls: list[tuple[str, int | None]] = []
 
-def run_tests():
-    n = MockNotifier()
-    
-    # Create sample signal
-    sig = Signal(
-        symbol='BTCUSDT', 
-        direction='LONG', 
-        entry_price=50000.0, 
-        tp1=52000.0, 
-        tp2=54000.0, 
-        tp3=56000.0, 
-        sl=49000.0, 
-        leverage=7, 
-        risk_reward=2.08, 
-        confidence=75.0, 
-        btc_trend='Uptrend'
+    def _send(self, text: str, reply_to_message_id: int | None = None):
+        self.calls.append((text, reply_to_message_id))
+        return 123
+
+
+@pytest.fixture()
+def signal() -> Signal:
+    return Signal(
+        symbol="BTCUSDT",
+        direction="LONG",
+        entry_price=50000.0,
+        tp1=52000.0,
+        tp2=54000.0,
+        tp3=56000.0,
+        sl=49000.0,
+        leverage=7,
+        risk_reward=2.08,
+        confidence=75.0,
+        btc_trend="Uptrend",
     )
-    
-    print("Testing TP1_HIT...")
-    n.send_tp_sl_alert(sig, 'TP1_HIT', realized_pnl=350.0, equity=1350.0, passport_name="📊 [Aggressive]")
-    
-    print("Testing SL_BREAKEVEN...")
-    n.send_tp_sl_alert(sig, 'SL_BREAKEVEN', realized_pnl=0.0, equity=1350.0, passport_name="📊 [Aggressive]")
-    
-    print("Testing TP3_HIT...")
-    n.send_tp_sl_alert(sig, 'TP3_HIT', realized_pnl=50.0, equity=1400.0, passport_name="📊 [Aggressive]")
-    
-    print("Testing SL_HIT...")
-    n.send_tp_sl_alert(sig, 'SL_HIT', realized_pnl=-150.0, equity=850.0, passport_name="🛡️ [Conservative]")
 
-if __name__ == "__main__":
-    run_tests()
+
+@pytest.mark.parametrize(
+    ("event", "realized_pnl", "equity", "expected_fragment"),
+    [
+        ("TP1_HIT", 350.0, 1350.0, "Closed: 70% of position"),
+        ("SL_BREAKEVEN", 0.0, 1350.0, "Hit Price: `50000` (Breakeven)"),
+        ("TP3_HIT", 50.0, 1400.0, "Closed: 10% of position (All targets hit!)"),
+        ("SL_HIT", -150.0, 850.0, "Loss: -2.00%"),
+    ],
+)
+def test_send_tp_sl_alert_formats_message_and_threads_reply(signal, event, realized_pnl, equity, expected_fragment):
+    notifier = MockNotifier()
+    notifier.store_signal_message_id(signal.symbol, 77, passport_name="📊 [Aggressive]")
+
+    notifier.send_tp_sl_alert(
+        signal,
+        event,
+        realized_pnl=realized_pnl,
+        equity=equity,
+        passport_name="📊 [Aggressive]",
+    )
+
+    assert len(notifier.calls) == 1
+    message, reply_to = notifier.calls[0]
+    assert reply_to == 77
+    assert "📊 [Aggressive]" in message
+    assert f"**{event.replace('_', ' ')}** — #{signal.symbol}" in message
+    assert expected_fragment in message
+
+
+def test_store_signal_message_id_uses_symbol_and_passport_name(signal):
+    notifier = MockNotifier()
+
+    notifier.store_signal_message_id(signal.symbol, 88, passport_name="🛡️ [Conservative]")
+
+    assert notifier.signal_message_ids[(signal.symbol, "🛡️ [Conservative]")] == 88
