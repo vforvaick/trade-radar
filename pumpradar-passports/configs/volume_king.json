@@ -1,0 +1,23 @@
+{
+    "name": "Pumpradar VolumeKing",
+    "emoji": "📢",
+    "description": "Volume-first thesis: 3x volume weight, trend + candle for confirmation, everything else muted",
+    "config_overrides": {
+        "EMA_FAST": 9,
+        "EMA_MID": 21,
+        "EMA_SLOW": 50,
+        "VOLUME_SPIKE_THRESHOLD": 2.5,
+        "INDICATOR_WEIGHTS": {
+            "ema_trend": 1.0,
+            "macd_signal": 0.0,
+            "rsi_position": 0.0,
+            "rsi_divergence": 0.0,
+            "bb_position": 0.0,
+            "volume_spike": 3.0,
+            "pressure": 0.0,
+            "candle_direction": 1.0
+        },
+        "USE_ATR_EXITS": false,
+        "USE_TRAILING_STOP": false
+    }
+}

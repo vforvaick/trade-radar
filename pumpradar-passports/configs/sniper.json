@@ -1,0 +1,24 @@
+{
+    "name": "Pumpradar Sniper",
+    "emoji": "🎯",
+    "description": "Ultra-selective: HiddenGem weights but only fires at 70%+ confidence",
+    "config_overrides": {
+        "EMA_FAST": 9,
+        "EMA_MID": 21,
+        "EMA_SLOW": 50,
+        "VOLUME_SPIKE_THRESHOLD": 2.0,
+        "CONFIDENCE_THRESHOLD": 70,
+        "INDICATOR_WEIGHTS": {
+            "ema_trend": 1.0,
+            "macd_signal": 0.0,
+            "rsi_position": 0.0,
+            "rsi_divergence": 0.0,
+            "bb_position": 1.0,
+            "volume_spike": 2.0,
+            "pressure": 0.0,
+            "candle_direction": 0.0
+        },
+        "USE_ATR_EXITS": false,
+        "USE_TRAILING_STOP": false
+    }
+}

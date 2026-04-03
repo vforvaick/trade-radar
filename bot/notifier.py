@@ -1,0 +1,192 @@
+"""
+Telegram notifier module for trade alerts and command polling.
+"""
+import requests
+import threading
+import time
+from bot.signals import Signal
+
+
+class TelegramNotifier:
+    def __init__(self, bot_token: str = None, chat_id: str = None):
+        self.bot_token = bot_token
+        self.chat_id = chat_id
+        self.enabled = bool(bot_token and chat_id)
+        # Maps (symbol, passport_name) -> message_id for reply threading
+        self.signal_message_ids: dict[tuple[str, str], int] = {}
+        
+    def restore_message_ids(self, state_store):
+        """Restore active message IDs from the database."""
+        if self.enabled and state_store:
+            self.signal_message_ids = state_store.load_active_message_ids()
+            print(f"[Notifier] Restored {len(self.signal_message_ids)} active signal message threads", flush=True)
+        
+    def _send(self, text: str, reply_to_message_id: int = None) -> int | None:
+        """Send a message and return the message_id, or None on failure."""
+        if not self.enabled:
+            return None
+            
+        url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+        payload = {
+            "chat_id": self.chat_id,
+            "text": text,
+            "parse_mode": "Markdown"
+        }
+        if reply_to_message_id:
+            payload["reply_to_message_id"] = reply_to_message_id
+            payload["allow_sending_without_reply"] = True
+        try:
+            resp = requests.post(url, json=payload, timeout=5)
+            data = resp.json()
+            if data.get("ok"):
+                return data["result"]["message_id"]
+        except Exception as e:
+            print(f"[Notifier] Failed to send TG message: {e}")
+        return None
+
+    def send_signal(self, signal: Signal):
+        """Format and send a new trade signal alert."""
+        emoji = "🟢 LONG" if signal.direction == "LONG" else "🔴 SHORT"
+        
+        msg = f"🚀 **Pumpradar Replica Signal** 🚀\n\n"
+        msg += f"**Symbol:** #{signal.symbol}\n"
+        msg += f"**Direction:** {emoji}\n"
+        msg += f"**Entry:** `{signal.entry_price}`\n\n"
+        
+        msg += f"📊 **Context:**\n"
+        msg += f"BTC Trend: {signal.btc_trend}\n"
+        msg += f"Risk/Reward: 1:{signal.risk_reward}\n"
+        msg += f"Leverage: **{signal.leverage}x**\n\n"
+        
+        msg += f"🎯 **Targets:**\n"
+        msg += f"TP1: `{signal.tp1}`\n"
+        msg += f"TP2: `{signal.tp2}`\n"
+        msg += f"TP3: `{signal.tp3}`\n\n"
+        
+        msg += f"🛑 **Stop Loss:** `{signal.sl}`\n\n"
+        
+        msg += f"🤖 **AI Confluence:** {signal.confidence}%\n"
+        
+        print(f"[Notifier] Sending signal alert for {signal.symbol}")
+        msg_id = self._send(msg)
+        return msg_id
+
+    def send_update(self, msg: str):
+        """Send a general update or TP/SL hit alert."""
+        print(f"[Notifier] {msg}")
+        self._send(f"🔔 **Bot Update:**\n{msg}")
+
+    def store_signal_message_id(self, symbol: str, message_id: int, passport_name: str = None):
+        """Store the message_id of a setup signal for reply threading."""
+        if message_id:
+            key = (symbol, passport_name or "")
+            self.signal_message_ids[key] = message_id
+
+    def send_tp_sl_alert(self, signal: Signal, event: str, realized_pnl: float, equity: float, passport_name: str = None):
+        """Format and send a rich TP/SL hit alert."""
+        emoji_map = {
+            "TP1_HIT": "🎯",
+            "TP2_HIT": "🎯🎯",
+            "TP3_HIT": "🏆",
+            "SL_HIT": "🛑",
+            "SL_BREAKEVEN": "⚖️",
+        }
+        
+        event_emoji = emoji_map.get(event, "📢")
+        direction_emoji = "🟢" if signal.direction == "LONG" else "🔴"
+        
+        prefix = passport_name if passport_name else "🚀 **Pumpradar Replica**"
+        
+        msg = f"{prefix}\n\n"
+        msg += f"{event_emoji} **{event.replace('_', ' ')}** — #{signal.symbol}\n"
+        msg += f"Direction: {direction_emoji} {signal.direction}\n"
+        msg += f"Entry: `{signal.entry_price:.6g}`\n"
+        
+        if "TP" in event:
+            if event == "TP1_HIT":
+                target_price = signal.tp1
+                msg += f"Hit Price: `{target_price:.6g}`\n"
+                msg += f"Closed: 70% of position\n"
+                msg += f"Action: SL moved to Breakeven\n"
+            elif event == "TP2_HIT":
+                target_price = signal.tp2
+                msg += f"Hit Price: `{target_price:.6g}`\n"
+                msg += f"Closed: 20% of position\n"
+            else: # TP3
+                target_price = signal.tp3
+                msg += f"Hit Price: `{target_price:.6g}`\n"
+                msg += f"Closed: 10% of position (All targets hit!)\n"
+                
+            dist_pct = abs(target_price - signal.entry_price) / signal.entry_price * 100
+            msg += f"Profit: +{dist_pct:.2f}%\n"
+            
+        elif event == "SL_HIT":
+            msg += f"Hit Price: `{signal.sl:.6g}`\n"
+            dist_pct = abs(signal.sl - signal.entry_price) / signal.entry_price * 100
+            msg += f"Loss: -{dist_pct:.2f}%\n"
+            
+        elif event == "SL_BREAKEVEN":
+            msg += f"Hit Price: `{signal.entry_price:.6g}` (Breakeven)\n"
+            msg += f"Note: Prior TP profits secured.\n"
+            
+        msg += f"\n"
+        pnl_symbol = "+" if realized_pnl > 0 else ""
+        msg += f"**Realized P&L:** `${pnl_symbol}{realized_pnl:.2f}`\n"
+        msg += f"**Bot Equity:** `${equity:,.2f}`\n"
+        
+        # Reply to the original setup signal message
+        key = (signal.symbol, passport_name or "")
+        reply_to = self.signal_message_ids.get(key)
+        
+        print(f"[Notifier] Sending {event} alert for {signal.symbol}" + (f" (reply to #{reply_to})" if reply_to else ""))
+        self._send(msg, reply_to_message_id=reply_to)
+
+
+class TelegramCommandPoller:
+    """Background thread that listens to Telegram commands."""
+    
+    def __init__(self, notifier: TelegramNotifier, passport_runner):
+        self.notifier = notifier
+        self.runner = passport_runner
+        self.thread = threading.Thread(target=self._poll_loop, daemon=True)
+        
+    def start(self):
+        if self.notifier.enabled:
+            print("[TelegramPoller] Starting background command listener...", flush=True)
+            self.thread.start()
+            
+    def _poll_loop(self):
+        last_update_id = 0
+        start_time = time.time()
+        while True:
+            try:
+                url = f"https://api.telegram.org/bot{self.notifier.bot_token}/getUpdates"
+                params = {"offset": last_update_id + 1, "timeout": 30}
+                # Use longer timeout for long-polling
+                resp = requests.get(url, params=params, timeout=40).json()
+                
+                if resp.get("ok") and resp.get("result"):
+                    for update in resp["result"]:
+                        last_update_id = update["update_id"]
+                        msg = update.get("message", {})
+                        text = msg.get("text", "")
+                        chat_id = msg.get("chat", {}).get("id")
+                        msg_date = msg.get("date", 0)
+                        
+                        # Only respond to new messages from authorized chat
+                        if msg_date > start_time and str(chat_id) == str(self.notifier.chat_id) and text:
+                            cmd = text.split()[0].lower()
+                            if cmd == "/summary" or cmd == "/stats":
+                                print("[TelegramPoller] Received /summary command", flush=True)
+                                summary = self.runner.get_summary()
+                                self.notifier._send(f"{summary}")
+                            elif cmd == "/status":
+                                self.notifier._send("🟢 **Bot Status**\nActively scanning and monitoring positions.")
+                            elif cmd == "/ping":
+                                self.notifier._send("🏓 Pong! Bot is alive and well.")
+                                
+            except Exception:
+                pass
+                
+            time.sleep(2)
+
