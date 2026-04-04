@@ -1,0 +1,42 @@
+{
+    "name": "MACDDivergence",
+    "emoji": "📊",
+    "version": "0.1",
+    "changelog": [
+        {
+            "version": "0.1",
+            "date": "2026-04-04",
+            "git_sha": "91e1e37",
+            "description": "MACD-primary with RSI divergence — uses MACD for trend/momentum and RSI divergence for reversal timing. Novel combination testing MACD as primary signal.",
+            "backtest_180d": {
+                "return_pct": null,
+                "win_rate": null,
+                "trades": null,
+                "max_dd_pct": null,
+                "note": "pending initial backtest"
+            }
+        }
+    ],
+    "description": "MACD momentum + RSI divergence combo. Thesis: MACD captures momentum shifts early, RSI divergence confirms exhaustion. Trades both trend continuation and reversals.",
+    "config_overrides": {
+        "EMA_FAST": 9,
+        "EMA_MID": 21,
+        "EMA_SLOW": 50,
+        "VOLUME_SPIKE_THRESHOLD": 2.0,
+        "INDICATOR_WEIGHTS": {
+            "ema_trend": 0.0,
+            "macd_signal": 2.5,
+            "rsi_position": 0.0,
+            "rsi_divergence": 2.0,
+            "bb_position": 0.0,
+            "volume_spike": 0.0,
+            "pressure": 0.0,
+            "candle_direction": 0.0
+        },
+        "CONFIDENCE_THRESHOLD": 58,
+        "USE_ATR_EXITS": false,
+        "USE_TRAILING_STOP": false,
+        "MAX_OPEN_POSITIONS_PER_PASSPORT": 25,
+        "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+    }
+}
