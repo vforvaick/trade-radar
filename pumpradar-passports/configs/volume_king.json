@@ -32,7 +32,7 @@
         {
             "version": "0.3",
             "date": "2026-04-04",
-            "git_sha": "TBD",
+            "git_sha": "fba799b",
             "description": "ROLLBACK — reverted to v0.1 params (vol_threshold=2.5, vol_weight=3.0, no macd, no pressure, no threshold override). v0.2 regression -29.6pp. Pure volume spike strategy works precisely because it only fires on genuine unusual volume events.",
             "backtest_180d": {
                 "return_pct": null,

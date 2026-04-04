@@ -32,7 +32,7 @@
         {
             "version": "0.3",
             "date": "2026-04-04",
-            "git_sha": "TBD",
+            "git_sha": "fba799b",
             "description": "ROLLBACK — reverted to v0.1 params (macd=0, ema=1.0, threshold=70). v0.2 regression -40.7pp. Sniper's selectivity IS the edge — threshold=70 combined with minimal weights produces only high-conviction trades.",
             "backtest_180d": {
                 "return_pct": null,

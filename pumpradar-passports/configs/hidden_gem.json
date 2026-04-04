@@ -32,7 +32,7 @@
         {
             "version": "0.3",
             "date": "2026-04-04",
-            "git_sha": "TBD",
+            "git_sha": "fba799b",
             "description": "ROLLBACK — reverted to v0.1 params (ema=1.0, pressure=0.0, no threshold override). v0.2 regression -52.7pp confirmed selectivity IS the edge for this strategy. Fewer indicators = fewer diluting NEUTRAL votes = higher effective confidence per trade.",
             "backtest_180d": {
                 "return_pct": null,

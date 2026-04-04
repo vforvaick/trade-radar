@@ -32,7 +32,7 @@
         {
             "version": "0.3",
             "date": "2026-04-04",
-            "git_sha": "TBD",
+            "git_sha": "fba799b",
             "description": "ROLLBACK — reverted VOLUME_SPIKE_THRESHOLD 2.0→1.5. v0.2 regressed 15.7pp vs v0.1 over 180d. Higher threshold filtered quality entries in bear/choppy regime.",
             "backtest_180d": {
                 "return_pct": null,
