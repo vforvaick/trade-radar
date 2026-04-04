@@ -1,6 +1,35 @@
 {
     "name": "Pumpradar Sniper",
     "emoji": "🎯",
+    "version": "0.2",
+    "changelog": [
+        {
+            "version": "0.1",
+            "date": "2026-03-31",
+            "git_sha": "950e0ec",
+            "description": "Initial production deployment — exact v0.1 baseline",
+            "backtest_180d": {
+                "return_pct": null,
+                "win_rate": null,
+                "trades": null,
+                "max_dd_pct": null,
+                "note": "pre-revision baseline — backtest pending"
+            }
+        },
+        {
+            "version": "0.2",
+            "date": "2026-04-04",
+            "git_sha": "ff9f3f9",
+            "description": "Added MACD confirmation (1.0), raised ema 1.0→1.5, lowered threshold 70→65 for achievable signals",
+            "backtest_180d": {
+                "return_pct": null,
+                "win_rate": null,
+                "trades": null,
+                "max_dd_pct": null,
+                "note": "backtest pending — will be updated by run_passport_validation.py"
+            }
+        }
+    ],
     "description": "Ultra-selective: HiddenGem weights but only fires at 70%+ confidence",
     "config_overrides": {
         "EMA_FAST": 9,

@@ -1,6 +1,35 @@
 {
     "name": "Pumpradar Dynamic",
     "emoji": "🎯",
+    "version": "0.2",
+    "changelog": [
+        {
+            "version": "0.1",
+            "date": "2026-03-31",
+            "git_sha": "950e0ec",
+            "description": "Initial production deployment — exact v0.1 baseline",
+            "backtest_180d": {
+                "return_pct": null,
+                "win_rate": null,
+                "trades": null,
+                "max_dd_pct": null,
+                "note": "pre-revision baseline — backtest pending"
+            }
+        },
+        {
+            "version": "0.2",
+            "date": "2026-04-04",
+            "git_sha": "ff9f3f9",
+            "description": "Disabled trailing stop (proven -63pp impact), aligned entry weights with Momentum v0.2",
+            "backtest_180d": {
+                "return_pct": null,
+                "win_rate": null,
+                "trades": null,
+                "max_dd_pct": null,
+                "note": "backtest pending — will be updated by run_passport_validation.py"
+            }
+        }
+    ],
     "description": "ATR-based dynamic exits with trailing stops — adapts to market volatility",
     "config_overrides": {
         "EMA_FAST": 9,

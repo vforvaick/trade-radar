@@ -2,6 +2,35 @@
     "name": "Pumpradar Reversal",
     "emoji": "🔄",
     "enabled": false,
+    "version": "0.2",
+    "changelog": [
+        {
+            "version": "0.1",
+            "date": "2026-03-31",
+            "git_sha": "950e0ec",
+            "description": "Initial deployment — overtrade issue discovered in live (337 signals/3 days), quarantined",
+            "backtest_180d": {
+                "return_pct": null,
+                "win_rate": null,
+                "trades": null,
+                "max_dd_pct": null,
+                "note": "pre-revision baseline — backtest pending"
+            }
+        },
+        {
+            "version": "0.2",
+            "date": "2026-04-04",
+            "git_sha": "ff9f3f9",
+            "description": "Tightened quarantine: threshold 60→85, vol 2.0→2.5x, positions 20→5, sideways 80→90; keep disabled",
+            "backtest_180d": {
+                "return_pct": null,
+                "win_rate": null,
+                "trades": null,
+                "max_dd_pct": null,
+                "note": "backtest pending — will be updated by run_passport_validation.py"
+            }
+        }
+    ],
     "description": "Mean reversion strategy kept disabled in production until Tasks 2, 3, and 7 land; quarantine this passport until regime filters and drawdown controls are fixed.",
     "config_overrides": {
         "EMA_FAST": 9,

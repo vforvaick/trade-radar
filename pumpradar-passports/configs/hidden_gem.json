@@ -1,6 +1,35 @@
 {
     "name": "Pumpradar HiddenGem",
     "emoji": "💎",
+    "version": "0.2",
+    "changelog": [
+        {
+            "version": "0.1",
+            "date": "2026-03-31",
+            "git_sha": "950e0ec",
+            "description": "Initial production deployment — exact v0.1 baseline",
+            "backtest_180d": {
+                "return_pct": null,
+                "win_rate": null,
+                "trades": null,
+                "max_dd_pct": null,
+                "note": "pre-revision baseline — backtest pending"
+            }
+        },
+        {
+            "version": "0.2",
+            "date": "2026-04-04",
+            "git_sha": "ff9f3f9",
+            "description": "Added pressure=0.5 tiebreaker, raised ema_trend 1.0→1.5, added CONFIDENCE_THRESHOLD 58",
+            "backtest_180d": {
+                "return_pct": null,
+                "win_rate": null,
+                "trades": null,
+                "max_dd_pct": null,
+                "note": "backtest pending — will be updated by run_passport_validation.py"
+            }
+        }
+    ],
     "description": "180-day winner: Ultra-selective EMA+BB+Volume only — +17% return, 48% WR",
     "config_overrides": {
         "EMA_FAST": 9,

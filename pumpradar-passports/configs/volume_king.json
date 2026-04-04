@@ -1,6 +1,35 @@
 {
     "name": "Pumpradar VolumeKing",
     "emoji": "📢",
+    "version": "0.2",
+    "changelog": [
+        {
+            "version": "0.1",
+            "date": "2026-03-31",
+            "git_sha": "950e0ec",
+            "description": "Initial production deployment — exact v0.1 baseline",
+            "backtest_180d": {
+                "return_pct": null,
+                "win_rate": null,
+                "trades": null,
+                "max_dd_pct": null,
+                "note": "pre-revision baseline — backtest pending"
+            }
+        },
+        {
+            "version": "0.2",
+            "date": "2026-04-04",
+            "git_sha": "ff9f3f9",
+            "description": "Lowered vol threshold 2.5→2.0, reduced vol weight 3.0→2.5, added MACD=0.5 and pressure=0.5",
+            "backtest_180d": {
+                "return_pct": null,
+                "win_rate": null,
+                "trades": null,
+                "max_dd_pct": null,
+                "note": "backtest pending — will be updated by run_passport_validation.py"
+            }
+        }
+    ],
     "description": "Volume-first thesis: 3x volume weight, trend + candle for confirmation, everything else muted",
     "config_overrides": {
         "EMA_FAST": 9,
