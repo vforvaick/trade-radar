@@ -89,7 +89,15 @@ class StateDB:
                 "SELECT * FROM passport_state WHERE status = ?", (status,)).fetchall()
         else:
             rows = self._conn.execute("SELECT * FROM passport_state").fetchall()
-        return [dict(r) for r in rows]
+        results = []
+        for r in rows:
+            d = dict(r)
+            if d.get("config"):
+                d["config"] = json.loads(d["config"])
+            if d.get("metrics"):
+                d["metrics"] = json.loads(d["metrics"])
+            results.append(d)
+        return results
 
     def log_trade(self, passport_id: str, symbol: str, direction: str,
                   entry_price: float, exit_price: Optional[float] = None,

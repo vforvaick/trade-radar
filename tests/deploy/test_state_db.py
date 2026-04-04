@@ -30,6 +30,15 @@ def test_list_by_status(db):
     assert len(result) == 2
 
 
+def test_list_passports_deserializes_json(db):
+    db.upsert_passport("psp_x", "paper_live", config={"pairs": ["BTCUSDT"]},
+                        metrics={"sharpe": 1.2})
+    results = db.list_passports()
+    assert isinstance(results[0]["config"], dict)
+    assert results[0]["config"]["pairs"] == ["BTCUSDT"]
+    assert isinstance(results[0]["metrics"], dict)
+
+
 def test_trade_logging(db):
     db.log_trade("psp_a", "BTCUSDT", "LONG", entry_price=30000.0,
                  exit_price=31000.0, pnl=3.33)

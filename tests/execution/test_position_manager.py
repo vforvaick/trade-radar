@@ -42,6 +42,12 @@ def test_no_pyramiding_by_default():
     assert intent is None
 
 
+def test_missing_direction_returns_none():
+    from bot.execution.position_manager import PositionManager
+    pm = PositionManager(default_size=0.02)
+    assert pm.signal_to_intent("psp_abc", "BTCUSDT", {"confidence": 80}) is None
+
+
 def test_low_confidence_rejected():
     from bot.execution.position_manager import PositionManager
     pm = PositionManager(default_size=0.02, min_confidence=60)

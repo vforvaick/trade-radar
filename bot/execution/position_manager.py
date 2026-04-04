@@ -31,6 +31,10 @@ class PositionManager:
         signal: dict,
     ) -> Optional[OrderIntent]:
         """Convert a signal dict to an OrderIntent, or None if blocked."""
+        direction = signal.get("direction")
+        if not direction:
+            return None
+
         confidence = signal.get("confidence", 0)
         if confidence < self.min_confidence:
             return None
@@ -51,7 +55,7 @@ class PositionManager:
         intent = OrderIntent(
             passport_id=passport_id,
             symbol=symbol,
-            direction=signal["direction"],
+            direction=direction,
             signal_confidence=confidence,
             size_hint=self.default_size,
             stop_loss=signal.get("stop_loss", 0),
