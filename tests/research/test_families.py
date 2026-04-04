@@ -17,6 +17,9 @@ class TestScoringFamilies:
         valid_indicators = {
             "ema_trend", "macd_signal", "rsi_position", "rsi_divergence",
             "bb_position", "volume_spike", "pressure", "candle_direction",
+            "stochrsi", "obv_trend", "ichimoku", "vwap_deviation",
+            "keltner", "donchian", "heikin_ashi", "williams_r",
+            "cci", "mfi", "hull_ma", "supertrend", "pivot_points",
         }
         for name, family in SCORING_FAMILIES.items():
             for ind in family["weights"]:
@@ -48,3 +51,18 @@ class TestParamGrid:
     def test_grid_returns_empty_for_unknown_family(self):
         grid = get_param_grid("nonexistent")
         assert grid == []
+
+
+class TestExtendedFamilies:
+    def test_families_6_through_18_exist(self):
+        expected = [
+            "stochastic_reversal", "obv_trend", "ichimoku_cloud",
+            "vwap_deviation", "keltner_breakout", "donchian_breakout",
+            "heikin_ashi_momentum", "williams_reversal", "cci_divergence",
+            "mfi_flow", "hull_ma_crossover", "supertrend_follow", "pivot_bounce",
+        ]
+        for name in expected:
+            assert name in SCORING_FAMILIES, f"Missing: {name}"
+
+    def test_total_family_count_at_least_25(self):
+        assert len(SCORING_FAMILIES) >= 25

@@ -12,6 +12,10 @@ from typing import Optional
 _ALL_INDICATORS = [
     "ema_trend", "macd_signal", "rsi_position", "rsi_divergence",
     "bb_position", "volume_spike", "pressure", "candle_direction",
+    # New 13 indicators from research/indicators.py
+    "stochrsi", "obv_trend", "ichimoku", "vwap_deviation",
+    "keltner", "donchian", "heikin_ashi", "williams_r",
+    "cci", "mfi", "hull_ma", "supertrend", "pivot_points",
 ]
 
 _ZERO_WEIGHTS = {ind: 0.0 for ind in _ALL_INDICATORS}
@@ -179,6 +183,139 @@ SCORING_FAMILIES: dict[str, dict] = {
         },
         "compatible_regimes": ["TREND_UP", "TREND_DOWN"],
         "min_trades": 25,
+    },
+    # --- Families 6-18 (using new indicators) ---
+    "stochastic_reversal": {
+        "name": "Stochastic Reversal",
+        "description": "Mean-reversion via Stochastic RSI crossovers in extreme zones",
+        "weights": _w(stochrsi=2.5, rsi_position=1.5, bb_position=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+        },
+        "compatible_regimes": ["HIGH_VOL_CHOP", "LOW_VOL_COMPRESSION"],
+        "min_trades": 20,
+    },
+    "obv_trend": {
+        "name": "OBV Trend",
+        "description": "Volume-confirmed trend via OBV slope + EMA alignment",
+        "weights": _w(obv_trend=2.5, ema_trend=1.5, volume_spike=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+        },
+        "compatible_regimes": ["TREND_UP", "TREND_DOWN"],
+        "min_trades": 25,
+    },
+    "ichimoku_cloud": {
+        "name": "Ichimoku Cloud",
+        "description": "Full Ichimoku system — Tenkan/Kijun cross + cloud + span color",
+        "weights": _w(ichimoku=3.0, ema_trend=1.0, macd_signal=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+        },
+        "compatible_regimes": ["TREND_UP", "TREND_DOWN"],
+        "min_trades": 20,
+    },
+    "vwap_deviation": {
+        "name": "VWAP Deviation",
+        "description": "Mean-reversion from VWAP z-score extremes",
+        "weights": _w(vwap_deviation=2.5, bb_position=1.5, rsi_position=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+        },
+        "compatible_regimes": ["HIGH_VOL_CHOP", "LOW_VOL_COMPRESSION"],
+        "min_trades": 20,
+    },
+    "keltner_breakout": {
+        "name": "Keltner Breakout",
+        "description": "Volatility breakout via Keltner Channel with volume confirmation",
+        "weights": _w(keltner=2.5, volume_spike=2.0, ema_trend=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+            "VOLUME_SPIKE_THRESHOLD": [1.5, 2.0],
+        },
+        "compatible_regimes": ["TREND_UP", "TREND_DOWN", "HIGH_VOL_CHOP"],
+        "min_trades": 20,
+    },
+    "donchian_breakout": {
+        "name": "Donchian Breakout",
+        "description": "Breakout on new period high/low with trend confirmation",
+        "weights": _w(donchian=2.5, ema_trend=1.5, volume_spike=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+        },
+        "compatible_regimes": ["TREND_UP", "TREND_DOWN"],
+        "min_trades": 20,
+    },
+    "heikin_ashi_momentum": {
+        "name": "Heikin-Ashi Momentum",
+        "description": "Momentum via HA candle persistence + EMA/MACD confirmation",
+        "weights": _w(heikin_ashi=2.0, ema_trend=1.5, macd_signal=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+        },
+        "compatible_regimes": ["TREND_UP", "TREND_DOWN"],
+        "min_trades": 20,
+    },
+    "williams_reversal": {
+        "name": "Williams Reversal",
+        "description": "Mean-reversion via Williams %R extremes + RSI/BB confirmation",
+        "weights": _w(williams_r=2.5, rsi_position=1.5, bb_position=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+        },
+        "compatible_regimes": ["HIGH_VOL_CHOP", "LOW_VOL_COMPRESSION"],
+        "min_trades": 20,
+    },
+    "cci_divergence": {
+        "name": "CCI Divergence",
+        "description": "CCI extreme/crossing signals with MACD/RSI confirmation",
+        "weights": _w(cci=2.0, macd_signal=1.5, rsi_position=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+        },
+        "compatible_regimes": ["TREND_UP", "TREND_DOWN", "HIGH_VOL_CHOP", "LOW_VOL_COMPRESSION"],
+        "min_trades": 20,
+    },
+    "mfi_flow": {
+        "name": "MFI Flow",
+        "description": "Money flow extremes with volume and pressure confirmation",
+        "weights": _w(mfi=2.5, volume_spike=1.5, pressure=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+            "VOLUME_SPIKE_THRESHOLD": [1.5, 2.0],
+        },
+        "compatible_regimes": ["TREND_UP", "TREND_DOWN", "HIGH_VOL_CHOP", "LOW_VOL_COMPRESSION"],
+        "min_trades": 20,
+    },
+    "hull_ma_crossover": {
+        "name": "Hull MA Crossover",
+        "description": "Fast trend following via Hull Moving Average direction + EMA/MACD",
+        "weights": _w(hull_ma=2.5, ema_trend=1.5, macd_signal=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+        },
+        "compatible_regimes": ["TREND_UP", "TREND_DOWN"],
+        "min_trades": 20,
+    },
+    "supertrend_follow": {
+        "name": "Supertrend Follow",
+        "description": "ATR-based trend following via Supertrend + EMA confirmation",
+        "weights": _w(supertrend=3.0, ema_trend=1.5),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+        },
+        "compatible_regimes": ["TREND_UP", "TREND_DOWN"],
+        "min_trades": 20,
+    },
+    "pivot_bounce": {
+        "name": "Pivot Bounce",
+        "description": "Support/resistance bounce via pivot points + BB/RSI",
+        "weights": _w(pivot_points=2.0, bb_position=1.5, rsi_position=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+        },
+        "compatible_regimes": ["HIGH_VOL_CHOP", "LOW_VOL_COMPRESSION"],
+        "min_trades": 20,
     },
 }
 
