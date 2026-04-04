@@ -6,7 +6,7 @@
         "EMA_FAST": 9,
         "EMA_MID": 21,
         "EMA_SLOW": 50,
-        "VOLUME_SPIKE_THRESHOLD": 1.5,
+        "VOLUME_SPIKE_THRESHOLD": 2.0,
         "INDICATOR_WEIGHTS": {
             "ema_trend": 1.0,
             "macd_signal": 1.0,
