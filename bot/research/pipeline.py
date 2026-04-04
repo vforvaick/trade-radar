@@ -4,10 +4,16 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+import numpy as np
+
 from bot.backtester import run_backtest
-from bot.research.types import PassportCandidate, BacktestMetrics, EvalResult
+from bot.research.types import (
+    PassportCandidate, BacktestMetrics, EvalResult, Stage3Result, Stage4Result,
+)
 from bot.research.generator import generate_passports
 from bot.research.evaluator import Stage1Evaluator, Stage2Evaluator
+from bot.research.stage3 import Stage3Evaluator, perturb_config
+from bot.research.stage4 import Stage4Evaluator
 from bot.research.tracker import ExperimentTracker
 from bot.research.families import SCORING_FAMILIES
 
@@ -15,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class ResearchPipeline:
-    """Orchestrates the full research pipeline: generate → Stage 1 → Stage 2."""
+    """Orchestrates the full research pipeline: generate → Stage 1 → Stage 2 → Stage 3 → Stage 4."""
 
     def __init__(
         self,
@@ -30,6 +36,8 @@ class ResearchPipeline:
         self.tracker = ExperimentTracker(db_path=db_path)
         self.stage1 = Stage1Evaluator()
         self.stage2 = Stage2Evaluator()
+        self.stage3 = Stage3Evaluator()
+        self.stage4 = Stage4Evaluator()
         self.run_id: Optional[str] = None
 
     def generate_candidates(
@@ -153,12 +161,111 @@ class ResearchPipeline:
         logger.info("Stage 2: %d/%d survived", len(survivors), len(candidates))
         return survivors
 
+    def run_stage3(
+        self,
+        candidates: list[PassportCandidate],
+        mc_iterations: int = 50,
+    ) -> list[PassportCandidate]:
+        """Run Stage 3 Monte Carlo perturbation on Stage 2 survivors."""
+        survivors = []
+        rng = np.random.RandomState(42)
+
+        for i, candidate in enumerate(candidates):
+            logger.info(
+                "[Stage 3] %d/%d — %s (%d MC iterations)",
+                i + 1, len(candidates), candidate.slug, mc_iterations,
+            )
+
+            # Run original backtest for baseline return
+            try:
+                orig_summary = run_backtest(
+                    symbols=self.symbols,
+                    interval=self.interval,
+                    days=self.days,
+                    cfg_override=candidate.config_overrides,
+                )
+                original_return = orig_summary.get("return_pct", 0.0)
+            except Exception as e:
+                logger.warning("Original backtest failed for %s: %s", candidate.slug, e)
+                continue
+
+            # Run perturbed backtests
+            perturbed_summaries = []
+            for mc_i in range(mc_iterations):
+                perturbed_config = perturb_config(
+                    candidate.config_overrides, magnitude=0.15, rng=rng,
+                )
+                try:
+                    summary = run_backtest(
+                        symbols=self.symbols,
+                        interval=self.interval,
+                        days=self.days,
+                        cfg_override=perturbed_config,
+                    )
+                    perturbed_summaries.append(summary)
+                except Exception:
+                    perturbed_summaries.append({
+                        "return_pct": -100.0, "max_dd": 100.0,
+                        "sharpe": -1.0, "profit_factor": 0.0, "trades": 0,
+                    })
+
+            result = self.stage3.evaluate_from_summaries(
+                candidate.passport_id, original_return, perturbed_summaries,
+            )
+
+            if result.passed:
+                candidate.status = "stage3_passed"
+                survivors.append(candidate)
+                logger.info("  PASS — survival=%.0f%% mean_ret=%.1f%%",
+                            result.survival_rate * 100, result.mean_perturbed_return)
+            else:
+                logger.info("  FAIL — %s", result.reject_reason)
+
+        logger.info("Stage 3: %d/%d survived", len(survivors), len(candidates))
+        return survivors
+
+    def run_stage4(
+        self,
+        candidates: list[PassportCandidate],
+    ) -> Stage4Result:
+        """Run Stage 4 portfolio selection on Stage 3 survivors."""
+        logger.info("[Stage 4] Building portfolio from %d candidates", len(candidates))
+
+        # Build candidate dicts with backtest metrics
+        cand_dicts = []
+        for candidate in candidates:
+            try:
+                summary = run_backtest(
+                    symbols=self.symbols,
+                    interval=self.interval,
+                    days=self.days,
+                    cfg_override=candidate.config_overrides,
+                )
+                cand_dicts.append({
+                    "passport_id": candidate.passport_id,
+                    "family": candidate.family,
+                    "sharpe": summary.get("sharpe", 0),
+                    "calmar": summary.get("calmar", 0),
+                    "max_dd": summary.get("max_dd", 50),
+                    "equity_curve": summary.get("equity_curve", []),
+                    "trades": summary.get("trade_details", []),
+                    "dd_series": summary.get("dd_series", []),
+                })
+            except Exception as e:
+                logger.warning("Backtest for Stage 4 failed for %s: %s",
+                               candidate.slug, e)
+
+        result = self.stage4.select_portfolio(cand_dicts)
+        logger.info("Stage 4: selected %d for portfolio (utility=%.2f)",
+                     len(result.selected_passport_ids), result.portfolio_utility)
+        return result
+
     def run_full(
         self,
         families: Optional[list[str]] = None,
         max_per_family: Optional[int] = None,
     ) -> list[PassportCandidate]:
-        """Run the complete pipeline: generate → Stage 1 → Stage 2."""
+        """Run the 2-stage pipeline: generate → Stage 1 → Stage 2."""
         candidates = self.generate_candidates(families, max_per_family)
         stage1_survivors = self.run_stage1(candidates)
         stage2_survivors = self.run_stage2(stage1_survivors)
@@ -174,6 +281,32 @@ class ResearchPipeline:
             len(candidates), len(stage1_survivors), len(stage2_survivors),
         )
         return stage2_survivors
+
+    def run_full_4stage(
+        self,
+        families: Optional[list[str]] = None,
+        max_per_family: Optional[int] = None,
+        mc_iterations: int = 50,
+    ) -> Stage4Result:
+        """Run the complete 4-stage pipeline: generate → S1 → S2 → S3 → S4."""
+        candidates = self.generate_candidates(families, max_per_family)
+        stage1_survivors = self.run_stage1(candidates)
+        stage2_survivors = self.run_stage2(stage1_survivors)
+        stage3_survivors = self.run_stage3(stage2_survivors, mc_iterations)
+        result = self.run_stage4(stage3_survivors)
+
+        self.tracker.finish_experiment(
+            self.run_id,
+            stage1_survivors=len(stage1_survivors),
+            stage2_survivors=len(stage2_survivors),
+        )
+
+        logger.info(
+            "4-stage pipeline: %d → %d S1 → %d S2 → %d S3 → %d selected",
+            len(candidates), len(stage1_survivors), len(stage2_survivors),
+            len(stage3_survivors), len(result.selected_passport_ids),
+        )
+        return result
 
 
 def _calc_folds(
