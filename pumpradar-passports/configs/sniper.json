@@ -7,10 +7,10 @@
         "EMA_MID": 21,
         "EMA_SLOW": 50,
         "VOLUME_SPIKE_THRESHOLD": 2.0,
-        "CONFIDENCE_THRESHOLD": 70,
+        "CONFIDENCE_THRESHOLD": 65,
         "INDICATOR_WEIGHTS": {
-            "ema_trend": 1.0,
-            "macd_signal": 0.0,
+            "ema_trend": 1.5,
+            "macd_signal": 1.0,
             "rsi_position": 0.0,
             "rsi_divergence": 0.0,
             "bb_position": 1.0,
