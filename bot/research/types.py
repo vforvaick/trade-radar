@@ -81,3 +81,44 @@ class ExperimentResult:
     stage2_survivors: int = 0
     results: list[EvalResult] = field(default_factory=list)
     rejected_log: list[dict] = field(default_factory=list)
+
+
+@dataclass
+class Stage3Result:
+    """Result of Stage 3 parameter perturbation evaluation."""
+    passport_id: str
+    survival_rate: float
+    mean_perturbed_return: float
+    original_return: float
+    p5_return: float
+    p95_return: float
+    iqr_return: float
+    passed: bool
+    reject_reason: Optional[str]
+    mc_iterations: int
+    perturbation_details: list[dict] = field(default_factory=list)
+
+
+@dataclass
+class Stage4Result:
+    """Result of Stage 4 orthogonality + portfolio selection."""
+    selected_passport_ids: list[str]
+    portfolio_utility: float
+    portfolio_sharpe: float
+    portfolio_max_dd: float
+    family_counts: dict = field(default_factory=dict)
+    cluster_counts: dict = field(default_factory=dict)
+    correlation_matrix: dict = field(default_factory=dict)
+    rejection_log: list[dict] = field(default_factory=list)
+
+
+@dataclass
+class PortfolioSelection:
+    """Summary of a portfolio selection experiment."""
+    experiment_run_id: str
+    selected: list = field(default_factory=list)
+    total_candidates: int = 0
+    stage3_survivors: int = 0
+    stage4_selected: int = 0
+    composite_utility: float = 0.0
+    selection_rationale: str = ""

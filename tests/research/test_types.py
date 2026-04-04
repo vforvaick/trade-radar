@@ -107,3 +107,40 @@ class TestExperimentResult:
         )
         assert er.total_generated == 400
         assert er.stage2_survivors == 45
+
+
+class TestStage3Result:
+    def test_stage3_result_creation(self):
+        from bot.research.types import Stage3Result
+        r = Stage3Result(
+            passport_id="psp_test", survival_rate=0.72,
+            mean_perturbed_return=8.5, original_return=12.0,
+            p5_return=-5.2, p95_return=22.0, iqr_return=10.5,
+            passed=True, reject_reason=None, mc_iterations=50,
+            perturbation_details=[],
+        )
+        assert r.passed is True
+        assert r.survival_rate == 0.72
+
+
+class TestStage4Result:
+    def test_stage4_result_creation(self):
+        from bot.research.types import Stage4Result
+        r = Stage4Result(
+            selected_passport_ids=["psp_a", "psp_b"],
+            portfolio_utility=2.35, portfolio_sharpe=1.2, portfolio_max_dd=15.0,
+            family_counts={"ema_crossover": 2}, cluster_counts={0: 2},
+            correlation_matrix={"psp_a|psp_b": 0.15}, rejection_log=[],
+        )
+        assert len(r.selected_passport_ids) == 2
+
+
+class TestPortfolioSelection:
+    def test_portfolio_selection(self):
+        from bot.research.types import PortfolioSelection
+        ps = PortfolioSelection(
+            experiment_run_id="exp-001", selected=[], total_candidates=100,
+            stage3_survivors=25, stage4_selected=12, composite_utility=3.1,
+            selection_rationale="Top 12 by marginal utility",
+        )
+        assert ps.stage4_selected == 12
