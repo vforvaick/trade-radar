@@ -9,11 +9,11 @@
             "git_sha": "950e0ec",
             "description": "Initial production deployment — exact v0.1 baseline",
             "backtest_180d": {
-                "return_pct": null,
-                "win_rate": null,
-                "trades": null,
-                "max_dd_pct": null,
-                "note": "pre-revision baseline — backtest pending"
+                "return_pct": -16.3,
+                "win_rate": 41.0,
+                "trades": 1799,
+                "max_dd_pct": 85.9,
+                "note": "v0.1 had USE_TRAILING_STOP=true causing massive overtrade 1799 trades + 85.9% MaxDD"
             }
         },
         {
@@ -22,11 +22,11 @@
             "git_sha": "ff9f3f9",
             "description": "Disabled trailing stop (proven -63pp impact), aligned entry weights with Momentum v0.2",
             "backtest_180d": {
-                "return_pct": null,
-                "win_rate": null,
-                "trades": null,
-                "max_dd_pct": null,
-                "note": "backtest pending — will be updated by run_passport_validation.py"
+                "return_pct": -20.0,
+                "win_rate": 37.6,
+                "trades": 1095,
+                "max_dd_pct": 73.6,
+                "note": "v0.2 disabled trailing stop: massive trade reduction 1799→1095, MaxDD improved 85.9%→73.6%. Return delta -3.7pp negligible. NOTE: identical metrics to Momentum v0.2 — backtester may not differentiate USE_ATR_EXITS in test window. Pending deeper investigation."
             }
         }
     ],

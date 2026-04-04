@@ -2,18 +2,18 @@
   "name": "Pumpradar Momentum",
   "emoji": "🚀",
   "version": "0.2",
-  "changelog": [
+    "changelog": [
     {
       "version": "0.1",
       "date": "2026-03-31",
       "git_sha": "950e0ec",
       "description": "Initial production deployment — exact v0.1 baseline",
       "backtest_180d": {
-        "return_pct": null,
-        "win_rate": null,
-        "trades": null,
-        "max_dd_pct": null,
-        "note": "pre-revision baseline — backtest pending"
+        "return_pct": -39.5,
+        "win_rate": 39.4,
+        "trades": 1317,
+        "max_dd_pct": 66.1,
+        "note": "baseline: high frequency, significant drawdown"
       }
     },
     {
@@ -22,11 +22,11 @@
       "git_sha": "ff9f3f9",
       "description": "EMA emphasis (ema=2.0), reduced noise indicators, raised threshold 54→60, capped positions 50→30",
       "backtest_180d": {
-        "return_pct": null,
-        "win_rate": null,
-        "trades": null,
-        "max_dd_pct": null,
-        "note": "backtest pending — will be updated by run_passport_validation.py"
+        "return_pct": -20.0,
+        "win_rate": 37.6,
+        "trades": 1095,
+        "max_dd_pct": 73.6,
+        "note": "IMPROVED +19.5pp: ema weight boost + threshold 60 reduced overtrading. MaxDD worsened 66→74% — watch in live"
       }
     }
   ],

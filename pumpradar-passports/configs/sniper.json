@@ -1,7 +1,7 @@
 {
     "name": "Pumpradar Sniper",
     "emoji": "🎯",
-    "version": "0.2",
+    "version": "0.3",
     "changelog": [
         {
             "version": "0.1",
@@ -9,11 +9,11 @@
             "git_sha": "950e0ec",
             "description": "Initial production deployment — exact v0.1 baseline",
             "backtest_180d": {
-                "return_pct": null,
-                "win_rate": null,
-                "trades": null,
-                "max_dd_pct": null,
-                "note": "pre-revision baseline — backtest pending"
+                "return_pct": 26.0,
+                "win_rate": 33.8,
+                "trades": 450,
+                "max_dd_pct": 60.1,
+                "note": "profitable baseline +26.0%. Near-identical to HiddenGem v0.1 — both use ema+bb+vol only, CONFIDENCE_THRESHOLD 70 vs 54 irrelevant at these weights (min achievable confidence is 75%)."
             }
         },
         {
@@ -22,11 +22,24 @@
             "git_sha": "ff9f3f9",
             "description": "Added MACD confirmation (1.0), raised ema 1.0→1.5, lowered threshold 70→65 for achievable signals",
             "backtest_180d": {
+                "return_pct": -14.7,
+                "win_rate": 33.6,
+                "trades": 812,
+                "max_dd_pct": 70.0,
+                "note": "adding MACD+raising EMA+lowering threshold created intermediate confidence scores 55-69% that now fire, increasing trade count 450→812 (+80%) and turning +26% to -14.7%"
+            }
+        },
+        {
+            "version": "0.3",
+            "date": "2026-04-04",
+            "git_sha": "TBD",
+            "description": "ROLLBACK — reverted to v0.1 params (macd=0, ema=1.0, threshold=70). v0.2 regression -40.7pp. Sniper's selectivity IS the edge — threshold=70 combined with minimal weights produces only high-conviction trades.",
+            "backtest_180d": {
                 "return_pct": null,
                 "win_rate": null,
                 "trades": null,
                 "max_dd_pct": null,
-                "note": "backtest pending — will be updated by run_passport_validation.py"
+                "note": "identical to v0.1 params — expect similar to v0.1 +26.0%"
             }
         }
     ],
@@ -36,10 +49,10 @@
         "EMA_MID": 21,
         "EMA_SLOW": 50,
         "VOLUME_SPIKE_THRESHOLD": 2.0,
-        "CONFIDENCE_THRESHOLD": 65,
+        "CONFIDENCE_THRESHOLD": 70,
         "INDICATOR_WEIGHTS": {
-            "ema_trend": 1.5,
-            "macd_signal": 1.0,
+            "ema_trend": 1.0,
+            "macd_signal": 0.0,
             "rsi_position": 0.0,
             "rsi_divergence": 0.0,
             "bb_position": 1.0,
