@@ -54,3 +54,57 @@ class TestStage1Evaluator:
         assert result.passed is False
         total_reasons = 1 + len(result.secondary_reasons)
         assert total_reasons >= 2
+
+
+from bot.research.evaluator import Stage2Evaluator
+
+
+class TestStage2Evaluator:
+    def setup_method(self):
+        self.evaluator = Stage2Evaluator()
+
+    def test_pass_two_positive_folds(self):
+        fold_results = [
+            {"return_pct": 10.0, "max_dd": 20.0, "sharpe": 0.8, "calmar": 0.5, "profit_factor": 1.3, "trades": 30},
+            {"return_pct": -5.0, "max_dd": 30.0, "sharpe": -0.2, "calmar": -0.1, "profit_factor": 0.9, "trades": 25},
+            {"return_pct": 8.0, "max_dd": 15.0, "sharpe": 0.6, "calmar": 0.4, "profit_factor": 1.2, "trades": 28},
+        ]
+        result = self.evaluator.evaluate("psp_001", fold_results)
+        assert result.passed is True
+        assert result.stage == 2
+
+    def test_fail_only_one_positive_fold(self):
+        fold_results = [
+            {"return_pct": 5.0, "max_dd": 20.0, "sharpe": 0.3, "calmar": 0.2, "profit_factor": 1.1, "trades": 30},
+            {"return_pct": -15.0, "max_dd": 35.0, "sharpe": -0.5, "calmar": -0.3, "profit_factor": 0.7, "trades": 25},
+            {"return_pct": -10.0, "max_dd": 30.0, "sharpe": -0.3, "calmar": -0.2, "profit_factor": 0.8, "trades": 20},
+        ]
+        result = self.evaluator.evaluate("psp_001", fold_results)
+        assert result.passed is False
+        assert "folds" in result.reject_reason.lower()
+
+    def test_fail_catastrophic_single_fold(self):
+        fold_results = [
+            {"return_pct": 20.0, "max_dd": 15.0, "sharpe": 1.0, "calmar": 0.8, "profit_factor": 1.5, "trades": 30},
+            {"return_pct": 10.0, "max_dd": 45.0, "sharpe": 0.3, "calmar": 0.1, "profit_factor": 1.1, "trades": 25},
+            {"return_pct": 15.0, "max_dd": 20.0, "sharpe": 0.7, "calmar": 0.5, "profit_factor": 1.3, "trades": 28},
+        ]
+        result = self.evaluator.evaluate("psp_001", fold_results)
+        assert result.passed is False
+        assert "drawdown" in result.reject_reason.lower()
+
+    def test_fail_low_aggregate_metrics(self):
+        fold_results = [
+            {"return_pct": 0.5, "max_dd": 35.0, "sharpe": 0.05, "calmar": 0.01, "profit_factor": 1.01, "trades": 30},
+            {"return_pct": 0.3, "max_dd": 30.0, "sharpe": 0.02, "calmar": 0.01, "profit_factor": 1.00, "trades": 25},
+            {"return_pct": 0.1, "max_dd": 25.0, "sharpe": 0.01, "calmar": 0.00, "profit_factor": 1.00, "trades": 20},
+        ]
+        result = self.evaluator.evaluate("psp_001", fold_results)
+        assert result.passed is False
+
+    def test_single_fold_mode(self):
+        fold_results = [
+            {"return_pct": 12.0, "max_dd": 20.0, "sharpe": 0.6, "calmar": 0.4, "profit_factor": 1.3, "trades": 40},
+        ]
+        result = self.evaluator.evaluate("psp_001", fold_results)
+        assert result.passed is True
