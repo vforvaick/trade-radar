@@ -1,5 +1,31 @@
 # Pumpradar — Copilot Instructions
 
+## What this project is
+
+**Pumpradar** is an automated Binance Futures paper-trading bot that runs multiple independent strategy "passports" simultaneously. Each passport is a self-contained JSON config with its own indicator weights, thresholds, and trade rules. The bot scans the top-volume altcoin futures pairs on the 1H timeframe, scores confluence across up to 8 technical indicators, and sends trade signals to Telegram.
+
+## North Star & Goals
+
+1. **Find consistently profitable automated strategies** — target: at least 3 passports with >+15% return over 180d, validated across multiple market regimes (bull, bear, sideways).
+2. **Build a research engine** that generates, tests, and promotes new passport candidates automatically — reducing manual tuning to exception handling only.
+3. **Paper trade first, always** — no real money until a passport has ≥30d of live paper trading with metrics above the PromotionPolicy 7-gate threshold.
+4. **Never lose the edge we've already found** — HiddenGem (+25.9%), Sniper (+26.0%), VolumeKing (+9.1%) are the baseline. Any change to their configs requires a backtest showing improvement before deployment.
+
+## Living Documentation (READ THIS FIRST)
+
+These docs are the source of truth. Always read them before starting work, and **update them after every iteration**:
+
+| Doc | Purpose | Update when |
+|---|---|---|
+| `docs/FINDINGS.md` | All findings, bugs fixed, anti-patterns, proven patterns, backtest results | **After every iteration — non-negotiable** |
+| `pumpradar-passports/VERSIONS.md` | Passport version registry | Every passport config change |
+| `ops/fight-tres-runbook.md` | VPS deployment and incident procedures | After any infra/deploy change |
+| `docs/superpowers/plans/` | Implementation plans and deep-dive analysis | After completing a plan |
+
+**Rule:** If you discover a new bug, fix a regression, find a better parameter combination, or complete a backtest — write it into `docs/FINDINGS.md` before closing the session. Future sessions depend on this.
+
+---
+
 ## Build, Test & Run
 
 ```bash
@@ -175,5 +201,15 @@ See `ops/fight-tres-runbook.md` for full post-deploy validation checklist.
 | `bot/position_manager.py` | TP cascade 70/20/10, SL → breakeven logic |
 | `bot/research/pipeline.py` | 4-stage research pipeline orchestrator |
 | `pumpradar-passports/VERSIONS.md` | Passport version registry |
-| `docs/FINDINGS.md` | All findings, bugs, anti-patterns, and proven strategies across all sessions |
+| `docs/FINDINGS.md` | ⭐ Master findings doc — read first, update last |
 | `ops/fight-tres-runbook.md` | VPS deployment and emergency procedures |
+
+## Current Status (as of 2026-04-05)
+
+- **Branch:** `fix/strategy-parameter-tuning` — 44 commits ahead of master, PR #1 open
+- **Tests:** 206/206 passing
+- **Passports:** 17 total (7 original + 10 new candidates in `pumpradar-passports/configs/`)
+- **VPS:** Running on **old code** (pre-branch). Needs PR merge + deploy to activate new work.
+- **Proven 180d winners (v0.3):** HiddenGem +25.9%, Sniper +26.0%, VolumeKing +9.1%
+- **Top new 90d candidates:** BBMeanRev +8.0% (PF=1.28), RSIContrarian +4.2% (PF=1.24)
+- **Research engine:** Fully built (Plans 1–3), never run end-to-end on live data yet
