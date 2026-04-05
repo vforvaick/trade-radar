@@ -304,6 +304,39 @@ def add_obv(df: pd.DataFrame):
     return df
 
 
+def calc_obv_signal(df: pd.DataFrame, period: int = 20):
+    """
+    OBV directional signal — buying vs selling pressure via cumulative volume.
+    OBV > its EMA(period): LONG (accumulation/buying pressure).
+    OBV < its EMA(period): SHORT (distribution/selling pressure).
+    Returns: direction ('LONG', 'SHORT', 'NEUTRAL'), strength (0.0-1.0)
+    """
+    if len(df) < period + 2:
+        return "NEUTRAL", 0.0
+
+    obv = (np.sign(df['close'].diff()) * df['volume']).fillna(0).cumsum()
+    obv_ema = obv.ewm(span=period, adjust=False).mean()
+
+    last_obv = obv.iloc[-1]
+    last_ema = obv_ema.iloc[-1]
+    prev_obv = obv.iloc[-2]
+    prev_ema = obv_ema.iloc[-2]
+
+    if last_ema == 0:
+        return "NEUTRAL", 0.0
+
+    # Normalized distance from EMA (0-1 capped)
+    gap_pct = abs(last_obv - last_ema) / (abs(last_ema) + 1e-10)
+    strength = min(gap_pct, 1.0)
+
+    if last_obv > last_ema and prev_obv >= prev_ema:
+        return "LONG", strength
+    elif last_obv < last_ema and prev_obv <= prev_ema:
+        return "SHORT", strength
+    else:
+        return "NEUTRAL", 0.0
+
+
 def add_stoch_rsi(df: pd.DataFrame, period=14, smoothK=3, smoothD=3):
     """Stochastic RSI for faster momentum shifts."""
     if 'rsi' not in df.columns:

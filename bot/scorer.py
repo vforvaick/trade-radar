@@ -35,6 +35,7 @@ def score_confluence(df, btc_trend="Sideways"):
     press_dir, press_pct = indicators.calc_pressure(df)
     candle_dir = indicators.calc_candle_direction(df)
     donchian_dir, donchian_str = indicators.calc_donchian_channel(df)
+    obv_dir, obv_str = indicators.calc_obv_signal(df)
 
     active_weights = getattr(config, 'INDICATOR_WEIGHTS', {})
     is_reversal = active_weights.get('REVERSAL_MODE', False)
@@ -53,6 +54,7 @@ def score_confluence(df, btc_trend="Sideways"):
         "pressure": press_dir,
         "candle_direction": candle_dir,
         "donchian_signal": donchian_dir,
+        "obv_signal": obv_dir,
     }
 
     signals_detail = {
@@ -65,6 +67,7 @@ def score_confluence(df, btc_trend="Sideways"):
         "pressure": {"direction": press_dir, "pct": press_pct},
         "candle_direction": {"direction": candle_dir},
         "donchian_signal": {"direction": donchian_dir, "strength": donchian_str},
+        "obv_signal": {"direction": obv_dir, "strength": obv_str},
     }
 
     # Determine primary direction via weighted voting
