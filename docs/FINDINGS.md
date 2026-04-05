@@ -509,11 +509,30 @@ Expected output: 19 passports load (17 original/new + reversal_v2 + seasonality_
 2. SeasonalityOG runs Mon/Tue/Thu only — compare vs regular OG performance
 3. Check if any passport overtrades (>50 positions/day) → raise CONFIDENCE_THRESHOLD
 
-### Medium-term — research engine
+### Research Engine — First Live Run (2026-04-05)
 
-4. **Run research engine for the first time** (built but never run live):
+**180-day quality-pair validation** (`scripts/run_new_passport_backtest.py`, 10 quality pairs, 180d):
+
+| Rank | Passport | Trades | WR% | Return | PF | Status |
+|------|----------|--------|-----|--------|----|--------|
+| 1 | MACDDivergence v0.1 | 123 | 41.5% | +9.1% | 1.39 | 🟢 TOP |
+| 2 | BBMeanRev v0.1 | 305 | 47.3% | +7.7% | 1.32 | 🟢 |
+| 3 | RSIContrarian v0.1 | 97 | 36.1% | +0.5% | 1.02 | 🟡 marginal |
+| 4 | BalancedSelective v0.1 | 254 | 40.6% | -4.2% | 0.92 | 🔴 |
+| 5 | TrendMomentum v0.1 | 435 | 32.4% | -5.7% | 0.94 | 🔴 |
+| 6 | PureTrend v0.1 | 431 | 32.0% | -5.3% | 0.95 | 🔴 |
+
+Full log: `logs/new_passports_20260405_105110.log`
+
+**Research pipeline** (`run_research.py --all --days 90 --max-per-family 2`):
+- Stage 1: ✅ Working — tested 4 candidates, 3 passed (ema_crossover-55: +4.1% Sharpe=1.15; rsi_momentum-50: +6.8% Sharpe=1.45)
+- Stage 2: ❌ Fails with `--days 90` — `train_days=120 + test_days=60 > 90` → `_calc_folds()` produces degenerate single fold `(0, 0)` → sentinel return -100 → "Single fold is not positive"
+- **Fix:** Use `--days 240` so `_calc_folds` can generate proper walk-forward windows
+
+**Next steps for research engine:**
+4. **Re-run with sufficient history** (fixes Stage 2):
    ```bash
-   uv run python run_research.py --all --max-per-family 5 --pairs 10 --days 90
+   uv run python run_research.py --all --max-per-family 5 --pairs 10 --days 240
    ```
 5. **Backtest reversal_v2** — now has correct RSI 30/70 thresholds:
    ```bash
