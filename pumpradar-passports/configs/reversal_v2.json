@@ -1,7 +1,7 @@
 {
     "name": "Pumpradar ReversalV2",
     "emoji": "🔃",
-    "version": "0.1",
+    "version": "0.2",
     "enabled": false,
     "changelog": [
         {
@@ -18,9 +18,24 @@
                 "pairs": ["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","AAVEUSDT","ADAUSDT","DOTUSDT","LINKUSDT","AVAXUSDT","MATICUSDT"],
                 "note": "FAILED. Pure mean-reversion fires too often in trending markets. Low win-rate (29.6%) and sub-1 PF. Kept disabled. Needs a trend-filter gate before re-testing."
             }
+        },
+        {
+            "version": "0.2",
+            "date": "2026-04-06",
+            "git_sha": "pending",
+            "description": "EMA gate experiment: added ema_trend=0.5, rsi_position=1.5, bb_position=1.5, CONFIDENCE_THRESHOLD=65. REVERTED — results were dramatically worse. Lower threshold opened more bad trades (186→227 trades, -11.78%→-16.44%). Root cause: lowered threshold negated EMA gate filtering. Config restored to v0.1 weights.",
+            "backtest_90d": {
+                "return_pct": -16.44,
+                "win_rate": 32.6,
+                "trades": 227,
+                "max_dd_pct": 25.42,
+                "profit_factor": 0.63,
+                "pairs": ["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","AAVEUSDT","ADAUSDT","DOTUSDT","LINKUSDT","AVAXUSDT","MATICUSDT"],
+                "note": "FAILED. Adding ema_trend=0.5 with lower threshold opened more marginal trades. EMA weight boosts confidence on both sides, not a hard gate. Reverted to v0.1 config. Next step: raise CONFIDENCE_THRESHOLD to 75+ or use EMA as hard filter in signal logic."
+            }
         }
     ],
-    "description": "True mean-reversion: buy RSI<30 oversold, sell RSI>70 overbought. BB confirms. DISABLED until backtested.",
+    "description": "True mean-reversion: buy RSI<30 oversold, sell RSI>70 overbought. BB confirms. DISABLED — both v0.1 and v0.2 (EMA gate experiment) showed negative returns. Needs hard EMA filter in signal logic, not just weight adjustment.",
     "config_overrides": {
         "RSI_LONG_THRESHOLD": 30,
         "RSI_SHORT_THRESHOLD": 70,

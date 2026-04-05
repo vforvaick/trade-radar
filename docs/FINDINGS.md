@@ -441,11 +441,18 @@ for k, v in original.items():
 - `classify_regime()` in `regime.py` is **never called** anywhere — it's unused infrastructure; the actual regime detection is `determine_btc_trend_at` with 3 labels
 - Must reconcile before integrating regime-aware scoring into the research pipeline; requires changing `determine_btc_trend_at` to emit 4 labels OR mapping 4→3 in `extended_scorer.py`
 
-**4. reversal_v2.json backtested — FAILED, kept disabled (RESOLVED)**
+**4. reversal_v2.json — v0.1 + v0.2 EMA-gate experiment — FAILED both, kept disabled (RESOLVED)**
+
+_v0.1 (RSI 30/70 + BB only, threshold=70):_
 - 90d quality-pair backtest (BTCUSDT ETHUSDT SOLUSDT BNBUSDT AAVEUSDT ADAUSDT DOTUSDT LINKUSDT AVAXUSDT MATICUSDT)
 - Return: **-11.78%** | Win Rate: **29.6%** | Profit Factor: **0.70** | Trades: **186**
-- Diagnosis: pure mean-reversion (RSI 30/70 + BB only) fires too often in trending markets, producing a low win-rate and negative PF
-- Decision: remain `enabled: false`; strategy needs trend-filter gate before re-testing
+- Diagnosis: pure mean-reversion fires too often in trending markets → low WR, negative PF
+
+_v0.2 (EMA gate: ema_trend=0.5, rsi_position=1.5, bb_position=1.5, threshold=65) — REVERTED:_
+- Return: **-16.44%** | Win Rate: **32.6%** | Profit Factor: **0.63** | Trades: **227**
+- Result: dramatically worse — lowered threshold (70→65) opened more marginal trades, negating any EMA filtering. EMA weight boosts confidence additively; it is not a hard gate.
+- Decision: reverted config to v0.1 weights; remain `enabled: false`
+- Next attempt: raise CONFIDENCE_THRESHOLD to 75+, OR implement EMA as a hard pre-filter in signal logic (not a weight)
 
 **5. `reversal.json` has 9 INDICATOR_WEIGHTS keys (LOW)**
 - Extra `reversal_mode` key inside INDICATOR_WEIGHTS — pre-existing, harmless
@@ -535,10 +542,7 @@ Full log: `logs/new_passports_20260405_105110.log`
    ```bash
    uv run python run_research.py --all --max-per-family 5 --pairs 10 --days 90
    ```
-5. **Backtest reversal_v2** — now has correct RSI 30/70 thresholds:
-   ```bash
-   uv run python scripts/run_new_passport_backtest.py --days 180 --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT AAVEUSDT
-   ```
+5. ~~**Backtest reversal_v2**~~ — ✅ DONE: v0.1 (-11.78%) and v0.2 EMA-gate experiment (-16.44%) both failed. See §10 issue #4 for full diagnosis.
 6. **Test trailing stop on Dynamic** — enable `USE_TRAILING_STOP: true` on just the Dynamic passport and compare 90d results
 
 ### Long-term (new lineages to explore)
