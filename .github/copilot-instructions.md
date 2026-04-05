@@ -206,11 +206,11 @@ See `ops/fight-tres-runbook.md` for full post-deploy validation checklist.
 
 ## Current Status (as of 2026-04-05 Session 4)
 
-- **Branch:** `fix/strategy-parameter-tuning` — 49 commits ahead of master, PR #1 open
+- **Branch:** `fix/strategy-parameter-tuning` — 51 commits ahead of master, PR #1 open
 - **Tests:** 206/206 passing
-- **Passports:** 19 total (7 original + 10 new + reversal_v2 + seasonality_og)
+- **Passports:** 19 total (7 original v0.3 + 10 new candidates + reversal_v2 + seasonality_og)
 - **VPS:** Running on **old code** (pre-branch). Needs PR merge + deploy to activate all work.
-- **Proven 180d winners (v0.3):** HiddenGem +25.9%, Sniper +26.0%, VolumeKing +9.1%
 - **Top 90d quality-pair candidates:** MACDDivergence +9.1% (PF=1.39), BBMeanRev +7.7% (PF=1.32)
+- **180d v0.1→v0.2:** Momentum BETTER (+10.7pp), Dynamic BETTER (+16.0pp); OG/HiddenGem/Sniper/VolumeKing WORSE — selectivity principle confirmed
 - **Research engine:** Fully built (Plans 1–3), never run end-to-end on live data yet
-- **Fixed in Session 4:** Trailing stop ATR formula, RSI per-passport override, SKIP_WEEKDAYS filter
+- **Fixed in Session 4:** Trailing stop ATR formula fixed, RSI thresholds now per-passport via config_overrides, weekday filter (SKIP_WEEKDAYS) added

@@ -13,17 +13,19 @@
 
 ## Version Comparison Quick Reference
 
-> Values will be updated after `run_passport_validation.py` completes.
+> Results from 180d validation run: Apr 5, `logs/passport_validation_20260405_110244.log`
 
-| Passport      | v0.1 Return | v0.1 WR | v0.2 Return | v0.2 WR | Δ Return | Status  |
-|---------------|-------------|---------|-------------|---------|----------|---------|
-| 🏆 OG         | pending     | pending | pending     | pending | pending  | pending |
-| 💎 HiddenGem  | pending     | pending | pending     | pending | pending  | pending |
-| 🚀 Momentum   | pending     | pending | pending     | pending | pending  | pending |
-| 🎯 Dynamic    | pending     | pending | pending     | pending | pending  | pending |
-| 🔄 Reversal   | pending     | pending | pending     | pending | pending  | pending |
-| 🎯 Sniper     | pending     | pending | pending     | pending | pending  | pending |
-| 📢 VolumeKing | pending     | pending | pending     | pending | pending  | pending |
+> ⚠️ Run-to-run variance warning: 180d results swing ±23pp depending on which top-10 pairs Binance returns that day. OG Apr 4 run showed HiddenGem +25.9%; Apr 5 run shows +2.5%. Only quality-pair results (BTC/ETH/SOL/AAVE/BNB) are stable.
+
+| Passport      | v0.1 Return | v0.1 WR | v0.2 Return | v0.2 WR | Δ Return  | Status        |
+|---------------|-------------|---------|-------------|---------|-----------|---------------|
+| 🏆 OG         | -21.7%      | 39.1%   | -30.6%      | 38.1%   | -8.9pp    | WORSE         |
+| 💎 HiddenGem  | +2.5%       | 33.3%   | -20.9%      | 32.1%   | -23.4pp   | WORSE         |
+| 🚀 Momentum   | -21.8%      | 39.7%   | -11.0%      | 37.9%   | +10.7pp   | BETTER ✅     |
+| 🎯 Dynamic    | -27.1%      | 39.6%   | -11.1%      | 37.9%   | +16.0pp   | BETTER ✅     |
+| 🔄 Reversal   | n/a (quarantined) | —  | n/a         | —       | —         | NOT TESTED    |
+| 🎯 Sniper     | +2.5%       | 33.3%   | -8.4%       | 32.0%   | -10.9pp   | WORSE         |
+| 📢 VolumeKing | -13.1%      | 31.8%   | -17.9%      | 32.3%   | -4.8pp    | WORSE         |
 
 ## Per-Passport Changelog Summary
 
@@ -75,6 +77,18 @@
 |---------|------------|-------------|
 | v0.1    | 2026-03-31 | Initial production deployment — exact v0.1 baseline |
 | v0.2    | 2026-04-04 | Lowered vol threshold 2.5→2.0, reduced vol weight 3.0→2.5, added MACD=0.5 and pressure=0.5 |
+
+### 🔄 Reversal v2 (`reversal_v2.json`)
+
+| Version | Date       | Description |
+|---------|------------|-------------|
+| v0.1    | 2026-04-05 | Rebuilt from scratch: RSI 30/70 true mean-reversion, threshold 70, enabled=false pending backtest |
+
+### 📅 Seasonality OG (`seasonality_og.json`)
+
+| Version | Date       | Description |
+|---------|------------|-------------|
+| v0.1    | 2026-04-05 | OG params + SKIP_WEEKDAYS=[2,4] skip Wed/Fri, leverages +81.1% weekday edge, enabled=true |
 
 ## Rollback Instructions
 
