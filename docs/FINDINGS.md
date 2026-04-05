@@ -179,10 +179,11 @@ git checkout 950e0ec -- pumpradar-passports/configs/<file>.json
 
 ## 6. What Works (Proven Patterns)
 
-### ✅ Selective 3-indicator passports
-- HiddenGem (EMA+BB+Vol): +25.9% at 180d ✅
-- Sniper (BB+Vol+Candle): +26.0% at 180d ✅
-- VolumeKing (Vol 2.5x+Candle): +9.1% at 180d ✅
+### ✅ Selective 3-indicator passports (still the pattern, but pair-sensitive)
+- HiddenGem/Sniper: **+2.5%** on Apr 5 quality-meme mix vs **+25.9%/+26.0%** on Apr 4 run
+- ⚠️ The +25.9%/+26.0% figures may have reflected a lucky pair draw — not a stable absolute number
+- **The selectivity principle still holds** (v0.2 always worse than v0.1 by -10pp to -23pp)
+- VolumeKing (Vol 2.5x+Candle): +9.1% at 180d (Apr 4 run) — pair-dependent
 - Pattern: 2–3 active indicators, others set to 0.0
 
 ### ✅ Volume spike as the primary filter
@@ -230,14 +231,27 @@ git checkout 950e0ec -- pumpradar-passports/configs/<file>.json
 | Live 3d (Apr 2026) | +5.2% | Very short, possibly favorable micro-regime |
 | 30d backtest | +11.3% | Captured bullish window |
 | 30d optimized (vol=2.0) | +49.1% | Overfitted to this specific window |
-| 180d backtest | -13.1% | Includes Oct–Jan bear market |
+| 180d (Apr 4 run) | -13.1% | Includes Oct–Jan bear market |
+| 180d (Apr 5 run) | -21.7% | Different top-10 pair set pulled |
 
 > **Rule:** Never make deployment decisions on <90d backtests. Always validate across at least 2 regime types.
 
-### Test pairs matter
-- Top-volume Binance futures pairs (0GUSDT, 1000BONKUSDT) in Jan–Apr 2026 are meme coins with noise-dominated price action
-- Results on these pairs systematically understate strategy quality
-- Better pairs for validation: BTCUSDT, ETHUSDT, SOLUSDT, BNBUSDT, AAVEUSDT, ADAUSDT
+### Test pairs matter — results vary by ±20pp depending on which pairs are used
+
+**HiddenGem 180d comparison across runs:**
+| Run | Return | Pairs |
+|---|---|---|
+| Apr 4 run | **+25.9%** | Top-10 vol (included "lucky" pairs) |
+| Apr 5 run | **+2.5%** | Different top-10 vol (different meme coins) |
+
+⚠️ **23pp swing from one day to the next on 180d backtest = pairs dominate results, not strategy.**
+
+> **Rule:** Never anchor to a single backtest number. Run 3+ times with different pair sets. Use quality pairs (BTC/ETH/SOL/AAVE/BNB) as the canonical benchmark.
+
+### Suspicious identical results = config isolation bug indicator
+- HiddenGem v0.1 and Sniper v0.1 show **identical** results in Apr 5 run (424 trades, 33.3% WR, +2.5%)
+- Different strategies should not produce identical metrics — possible config not being isolated per-passport
+- Investigate `_save_config()` / `_restore_config()` in `run_passport_validation.py` if this recurs
 
 ### Multi-symbol backtest aggregation (fixed bug)
 - Before fix: `return_pct` = last active symbol's return only. `max_dd` always 0.
@@ -350,14 +364,38 @@ for k, v in original.items():
 
 > **Key insight:** MACDDivergence is extremely pair-sensitive (+10pp swing). BBMeanRev is robust across pair types (only -0.3pp). Always use quality pairs for validation.
 
-### 9c. Proven 180d Baseline (Bull+Bear+Sideways, original runs)
+### 9c. 180d Validation — v0.1 vs v0.2 Comparison (Apr 5, 2026 run, mixed pairs)
 
-| Passport | 180d Return | Regime |
-|---|---|---|
-| 💎 HiddenGem v0.1/v0.3 | **+25.9%** | Mixed |
-| 🎯 Sniper v0.1/v0.3 | **+26.0%** | Mixed |
-| 📢 VolumeKing v0.1/v0.3 | **+9.1%** | Mixed |
-| 🏆 OG v0.1/v0.3 | -13.1% | Mixed |
+> Log: `logs/passport_validation_20260405_110244.log`
+> Pairs: top-10 volume (includes meme coins — pair-sensitive, see §7 warning)
+
+| Passport | v0.1 Return | v0.2 Return | Delta | Verdict |
+|---|---|---|---|---|
+| 🏆 OG | -21.7% | -30.6% | ↓-8.9pp | ⚠️ WORSE |
+| 💎 HiddenGem | **+2.5%** | -20.9% | ↓-23.4pp | ⚠️ WORSE |
+| 🚀 Momentum | -21.8% | **-11.0%** | ↑+10.7pp | ✅ BETTER |
+| 🎯 Dynamic | -27.1% | **-11.1%** | ↑+16.0pp | ✅ BETTER |
+| 🔫 Sniper | **+2.5%** | -8.4% | ↓-10.9pp | ⚠️ WORSE |
+| 📢 VolumeKing | -13.1% | -17.9% | ↓-4.8pp | ⚠️ WORSE |
+
+**Key findings from this run:**
+- **Momentum/Dynamic v0.2 both improved** — confirms that reducing MACD/RSI sensitivity helped
+- **Selective strategies (HiddenGem/Sniper) got much worse in v0.2** — adding indicators to selective passports is destructive (selectivity principle confirmed)
+- **HiddenGem/Sniper show IDENTICAL results** (424 trades, 33.3% WR, +2.5%) → possible config isolation bug in validation script — investigate if it recurs
+- **Dynamic v0.2 ≠ Momentum v0.2** (finally, -11.1% vs -11.0%) — ATR exits are marginally functional; 0.1pp difference suggests they are nearly equivalent for this pair set
+
+### 9d. 180d Run-to-Run Variance (CRITICAL WARNING)
+
+| Passport | Apr 4 run | Apr 5 run | Variance |
+|---|---|---|---|
+| HiddenGem v0.1 | **+25.9%** | +2.5% | **-23.4pp** |
+| Sniper v0.1 | **+26.0%** | +2.5% | **-23.5pp** |
+| VolumeKing v0.1 | **+9.1%** | -13.1% | **-22.2pp** |
+| OG v0.1 | -13.1% | -21.7% | -8.6pp |
+
+> ⚠️ **23pp variance from one day to the next on 180d backtest = the top-10 pairs drew from a different meme coin pool**
+> **DO NOT anchor to any single 180d run number.** Only trust quality-pair results (§9a) or multi-run averages.
+> True +25.9% figure for HiddenGem may have been on a lucky pair selection, not a stable absolute value.
 
 ---
 
@@ -387,9 +425,10 @@ for k, v in original.items():
 
 ### STILL OPEN
 
-**1. Dynamic EXIT behavior unverified (MEDIUM)**
-- `USE_ATR_EXITS: true` on Dynamic passport shows identical results to Momentum
-- Need a test fixture with wide ATR to confirm ATR exits actually differ from fixed exits
+**1. Dynamic EXIT behavior partially verified — still needs deeper test (MEDIUM)**
+- `USE_ATR_EXITS: true` on Dynamic passport showed -11.1% vs Momentum v0.2 -11.0% (only 0.1pp diff)
+- ATR exits ARE functional (results no longer perfectly identical as seen in earlier runs)
+- But 0.1pp diff suggests minimal real-world impact — need a fixture with high-ATR pairs to see meaningful difference
 
 **2. BTC Uptrend confidence × 0.5 multiplier (MEDIUM)**
 - Strategies rarely fire in bull markets due to halved confidence
