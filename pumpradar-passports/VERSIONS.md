@@ -104,6 +104,24 @@
 |---------|------------|-------------|
 | v0.1    | 2026-04-05 | OG params + SKIP_WEEKDAYS=[2,4] skip Wed/Fri, leverages +81.1% weekday edge, enabled=true |
 
+### 📈 DualMA Crossover (`dual_ma.json`)
+
+| Version | Date       | Description |
+|---------|------------|-------------|
+| v0.1    | 2026-04-05 | EMA(10/20) crossover + volume confirmation. 90d quality-pair: -8.96%, PF=0.806, 137 trades, WR=29.9%. Disabled. |
+
+### 🔔 Donchian Breakout (`donchian_breakout.json`)
+
+| Version | Date       | Description |
+|---------|------------|-------------|
+| v0.1    | 2026-04-05 | Donchian(20) breakout + EMA gate + volume. 90d quality-pair: +0.56%, PF=1.016, 111 trades, WR=34.2%, MaxDD=17.71%. Marginal — disabled pending trending-market re-test. |
+
+### 🌊 OBV Trend (`obv_trend.json`)
+
+| Version | Date       | Description |
+|---------|------------|-------------|
+| v0.1    | 2026-04-05 | OBV > EMA(20) trend signal + volume. 90d quality-pair: -11.45%, PF=0.771, 149 trades, WR=28.2%. Disabled. |
+
 ## Rollback Instructions
 
 ```bash

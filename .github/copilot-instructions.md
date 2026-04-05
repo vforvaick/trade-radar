@@ -2,7 +2,7 @@
 
 ## What this project is
 
-**Pumpradar** is an automated Binance Futures paper-trading bot that runs multiple independent strategy "passports" simultaneously. Each passport is a self-contained JSON config with its own indicator weights, thresholds, and trade rules. The bot scans the top-volume altcoin futures pairs on the 1H timeframe, scores confluence across up to 8 technical indicators, and sends trade signals to Telegram.
+**Pumpradar** is an automated Binance Futures paper-trading bot that runs multiple independent strategy "passports" simultaneously. Each passport is a self-contained JSON config with its own indicator weights, thresholds, and trade rules. The bot scans the top-volume altcoin futures pairs on the 1H timeframe, scores confluence across up to 10 technical indicators, and sends trade signals to Telegram.
 
 ## North Star & Goals
 
@@ -172,7 +172,9 @@ git show 950e0ec:pumpradar-passports/configs/<file>.json
 
 ```
 PUMPRADAR_TG_TOKEN   # Telegram bot token
-PUMPRADAR_TG_CHAT    # Telegram chat ID
+PUMPRADAR_TG_CHAT    # Telegram chat ID (DM — system logs only)
+PUMPRADAR_TG_GROUP_ID  # Supergroup chat_id for trade signals (e.g. Trader Zone)
+PUMPRADAR_TG_TOPIC_ID  # message_thread_id for the trade topic within group
 PUMPRADAR_STATE_DB   # SQLite path (default: state.db in cwd)
 ```
 Source from `.env` file (see `ops/env.example`). Never commit secrets.
@@ -208,7 +210,7 @@ See `ops/fight-tres-runbook.md` for full post-deploy validation checklist.
 
 - **Branch:** `fix/strategy-parameter-tuning` — 51 commits ahead of master, PR #1 open
 - **Tests:** 206/206 passing
-- **Passports:** 19 total (7 original v0.3 + 10 new candidates + reversal_v2 + seasonality_og)
+- **Passports:** 22 total (7 original + 10 new candidates + reversal_v2 + seasonality_og + DualMA + Donchian + OBV)
 - **VPS:** Running on **old code** (pre-branch). Needs PR merge + deploy to activate all work.
 - **Top 90d quality-pair candidates:** MACDDivergence +9.1% (PF=1.39), BBMeanRev +7.7% (PF=1.32)
 - **180d v0.1→v0.2:** Momentum BETTER (+10.7pp), Dynamic BETTER (+16.0pp); OG/HiddenGem/Sniper/VolumeKing WORSE — selectivity principle confirmed

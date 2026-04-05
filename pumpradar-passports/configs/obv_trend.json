@@ -8,7 +8,15 @@
             "version": "0.1",
             "date": "2026-04-05",
             "description": "On-Balance Volume trend signal with EMA directional gate. Thesis: OBV captures smart-money accumulation/distribution before price moves; EMA alignment confirms direction. Replaces Pairs Trading (incompatible with single-asset architecture). Modeled on 151-strategies volume-flow section.",
-            "backtest_90d": null
+            "backtest_90d": {
+                "pairs": ["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","AAVEUSDT","ADAUSDT"],
+                "return_pct": -11.45,
+                "profit_factor": 0.771,
+                "trades": 149,
+                "win_rate": 28.2,
+                "max_dd": 27.93,
+                "verdict": "DISABLED — unprofitable, highest trade count (149) but worst WR (28.2%). OBV signal too noisy as primary indicator without stronger trend filter."
+            }
         }
     ],
     "description": "OBV-primary trend passport. OBV > EMA(20) = buying pressure (LONG), OBV < EMA(20) = selling pressure (SHORT). EMA trend confirms direction. No RSI/MACD dilution.",

@@ -2,7 +2,7 @@
 
 > Living document. Updated after every iteration cycle.
 > Purpose: avoid repeating mistakes, build on proven insights, explore new lineages with context.
-> Last updated: 2026-04-05 (Session 4 — trailing stop fix, RSI/weekday overrides, quality-pair backtest)
+> Last updated: 2026-04-05 (Session 6 — 3 new indicators, Telegram group routing, new passport backtest)
 
 ---
 
@@ -475,6 +475,7 @@ _v0.2 (EMA gate: ema_trend=0.5, rsi_position=1.5, bb_position=1.5, threshold=65)
 - Threading: signal message → TP/SL replies in same thread
 - Commands: `/status`, `/ping`, `/summary`
 - New formatters in `bot/telegram_commands.py`: strategies, compare, health, promotion, digest
+- **Group routing (Session 6):** Trade signals → `PUMPRADAR_TG_GROUP_ID=-1003773269891` topic `PUMPRADAR_TG_TOPIC_ID=6` (Trader Zone > Tradar: Trade Radar). System logs/errors/updates → DM only. Set in VPS `.env`. Falls back to DM if group vars not set.
 
 ### State Persistence
 - `bot/state_store.py`: SQLite with `positions`, `equity_snapshots`, `trade_log`
@@ -500,23 +501,25 @@ _v0.2 (EMA gate: ema_trend=0.5, rsi_position=1.5, bb_position=1.5, threshold=65)
 
 ## 12. What's Next
 
-### Immediate — Deploy to VPS (needs your action — SSH required)
+### Current State (2026-04-05 Session 6)
+- **VPS:** Running on master, 22 passports loaded (7 original + 15 new candidates), service healthy
+- **Enabled passports:** MACDDivergence, BBMeanRev, SeasonalityOG, OG, HiddenGem, Sniper, VolumeKing, Momentum, Dynamic
+- **Disabled (quarantine):** Reversal, ReversalV2
+- **Disabled (pending backtest/trending regime):** DualMA, Donchian, OBV, RSIContrarian + others
+- **Telegram routing:** Trade signals → Trader Zone group topic (ID=-1003773269891, thread=6). System logs → DM only.
 
-```bash
-# On fight-tres — pull branch and restart:
-ssh fight-tres "cd /home/vforvaick/pumpradar-bot && git fetch origin && git checkout fix/strategy-parameter-tuning && git pull && systemctl restart pumpradar.service"
+### Immediate — Done ✅
+- [x] 3 new indicators added (Donchian, OBV — DualMA uses existing EMA)
+- [x] 3 new passports created and backtested
+- [x] Telegram group routing deployed
+- [x] VPS .env updated with GROUP_ID + TOPIC_ID
 
-# Validate (wait ~30s after restart):
-ssh fight-tres "journalctl -u pumpradar.service -n 50 --no-pager -o short-iso"
-```
-
-Expected output: 19 passports load (17 original/new + reversal_v2 + seasonality_og), `reversal.json` and `reversal_v2.json` skipped (disabled), all others scanning.
-
-### Short-term — paper trading observation
-
-1. Monitor MACDDivergence and BBMeanRev — top 90d performers on quality pairs
-2. SeasonalityOG runs Mon/Tue/Thu only — compare vs regular OG performance
-3. Check if any passport overtrades (>50 positions/day) → raise CONFIDENCE_THRESHOLD
+### Short-term Priorities
+1. **Monitor MACDDivergence + BBMeanRev** — top performers, watch for >50 trades/day overtrade signals
+2. **Donchian re-test in trending market** — if a clear trend emerges Q2 2026, re-run 90d backtest and enable if PF > 1.1
+3. **OBV as secondary confirmation** — build hybrid passport: `bb_position=1.5, obv_signal=0.5, volume_spike=2.0`
+4. **Research engine output** — VPS has PID 1472995 running `run_research.py --all --days 90 --pairs 10` (started 2026-04-05 ~15:00 UTC). Check results: `ssh fight-tres "tail -30 ~/pumpradar-bot/logs/research_run_*.log"`
+5. **Verify Telegram group routing** — after next deploy, confirm trade signals appear in Trader Zone > Tradar: Trade Radar (thread 6) not DM
 
 ### Research Engine — First Live Run (2026-04-05)
 
@@ -532,6 +535,30 @@ Expected output: 19 passports load (17 original/new + reversal_v2 + seasonality_
 | 6 | PureTrend v0.1 | 431 | 32.0% | -5.3% | 0.95 | 🔴 |
 
 Full log: `logs/new_passports_20260405_105110.log`
+
+### 9e. Three New Strategy Passports — 90d Quality Pairs (Session 6, 2026-04-05)
+
+**Passports:** DualMA Crossover, Donchian Breakout, OBV Trend  
+**New indicators added to `bot/indicators.py`:** `calc_donchian_channel()`, `calc_obv_signal()`  
+**Scorer wired:** both new indicators added to `score_confluence()` with backward-compat guard (default weight=0 for existing passports)
+
+| Passport | Return | PF | Trades | WR% | MaxDD | Status |
+|----------|--------|----|--------|-----|-------|--------|
+| DualMA Crossover | -8.96% | 0.806 | 137 | 29.9% | 24.93% | 🔴 Disabled |
+| Donchian Breakout | +0.56% | 1.016 | 111 | 34.2% | 17.71% | 🟡 Marginal |
+| OBV Trend | -11.45% | 0.771 | 149 | 28.2% | 27.93% | 🔴 Disabled |
+
+**Key learnings:**
+- **DualMA**: Pure EMA crossover (10/20) over-trades in choppy 1H timeframe — 137 trades at 29.9% WR confirms whipsaw problem. EMA trend alone without momentum confirmation isn't selective enough.
+- **Donchian Breakout**: Best of the 3 with PF=1.016 and lowest MaxDD=17.71%. Technically profitable but too marginal to enable. Most promising for re-test in a trending market (Q2 bull run or sustained downtrend). The EMA filter helps but channel breakouts still get faded in ranging conditions.
+- **OBV Trend**: Highest trade count (149) at worst WR (28.2%) — OBV signal generates too many entries. OBV EMA crossover is too noisy as a primary signal; better used as a secondary confirmation (weight 0.5–1.0) alongside a trend indicator.
+- **Pairs Trading**: Definitively rejected — single-asset scanner architecture is incompatible. Would require cross-symbol state + major architectural changes.
+- **Selectivity principle re-confirmed**: All 3 new passports underperform HiddenGem/Sniper despite similar indicator count because the underlying signal quality (EMA crossover, Donchian breakout, OBV) is lower conviction than EMA+BB+Volume combo on 1H crypto.
+
+**Next steps for new passports:**
+- Donchian: re-test with 180d window covering a trending period; try raising `donchian_signal` weight to 4.0 and adding `bb_position=1.0` as breakout confirmation
+- OBV: demote to secondary confirmation (weight=0.5–1.0) in a new hybrid passport alongside BB+Vol
+- DualMA: try 4H timeframe or require MACD confirmation before enabling
 
 **Research pipeline** (`run_research.py --all --days 90 --max-per-family 2`):
 - Stage 1: ✅ Working — tested 4 candidates, 3 passed (ema_crossover-55: +4.1% Sharpe=1.15; rsi_momentum-50: +6.8% Sharpe=1.45)

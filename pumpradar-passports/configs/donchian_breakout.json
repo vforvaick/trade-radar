@@ -8,7 +8,15 @@
             "version": "0.1",
             "date": "2026-04-05",
             "description": "Donchian(20) channel breakout with EMA trend gate and volume confirmation. Thesis: price breaking 20-period high/low is a genuine breakout signal; EMA alignment filters false breakouts in ranging markets. Modeled on 151-strategies S8 (Donchian breakout).",
-            "backtest_90d": null
+            "backtest_90d": {
+                "pairs": ["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","AAVEUSDT","ADAUSDT"],
+                "return_pct": 0.56,
+                "profit_factor": 1.016,
+                "trades": 111,
+                "win_rate": 34.2,
+                "max_dd": 17.71,
+                "verdict": "DISABLED — marginal PF=1.016 insufficient to enable. Lowest MaxDD of the 3 (17.71%) is promising. Re-test in trending market regime before enabling."
+            }
         }
     ],
     "description": "20-period Donchian channel breakout. Price above 20-day high = LONG, below 20-day low = SHORT. EMA trend gate (weight=1) filters choppy breakouts. Volume spike confirms conviction.",
