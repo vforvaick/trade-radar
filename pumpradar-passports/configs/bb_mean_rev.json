@@ -1,5 +1,6 @@
 {
     "name": "BBMeanRev",
+    "enabled": true,
     "emoji": "🔄",
     "version": "0.1",
     "changelog": [
@@ -15,6 +16,17 @@
                 "max_dd_pct": 0.0,
                 "profit_factor": 1.28,
                 "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight portfolio. TOP performer among new candidates. PF>1 confirms edge."
+            }
+        },
+        {
+            "version": "0.1",
+            "date": "2026-04-05",
+            "description": "Enabled for paper trading \u2014 90d quality-pair backtest: +9.1% PF=1.39 (MACDDiv) / +7.7% PF=1.32 (BBMeanRev). Deploy with quality pairs only.",
+            "backtest_90d": {
+                "return_pct": 7.7,
+                "win_rate": 47.3,
+                "trades": 131,
+                "profit_factor": 1.32
             }
         }
     ],

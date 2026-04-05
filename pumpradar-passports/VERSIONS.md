@@ -26,6 +26,8 @@
 | 🔄 Reversal   | n/a (quarantined) | —  | n/a         | —       | —         | NOT TESTED    |
 | 🎯 Sniper     | +2.5%       | 33.3%   | -8.4%       | 32.0%   | -10.9pp   | WORSE         |
 | 📢 VolumeKing | -13.1%      | 31.8%   | -17.9%      | 32.3%   | -4.8pp    | WORSE         |
+| 📊 MACDDivergence | +9.1% (90d) | 41.5% | — | — | — | Paper live ✅ |
+| 🔄 BBMeanRev | +7.7% (90d) | 47.3% | — | — | — | Paper live ✅ |
 
 ## Per-Passport Changelog Summary
 
@@ -83,6 +85,18 @@
 | Version | Date       | Description |
 |---------|------------|-------------|
 | v0.1    | 2026-04-05 | Rebuilt from scratch: RSI 30/70 true mean-reversion, threshold 70, enabled=false pending backtest |
+
+### 📊 MACDDivergence (`macd_divergence.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v0.1 | 2026-04-05 | Enabled for paper trading — quality-pair 90d: +9.1%, PF=1.39, WR=41.5%, 123 trades |
+
+### 🔄 BBMeanRev (`bb_mean_rev.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v0.1 | 2026-04-05 | Enabled for paper trading — quality-pair 90d: +7.7%, PF=1.32, WR=47.3%, 131 trades |
 
 ### 📅 Seasonality OG (`seasonality_og.json`)
 
