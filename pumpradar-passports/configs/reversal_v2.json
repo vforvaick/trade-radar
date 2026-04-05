@@ -9,12 +9,14 @@
             "date": "2026-04-05",
             "git_sha": "pending",
             "description": "RSI mean-reversion with correct 30/70 thresholds. Kept disabled until backtested.",
-            "backtest_180d": {
-                "return_pct": null,
-                "win_rate": null,
-                "trades": null,
-                "max_dd_pct": null,
-                "note": "Not backtested yet. RSI_LONG_THRESHOLD=30 means buy oversold, RSI_SHORT_THRESHOLD=70 means sell overbought."
+            "backtest_90d": {
+                "return_pct": -11.78,
+                "win_rate": 29.6,
+                "trades": 186,
+                "max_dd_pct": 26.44,
+                "profit_factor": 0.70,
+                "pairs": ["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","AAVEUSDT","ADAUSDT","DOTUSDT","LINKUSDT","AVAXUSDT","MATICUSDT"],
+                "note": "FAILED. Pure mean-reversion fires too often in trending markets. Low win-rate (29.6%) and sub-1 PF. Kept disabled. Needs a trend-filter gate before re-testing."
             }
         }
     ],

@@ -439,9 +439,11 @@ for k, v in original.items():
 - Backtester (`determine_btc_trend_at()`): 3 regimes (Up/Down/Sideways)
 - Must reconcile before deploying research-engine-selected passports to live bot
 
-**4. reversal_v2.json needs backtesting (LOW)**
-- Created with correct RSI 30/70 thresholds but `enabled: false`
-- Run 90d backtest before enabling
+**4. reversal_v2.json backtested — FAILED, kept disabled (RESOLVED)**
+- 90d quality-pair backtest (BTCUSDT ETHUSDT SOLUSDT BNBUSDT AAVEUSDT ADAUSDT DOTUSDT LINKUSDT AVAXUSDT MATICUSDT)
+- Return: **-11.78%** | Win Rate: **29.6%** | Profit Factor: **0.70** | Trades: **186**
+- Diagnosis: pure mean-reversion (RSI 30/70 + BB only) fires too often in trending markets, producing a low win-rate and negative PF
+- Decision: remain `enabled: false`; strategy needs trend-filter gate before re-testing
 
 **5. `reversal.json` has 9 INDICATOR_WEIGHTS keys (LOW)**
 - Extra `reversal_mode` key inside INDICATOR_WEIGHTS — pre-existing, harmless
