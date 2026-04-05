@@ -108,6 +108,18 @@ class ResearchPipeline:
         """Run Stage 2 walk-forward validation on Stage 1 survivors."""
         survivors = []
         total_days = self.days
+
+        # Scale train/test proportionally when total window is smaller than the full fold.
+        # E.g. --days 90 with default train=120, test=60 would produce a degenerate fold.
+        if total_days < train_days + test_days:
+            train_ratio = train_days / (train_days + test_days)
+            train_days = max(30, int(total_days * train_ratio))
+            test_days = max(14, total_days - train_days)
+            logger.info(
+                "Stage 2: total_days=%d < default fold; scaled to train=%d, test=%d",
+                total_days, train_days, test_days,
+            )
+
         folds = _calc_folds(total_days, train_days, test_days, slide=30)
 
         for i, candidate in enumerate(candidates):

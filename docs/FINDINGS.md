@@ -434,10 +434,12 @@ for k, v in original.items():
 - Strategies rarely fire in bull markets due to halved confidence
 - Consider making `BTC_TREND_WEIGHTS` per-passport overridable
 
-**3. Regime classifier mismatch (MEDIUM)**
-- Research engine (`bot/research/regime.py`): 4 regimes (Bull/Bear/Sideways/HighVol)
-- Backtester (`determine_btc_trend_at()`): 3 regimes (Up/Down/Sideways)
-- Must reconcile before deploying research-engine-selected passports to live bot
+**3. Regime classifier mismatch (MEDIUM) — documented, not yet fixed**
+- Research engine (`bot/research/regime.py`): 4 regimes (TREND_UP/TREND_DOWN/HIGH_VOL_CHOP/LOW_VOL_COMPRESSION)
+- Backtester (`determine_btc_trend_at()` in `bot/backtester.py`): 3 regimes (Uptrend/Downtrend/Sideways)
+- `extended_scorer.py` also uses 3-regime labels (Uptrend/Downtrend/Sideways) via `BTC_WEIGHT` dict
+- `classify_regime()` in `regime.py` is **never called** anywhere — it's unused infrastructure; the actual regime detection is `determine_btc_trend_at` with 3 labels
+- Must reconcile before integrating regime-aware scoring into the research pipeline; requires changing `determine_btc_trend_at` to emit 4 labels OR mapping 4→3 in `extended_scorer.py`
 
 **4. reversal_v2.json backtested — FAILED, kept disabled (RESOLVED)**
 - 90d quality-pair backtest (BTCUSDT ETHUSDT SOLUSDT BNBUSDT AAVEUSDT ADAUSDT DOTUSDT LINKUSDT AVAXUSDT MATICUSDT)
@@ -526,13 +528,12 @@ Full log: `logs/new_passports_20260405_105110.log`
 
 **Research pipeline** (`run_research.py --all --days 90 --max-per-family 2`):
 - Stage 1: ✅ Working — tested 4 candidates, 3 passed (ema_crossover-55: +4.1% Sharpe=1.15; rsi_momentum-50: +6.8% Sharpe=1.45)
-- Stage 2: ❌ Fails with `--days 90` — `train_days=120 + test_days=60 > 90` → `_calc_folds()` produces degenerate single fold `(0, 0)` → sentinel return -100 → "Single fold is not positive"
-- **Fix:** Use `--days 240` so `_calc_folds` can generate proper walk-forward windows
+- Stage 2: ✅ **FIXED** — `run_stage2()` now scales `train_days`/`test_days` proportionally when `total_days < train_days + test_days`. `--days 90` now gives `train=60, test=30` instead of degenerate fold. Fix is in `bot/research/pipeline.py` (branch `fix/strategy-parameter-tuning`).
 
 **Next steps for research engine:**
-4. **Re-run with sufficient history** (fixes Stage 2):
+4. **Re-run with quality pairs only** (fewer API calls, faster Stage 1):
    ```bash
-   uv run python run_research.py --all --max-per-family 5 --pairs 10 --days 240
+   uv run python run_research.py --all --max-per-family 5 --pairs 10 --days 90
    ```
 5. **Backtest reversal_v2** — now has correct RSI 30/70 thresholds:
    ```bash
