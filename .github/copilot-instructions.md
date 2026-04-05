@@ -204,12 +204,13 @@ See `ops/fight-tres-runbook.md` for full post-deploy validation checklist.
 | `docs/FINDINGS.md` | ⭐ Master findings doc — read first, update last |
 | `ops/fight-tres-runbook.md` | VPS deployment and emergency procedures |
 
-## Current Status (as of 2026-04-05)
+## Current Status (as of 2026-04-05 Session 4)
 
-- **Branch:** `fix/strategy-parameter-tuning` — 44 commits ahead of master, PR #1 open
+- **Branch:** `fix/strategy-parameter-tuning` — 49 commits ahead of master, PR #1 open
 - **Tests:** 206/206 passing
-- **Passports:** 17 total (7 original + 10 new candidates in `pumpradar-passports/configs/`)
-- **VPS:** Running on **old code** (pre-branch). Needs PR merge + deploy to activate new work.
+- **Passports:** 19 total (7 original + 10 new + reversal_v2 + seasonality_og)
+- **VPS:** Running on **old code** (pre-branch). Needs PR merge + deploy to activate all work.
 - **Proven 180d winners (v0.3):** HiddenGem +25.9%, Sniper +26.0%, VolumeKing +9.1%
-- **Top new 90d candidates:** BBMeanRev +8.0% (PF=1.28), RSIContrarian +4.2% (PF=1.24)
+- **Top 90d quality-pair candidates:** MACDDivergence +9.1% (PF=1.39), BBMeanRev +7.7% (PF=1.32)
 - **Research engine:** Fully built (Plans 1–3), never run end-to-end on live data yet
+- **Fixed in Session 4:** Trailing stop ATR formula, RSI per-passport override, SKIP_WEEKDAYS filter

@@ -2,7 +2,7 @@
 
 > Living document. Updated after every iteration cycle.
 > Purpose: avoid repeating mistakes, build on proven insights, explore new lineages with context.
-> Last updated: 2026-04-05 (Session 1–3 consolidated)
+> Last updated: 2026-04-05 (Session 4 — trailing stop fix, RSI/weekday overrides, quality-pair backtest)
 
 ---
 
@@ -200,15 +200,25 @@ git checkout 950e0ec -- pumpradar-passports/configs/<file>.json
 - Short side outperforms: 65.2% WR shorts vs 50.0% WR longs
 - Skip Wed+Fri: +81.1% vs +29.6% baseline (crypto weekly seasonality)
 
-### ✅ BBMeanRev (new candidate)
-- 90d Jan–Apr 2026: +8.0%, PF=1.28, WR=45.2%, 157 trades
-- BB+RSI mean reversion, 2 active indicators
-- Best performer in the choppy Q1-2026 window
+### ✅ BBMeanRev (new candidate — confirmed)
+- Quality-pair 90d: +7.7%, PF=1.32, WR=47.3%, 131 trades — **robust across pair types**
+- Very consistent: only -0.3pp vs meme pairs (+8.0%)
+- Mean-reversion strategies are less sensitive to pair quality (good property)
 
-### ✅ RSIContrarian (new candidate)
-- 90d Jan–Apr 2026: +4.2%, PF=1.24, WR=40.9%, 88 trades
-- RSI+RSI_divergence+BB, 3 active indicators
-- Selective, low trade count — quality over quantity
+### ✅ MACDDivergence (new candidate — quality pairs only)
+- Quality-pair 90d: +9.1%, PF=1.39, WR=41.5%, 123 trades — **top performer**
+- BUT highly pair-sensitive: +9.1% on quality pairs vs -1.3% on meme pairs (+10.4pp swing)
+- Only deploy with quality pairs (BTC/ETH/SOL/AAVE/BNB/ADA/DOT/LINK/AVAX/MATIC)
+
+### ✅ Trailing stop now properly ATR-based (fixed Session 4)
+- `trail_dist = atr_at_entry * ATR_TRAIL_MULTIPLIER` (was fixed dollar distance)
+- Only trails after TP2 (was TP1) — lets winners run longer
+- Still disabled by default; test in paper before enabling
+
+### ✅ RSI thresholds and weekday filter now per-passport
+- Any passport can set `RSI_LONG_THRESHOLD: 30` in config_overrides
+- Any passport can set `SKIP_WEEKDAYS: [2, 4]` to skip Wed/Fri
+- `seasonality_og.json` leverages the +81.1% weekday edge
 
 ---
 
@@ -304,78 +314,99 @@ for k, v in original.items():
 
 ---
 
-## 9. New Passport Candidates (90d Results)
+## 9. New Passport Candidates — Backtest Results
 
-> 90d window Jan–Apr 2026, 10 pairs (top Binance volume), equal-weight avg.
-> Choppy/bear period — results conservative. Re-validate on better pairs and longer window.
+### 9a. Quality Pairs (90d, Jan–Apr 2026) — BTC/ETH/SOL/BNB/AAVE/ADA/DOT/LINK/AVAX/MATIC
 
-| Rank | Passport | Strategy | Return | PF | WR | Trades | Assessment |
-|---|---|---|---|---|---|---|---|
-| 1 | 🔄 BBMeanRev v0.1 | BB+RSI mean reversion | **+8.0%** | 1.28 | 45.2% | 157 | ✅ **Deploy to paper** |
-| 2 | 🔮 RSIContrarian v0.1 | RSI extremes+divergence+BB | **+4.2%** | 1.24 | 40.9% | 88 | ✅ **Deploy to paper** |
-| 3 | 🚄 TrendMomentum v0.1 | EMA+RSI+MACD | +1.5% | 1.02 | 34.1% | 302 | 🟡 Monitor |
-| 4 | 🎯 MinimalEdge v0.1 | EMA+Vol | +0.3% | 1.00 | 33.2% | 319 | 🟡 No clear edge |
-| 5 | 📈 PureTrend v0.1 | EMA-only | +0.2% | 1.00 | 33.2% | 319 | 🟡 Too simple |
-| 6 | 📊 MACDDivergence v0.1 | MACD+RSI_div | -1.3% | 0.96 | 32.9% | 164 | 🔴 Skip |
-| 7 | ⚖️ BalancedSelective v0.1 | EMA+BB+RSI | -2.2% | 0.97 | 40.3% | 385 | 🔴 Too many trades |
-| 8 | ✅ TrendConfirm v0.1 | EMA+MACD+Vol | -3.7% | 0.95 | 32.3% | 310 | 🔴 Skip |
-| 9 | 💥 BreakoutVol v0.1 | BB+Vol+Candle | -10.8% | 0.85 | 36.0% | 403 | 🔴 Overtrades |
-| 10 | 🌊 PressureReader v0.1 | Pressure+Candle+EMA | -14.9% | 0.78 | 30.8% | 338 | 🔴 Skip |
+> Ran after fixing meme-coin bias. This is the authoritative result set.
+> Log: `logs/new_passports_20260405_105110.log`
 
-> Reference passports (v0.3) also negative in this window due to choppy regime — not a regression.
+| Rank | Passport | Return | PF | WR | Trades | Assessment |
+|---|---|---|---|---|---|---|
+| 1 | 📊 MACDDivergence v0.1 | **+9.1%** | 1.39 | 41.5% | 123 | ✅ **Top candidate** |
+| 2 | 🔄 BBMeanRev v0.1 | **+7.7%** | 1.32 | 47.3% | 131 | ✅ **Deploy to paper** |
+| 3 | 🔮 RSIContrarian v0.1 | +0.5% | 1.02 | 36.1% | 97 | 🟡 Marginal, monitor |
+| 4 | 🎯 Sniper v0.3 | -3.4% | 0.90 | 33.1% | 160 | 🟡 Choppy window, proven 180d |
+| 5 | 💎 HiddenGem v0.3 | -3.4% | 0.90 | 33.1% | 160 | 🟡 Choppy window, proven 180d |
+| 6 | 🏆 OG v0.3 | -4.1% | 0.93 | 40.8% | 277 | 🟡 Choppy window |
+| 7 | ⚖️ BalancedSelective v0.1 | -4.2% | 0.92 | 40.6% | 254 | 🔴 Skip |
+| 8 | 🚄 TrendMomentum v0.1 | -7.0% | 0.85 | 30.3% | 201 | 🔴 Skip |
+| 9 | ✅ TrendConfirm v0.1 | -7.8% | 0.84 | 31.5% | 216 | 🔴 Skip |
+| 10 | 🎯 MinimalEdge v0.1 | -11.5% | 0.76 | 28.2% | 213 | 🔴 Skip |
+| 11 | 📈 PureTrend v0.1 | -11.5% | 0.76 | 28.2% | 213 | 🔴 Skip |
+| 12 | 📢 VolumeKing v0.3 | -11.7% | 0.77 | 27.9% | 219 | 🟡 Choppy window, proven 180d |
+| 13 | 🌊 PressureReader v0.1 | -13.2% | 0.69 | 29.0% | 200 | 🔴 Skip |
+| 14 | 💥 BreakoutVol v0.1 | -19.4% | 0.62 | 29.7% | 259 | 🔴 Skip |
+
+### 9b. Meme Pairs (90d, Jan–Apr 2026) — Previous run for comparison
+
+> Pairs: 0GUSDT, 1000BONKUSDT, 1000PEPEUSDT etc. Results are noisy — use §9a instead.
+
+| Rank | Passport | Return (meme) | Return (quality) | Delta |
+|---|---|---|---|---|
+| MACDDivergence v0.1 | -1.3% | **+9.1%** | **+10.4pp** |
+| BBMeanRev v0.1 | +8.0% | +7.7% | -0.3pp |
+| RSIContrarian v0.1 | +4.2% | +0.5% | -3.7pp |
+
+> **Key insight:** MACDDivergence is extremely pair-sensitive (+10pp swing). BBMeanRev is robust across pair types (only -0.3pp). Always use quality pairs for validation.
+
+### 9c. Proven 180d Baseline (Bull+Bear+Sideways, original runs)
+
+| Passport | 180d Return | Regime |
+|---|---|---|
+| 💎 HiddenGem v0.1/v0.3 | **+25.9%** | Mixed |
+| 🎯 Sniper v0.1/v0.3 | **+26.0%** | Mixed |
+| 📢 VolumeKing v0.1/v0.3 | **+9.1%** | Mixed |
+| 🏆 OG v0.1/v0.3 | -13.1% | Mixed |
 
 ---
 
-## 10. Open Code Issues (Not Yet Fixed)
+## 10. Open Code Issues
 
-### HIGH PRIORITY
+### FIXED IN SESSION 4 ✅
 
-**1. Trailing stop formula (position_manager.py L181–193)**
+**✅ Trailing stop formula** (fixed 2026-04-05, commit `62c2c39`)
 ```python
-# CURRENT (WRONG):
-trail_dist = abs(sig.entry_price - sig.sl)  # fixed, too tight
-
-# SHOULD BE:
-trail_dist = current_atr * ATR_TRAIL_MULTIPLIER  # adaptive
-# Also: only trail after TP2, not TP1
+# OLD (WRONG): trail_dist = abs(sig.entry_price - sig.sl)  # fixed distance
+# NEW (CORRECT): trail_dist = (sig.atr_at_entry or fallback) * ATR_TRAIL_MULTIPLIER
+# Also: now trails after TP2 (not TP1)
 ```
+- `atr_at_entry` added to Signal dataclass, populated from scorer result
+- `ATR_TRAIL_MULTIPLIER = 2.0` in config.py (per-passport overridable)
+- Still disabled by default: `USE_TRAILING_STOP: false` in all passports
 
-**2. RSI threshold not per-passport overridable (config.py L17–18)**
-```python
-RSI_LONG_THRESHOLD = 50   # hardcoded global
-RSI_SHORT_THRESHOLD = 50  # hardcoded global
-# Needs: setattr support in passport config_overrides
-```
-This blocks Reversal strategy from being usable as a true mean-reversion engine.
+**✅ RSI thresholds not per-passport** (fixed 2026-04-05, commit `62c2c39`)
+- Added `RSI_LONG_THRESHOLD` and `RSI_SHORT_THRESHOLD` to `_save_config()` keys
+- Passports can now override via `config_overrides`
+- `reversal_v2.json` created with correct 30/70 thresholds (disabled, needs backtest)
 
-**3. Reversal strategy needs code rewrite before re-enabling**
-- RSI logic needs threshold inversion (30/70 instead of 50/50)
-- Or: replace with a dedicated mean-reversion indicator that checks RSI<30 LONG / RSI>70 SHORT
-- Currently: `enabled: false` in passport JSON — do not enable until fixed
+**✅ Weekday filter missing** (added 2026-04-05, commit `62c2c39`)
+- `SKIP_WEEKDAYS = []` in config.py (per-passport overridable)
+- `seasonality_og.json` created with `SKIP_WEEKDAYS: [2, 4]` (skip Wed/Fri)
+- Historical edge: +81.1% vs +29.6% baseline
 
-### MEDIUM PRIORITY
+### STILL OPEN
 
-**4. Dynamic EXIT behavior unverified**
-- `USE_ATR_EXITS: true` on Dynamic passport shows identical results to Momentum (same metrics)
-- Need to trace through whether ATR exits are actually being called in backtester
-- May need a dedicated test fixture with wide ATR to trigger the different exit logic
+**1. Dynamic EXIT behavior unverified (MEDIUM)**
+- `USE_ATR_EXITS: true` on Dynamic passport shows identical results to Momentum
+- Need a test fixture with wide ATR to confirm ATR exits actually differ from fixed exits
 
-**5. BTC Uptrend confidence multiplier (scorer.py)**
-- `btc_weight = 0.5` in Uptrend halves all confidence scores
-- This means strategies often don't fire during bull markets
-- Consider making this tunable per-passport or removing the Uptrend penalty
+**2. BTC Uptrend confidence × 0.5 multiplier (MEDIUM)**
+- Strategies rarely fire in bull markets due to halved confidence
+- Consider making `BTC_TREND_WEIGHTS` per-passport overridable
 
-**6. Regime classification used in research engine may not match live bot**
-- `bot/research/regime.py` classifies 4 regimes (Bull/Bear/Sideways/HighVol)
-- Live bot uses `determine_btc_trend_at()` in backtester which only does Up/Down/Sideways
-- These two need to be reconciled before deploying research-engine-selected passports
+**3. Regime classifier mismatch (MEDIUM)**
+- Research engine (`bot/research/regime.py`): 4 regimes (Bull/Bear/Sideways/HighVol)
+- Backtester (`determine_btc_trend_at()`): 3 regimes (Up/Down/Sideways)
+- Must reconcile before deploying research-engine-selected passports to live bot
 
-### LOW PRIORITY
+**4. reversal_v2.json needs backtesting (LOW)**
+- Created with correct RSI 30/70 thresholds but `enabled: false`
+- Run 90d backtest before enabling
 
-**7. `reversal.json` has 9 INDICATOR_WEIGHTS keys (not 8)**
-- Extra key `reversal_mode` inside INDICATOR_WEIGHTS
-- Pre-existing, not causing failures (quarantined passport)
-- Clean up when Reversal is properly rewritten
+**5. `reversal.json` has 9 INDICATOR_WEIGHTS keys (LOW)**
+- Extra `reversal_mode` key inside INDICATOR_WEIGHTS — pre-existing, harmless
+- Clean up when rewriting Reversal
 
 ---
 
@@ -413,79 +444,49 @@ This blocks Reversal strategy from being usable as a true mean-reversion engine.
 ### Branch/PR Status
 - Branch `fix/strategy-parameter-tuning` → PR #1 open on GitHub
 - URL: https://github.com/vforvaick/trade-radar/pull/1
-- 42 commits, 206/206 tests passing
+- **49 commits**, 206/206 tests passing
 
 ---
 
 ## 12. What's Next
 
-### Immediate (merge + paper trading)
+### Immediate — Deploy to VPS (needs your action — SSH required)
 
-1. **Review and merge PR #1** — 42 commits of foundational work. Can review at:
-   https://github.com/vforvaick/trade-radar/pull/1
+```bash
+# On fight-tres — pull branch and restart:
+ssh fight-tres "cd /home/vforvaick/pumpradar-bot && git fetch origin && git checkout fix/strategy-parameter-tuning && git pull && systemctl restart pumpradar.service"
 
-2. **Deploy to VPS for paper trading:**
-   ```bash
-   # On fight-tres:
-   git pull origin fix/strategy-parameter-tuning  # or master after merge
-   systemctl restart pumpradar.service
-   ```
-   - All 17 passports will auto-load (7 original + 10 new)
-   - Monitor via Telegram `/summary`
-   - Recommend **disabling** high-loss passports: Reversal (already disabled), Momentum, Dynamic initially
+# Validate (wait ~30s after restart):
+ssh fight-tres "journalctl -u pumpradar.service -n 50 --no-pager -o short-iso"
+```
 
-3. **Run BBMeanRev and RSIContrarian on better pairs** — re-validate on BTC/ETH/SOL/AAVE:
-   ```bash
-   uv run python scripts/run_new_passport_backtest.py --days 90 --pairs 10 \
-     --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT AAVEUSDT ADAUSDT MATICUSDT DOTUSDT LINKUSDT AVAXUSDT
-   ```
+Expected output: 19 passports load (17 original/new + reversal_v2 + seasonality_og), `reversal.json` and `reversal_v2.json` skipped (disabled), all others scanning.
 
-### Short-term (strategy improvement)
+### Short-term — paper trading observation
 
-4. **Fix trailing stop formula** — highest ROI code fix:
-   ```python
-   # position_manager.py L182
-   trail_dist = ATR_TRAIL_MULTIPLIER * current_atr  # needs ATR in position context
-   ```
-   Then re-enable `USE_TRAILING_STOP: true` on Dynamic and test.
+1. Monitor MACDDivergence and BBMeanRev — top 90d performers on quality pairs
+2. SeasonalityOG runs Mon/Tue/Thu only — compare vs regular OG performance
+3. Check if any passport overtrades (>50 positions/day) → raise CONFIDENCE_THRESHOLD
 
-5. **Make RSI thresholds per-passport overridable** — enables true mean-reversion:
-   ```python
-   # config.py
-   RSI_LONG_THRESHOLD = getattr(config, 'RSI_LONG_THRESHOLD', 50)
-   ```
-   Then create a proper `reversal_v2.json` with RSI thresholds 30/70.
+### Medium-term — research engine
 
-6. **Weekly seasonality filter** — historical data shows +81.1% skipping Wed+Fri vs +29.6% baseline:
-   ```python
-   # config_overrides: "SKIP_WEEKDAYS": [2, 4]  # 0=Mon, 2=Wed, 4=Fri
-   ```
-
-7. **Run 90d backtest on quality pairs** for all 10 new passports — current results are on noisy meme coins
-
-### Medium-term (research engine)
-
-8. **Activate the Strategy Research Engine** (`run_research.py`):
+4. **Run research engine for the first time** (built but never run live):
    ```bash
    uv run python run_research.py --all --max-per-family 5 --pairs 10 --days 90
    ```
-   This runs all 25 families through the 4-stage pipeline and generates ranked candidates.
-
-9. **Paper trading promotion pipeline:**
-   - Generated passport → Stage 1-4 validation → `paper_live` status → 30d paper trading → check PromotionPolicy 7 gates → promote to `production`
-
-10. **Portfolio construction:**
-    - Use `bot/research/pipeline.py` Stage 4 (orthogonality) to select non-correlated strategy set
-    - Target: 3–5 concurrent strategies covering different regimes (trend + mean-rev + breakout)
+5. **Backtest reversal_v2** — now has correct RSI 30/70 thresholds:
+   ```bash
+   uv run python scripts/run_new_passport_backtest.py --days 180 --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT AAVEUSDT
+   ```
+6. **Test trailing stop on Dynamic** — enable `USE_TRAILING_STOP: true` on just the Dynamic passport and compare 90d results
 
 ### Long-term (new lineages to explore)
 
-11. **Multi-timeframe confluence** — combine 15m signal quality with 4H trend direction
-12. **Funding rate carry strategy** — go long when funding rate is strongly negative (shorts paying longs)
-13. **Volatility regime switching** — use ATR percentile to switch between trend and mean-reversion passports
-14. **Short-side optimization** — shorts historically outperform longs (65.2% vs 50.0% WR); consider a short-only passport
-15. **Weekly seasonality passport** — only trade Mon/Tue/Thu based on historical +81.1% edge
-16. **OI + Liquidation cluster entries** — when OI spikes and price approaches liquidation clusters = high-conviction reversal
+- **Multi-timeframe confluence** — 15m signal + 4H trend direction
+- **Funding rate carry** — long when funding rate strongly negative
+- **Volatility regime switching** — ATR percentile selects trend vs mean-reversion mode
+- **Short-only passport** — shorts WR 65.2% vs longs 50.0% historically
+- **OI + Liquidation clusters** — high-conviction reversal entries
 
 ---
 
