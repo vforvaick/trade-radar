@@ -8,12 +8,13 @@
             "date": "2026-04-04",
             "git_sha": "91e1e37",
             "description": "Bollinger Band mean reversion — BB+RSI only. Reference S4 (Mean Reversion - Bollinger Bands). Targets range-bound periods where price deviates from mean.",
-            "backtest_180d": {
-                "return_pct": null,
-                "win_rate": null,
-                "trades": null,
-                "max_dd_pct": null,
-                "note": "pending initial backtest"
+            "backtest_90d": {
+                "return_pct": 8.0,
+                "win_rate": 45.2,
+                "trades": 157,
+                "max_dd_pct": 0.0,
+                "profit_factor": 1.28,
+                "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight portfolio. TOP performer among new candidates. PF>1 confirms edge."
             }
         }
     ],

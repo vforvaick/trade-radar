@@ -8,12 +8,13 @@
             "date": "2026-04-04",
             "git_sha": "91e1e37",
             "description": "RSI extremes contrarian — RSI+RSI_div+BB. Reference S8 (RSI Extremes). Uses RSI position for oversold/overbought, divergence for reversal confirmation, BB for mean distance.",
-            "backtest_180d": {
-                "return_pct": null,
-                "win_rate": null,
-                "trades": null,
-                "max_dd_pct": null,
-                "note": "pending initial backtest"
+            "backtest_90d": {
+                "return_pct": 4.2,
+                "win_rate": 40.9,
+                "trades": 88,
+                "max_dd_pct": 0.0,
+                "profit_factor": 1.24,
+                "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight portfolio. 2nd best. PF>1 with low trade count — selective edge confirmed."
             }
         }
     ],

@@ -1,6 +1,6 @@
 {
     "name": "PressureReader",
-    "emoji": "🌊",
+    "emoji": "\ud83c\udf0a",
     "version": "0.1",
     "changelog": [
         {
@@ -8,12 +8,13 @@
             "date": "2026-04-04",
             "git_sha": "91e1e37",
             "description": "Buy/sell pressure dominant with candle + EMA context. Novel strategy using underexplored pressure indicator as primary signal. Tests whether order flow pressure has predictive edge.",
-            "backtest_180d": {
-                "return_pct": null,
-                "win_rate": null,
-                "trades": null,
-                "max_dd_pct": null,
-                "note": "pending initial backtest"
+            "backtest_90d": {
+                "return_pct": -14.9,
+                "win_rate": 30.8,
+                "trades": 338,
+                "max_dd_pct": 0.0,
+                "profit_factor": 0.78,
+                "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Negative 90d. Worst PF \u2014 Pressure+Candle+EMA noisy."
             }
         }
     ],

@@ -1,19 +1,20 @@
 {
     "name": "TrendConfirm",
-    "emoji": "✅",
+    "emoji": "\u2705",
     "version": "0.1",
     "changelog": [
         {
             "version": "0.1",
             "date": "2026-04-04",
             "git_sha": "91e1e37",
-            "description": "EMA+MACD+Volume triple confirmation — trades only when trend (EMA), momentum (MACD), and volume all agree. More selective than TrendMomentum, uses volume instead of RSI.",
-            "backtest_180d": {
-                "return_pct": null,
-                "win_rate": null,
-                "trades": null,
-                "max_dd_pct": null,
-                "note": "pending initial backtest"
+            "description": "EMA+MACD+Volume triple confirmation \u2014 trades only when trend (EMA), momentum (MACD), and volume all agree. More selective than TrendMomentum, uses volume instead of RSI.",
+            "backtest_90d": {
+                "return_pct": -3.7,
+                "win_rate": 32.3,
+                "trades": 310,
+                "max_dd_pct": 0.0,
+                "profit_factor": 0.95,
+                "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Negative 90d. EMA+MACD+Vol underperforms in chop."
             }
         }
     ],

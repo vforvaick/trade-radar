@@ -1,23 +1,24 @@
 {
     "name": "PureTrend",
-    "emoji": "📈",
+    "emoji": "\ud83d\udcc8",
     "version": "0.1",
     "changelog": [
         {
             "version": "0.1",
             "date": "2026-04-04",
             "git_sha": "91e1e37",
-            "description": "Pure EMA trend-following — single indicator strategy inspired by reference S1 (Single MA). Uses only EMA trend with heavy weight. Simplest possible mechanical strategy.",
-            "backtest_180d": {
-                "return_pct": null,
-                "win_rate": null,
-                "trades": null,
-                "max_dd_pct": null,
-                "note": "pending initial backtest"
+            "description": "Pure EMA trend-following \u2014 single indicator strategy inspired by reference S1 (Single MA). Uses only EMA trend with heavy weight. Simplest possible mechanical strategy.",
+            "backtest_90d": {
+                "return_pct": 0.2,
+                "win_rate": 33.2,
+                "trades": 319,
+                "max_dd_pct": 0.0,
+                "profit_factor": 1.0,
+                "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Barely profitable 90d. EMA-only single indicator."
             }
         }
     ],
-    "description": "Pure trend-following using only EMA alignment. Reference: 151 Strategies S1 — Single Moving Average. Thesis: simplicity reduces noise, trend is the strongest signal.",
+    "description": "Pure trend-following using only EMA alignment. Reference: 151 Strategies S1 \u2014 Single Moving Average. Thesis: simplicity reduces noise, trend is the strongest signal.",
     "config_overrides": {
         "EMA_FAST": 9,
         "EMA_MID": 21,
