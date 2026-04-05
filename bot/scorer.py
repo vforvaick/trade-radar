@@ -34,6 +34,7 @@ def score_confluence(df, btc_trend="Sideways"):
     vol_spike, vol_ratio = indicators.calc_volume_spike(df)
     press_dir, press_pct = indicators.calc_pressure(df)
     candle_dir = indicators.calc_candle_direction(df)
+    donchian_dir, donchian_str = indicators.calc_donchian_channel(df)
 
     active_weights = getattr(config, 'INDICATOR_WEIGHTS', {})
     is_reversal = active_weights.get('REVERSAL_MODE', False)
@@ -51,6 +52,7 @@ def score_confluence(df, btc_trend="Sideways"):
         "volume_spike": None,  # volume is confirmation, not directional
         "pressure": press_dir,
         "candle_direction": candle_dir,
+        "donchian_signal": donchian_dir,
     }
 
     signals_detail = {
@@ -62,6 +64,7 @@ def score_confluence(df, btc_trend="Sideways"):
         "volume_spike": {"spike": vol_spike, "ratio": vol_ratio},
         "pressure": {"direction": press_dir, "pct": press_pct},
         "candle_direction": {"direction": candle_dir},
+        "donchian_signal": {"direction": donchian_dir, "strength": donchian_str},
     }
 
     # Determine primary direction via weighted voting
@@ -72,6 +75,11 @@ def score_confluence(df, btc_trend="Sideways"):
     # Get optional overrides if passed by backtester, else use config
     for indicator, direction in votes.items():
         w = active_weights.get(indicator, 1.0)
+
+        # New indicators added after initial deployment default to 0 to avoid
+        # affecting existing passports that don't declare them.
+        if indicator in ("donchian_signal", "obv_signal") and indicator not in active_weights:
+            w = 0.0
 
         if is_reversal:
             if indicator in ["ema_trend", "macd_signal"]:

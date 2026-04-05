@@ -244,6 +244,43 @@ def calc_candle_direction(df: pd.DataFrame):
         return "NEUTRAL"
 
 
+def calc_donchian_channel(df: pd.DataFrame, period: int = 20):
+    """
+    Donchian Channel breakout signal.
+    LONG: close breaks above N-period high (upside breakout).
+    SHORT: close breaks below N-period low (downside breakout).
+    NEUTRAL: price within channel.
+    Returns: direction ('LONG', 'SHORT', 'NEUTRAL'), breakout_strength (0.0-1.0)
+    """
+    if len(df) < period + 1:
+        return "NEUTRAL", 0.0
+
+    high_channel = df['high'].rolling(period).max().shift(1)
+    low_channel = df['low'].rolling(period).min().shift(1)
+    close = df['close']
+
+    last_close = close.iloc[-1]
+    last_high = high_channel.iloc[-1]
+    last_low = low_channel.iloc[-1]
+
+    if pd.isna(last_high) or pd.isna(last_low):
+        return "NEUTRAL", 0.0
+
+    channel_width = last_high - last_low
+    if channel_width <= 0:
+        return "NEUTRAL", 0.0
+
+    if last_close > last_high:
+        # How far above the channel (normalized 0-1, capped at 1)
+        strength = min((last_close - last_high) / channel_width, 1.0)
+        return "LONG", strength
+    elif last_close < last_low:
+        strength = min((last_low - last_close) / channel_width, 1.0)
+        return "SHORT", strength
+    else:
+        return "NEUTRAL", 0.0
+
+
 # ==========================================
 # ADVANCED OPTIMIZATION INDICATORS (V2)
 # ==========================================
