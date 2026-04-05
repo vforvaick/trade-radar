@@ -68,3 +68,56 @@ def test_store_signal_message_id_uses_symbol_and_passport_name(signal):
     notifier.store_signal_message_id(signal.symbol, 88, passport_name="🛡️ [Conservative]")
 
     assert notifier.signal_message_ids[(signal.symbol, "🛡️ [Conservative]")] == 88
+
+
+# --- Group routing tests ---
+
+class TestTelegramNotifierGroupRouting:
+    def test_group_enabled_when_group_id_set(self):
+        n = TelegramNotifier(bot_token="tok", chat_id="123", group_id="-456", topic_id="789")
+        assert n.group_enabled is True
+
+    def test_group_disabled_when_group_id_missing(self):
+        n = TelegramNotifier(bot_token="tok", chat_id="123")
+        assert n.group_enabled is False
+
+    def test_send_to_group_uses_group_chat_id(self, monkeypatch):
+        """_send_to_group posts to group_id not chat_id."""
+        calls = []
+        def fake_post(url, json=None, timeout=None):
+            calls.append(json)
+            class R:
+                def json(self): return {"ok": True, "result": {"message_id": 99}}
+            return R()
+        monkeypatch.setattr("bot.notifier.requests.post", fake_post)
+        n = TelegramNotifier(bot_token="tok", chat_id="111", group_id="-456", topic_id="789")
+        n._send_to_group("hello")
+        assert len(calls) == 1
+        assert calls[0]["chat_id"] == "-456"
+        assert calls[0]["message_thread_id"] == 789
+
+    def test_send_to_group_falls_back_to_dm_when_no_group(self, monkeypatch):
+        """_send_to_group falls back to DM when group not configured."""
+        calls = []
+        def fake_post(url, json=None, timeout=None):
+            calls.append(json)
+            class R:
+                def json(self): return {"ok": True, "result": {"message_id": 1}}
+            return R()
+        monkeypatch.setattr("bot.notifier.requests.post", fake_post)
+        n = TelegramNotifier(bot_token="tok", chat_id="111")
+        n._send_to_group("hello")
+        assert calls[0]["chat_id"] == "111"  # fell back to DM
+
+    def test_send_update_still_goes_to_dm(self, monkeypatch):
+        """send_update always uses DM _send, never group."""
+        calls = []
+        def fake_post(url, json=None, timeout=None):
+            calls.append(json)
+            class R:
+                def json(self): return {"ok": True, "result": {"message_id": 1}}
+            return R()
+        monkeypatch.setattr("bot.notifier.requests.post", fake_post)
+        n = TelegramNotifier(bot_token="tok", chat_id="111", group_id="-456")
+        n.send_update("system log msg")
+        assert calls[0]["chat_id"] == "111"  # DM, not group

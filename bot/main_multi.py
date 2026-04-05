@@ -85,7 +85,10 @@ def run_multi_passport(tg_token: str = None, tg_chat: str = None,
     passport_dir = os.path.abspath(passport_dir)
 
     runner = PassportRunner(passport_dir, interval=interval)
-    notifier = TelegramNotifier(bot_token=tg_token, chat_id=tg_chat)
+    tg_group = (os.environ.get("PUMPRADAR_TG_GROUP_ID") or "").strip() or None
+    tg_topic = (os.environ.get("PUMPRADAR_TG_TOPIC_ID") or "").strip() or None
+    notifier = TelegramNotifier(bot_token=tg_token, chat_id=tg_chat,
+                                group_id=tg_group, topic_id=tg_topic)
     notifier.restore_message_ids(runner.state_store)
 
     # Start telegram polling thread

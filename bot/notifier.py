@@ -13,10 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramNotifier:
-    def __init__(self, bot_token: str = None, chat_id: str = None):
+    def __init__(self, bot_token: str = None, chat_id: str = None,
+                 group_id: str = None, topic_id: str = None):
         self.bot_token = bot_token
-        self.chat_id = chat_id
+        self.chat_id = chat_id            # DM chat — system logs/errors
+        self.group_id = group_id          # Trade group chat ID
+        self.topic_id = topic_id          # message_thread_id for trade topic
         self.enabled = bool(bot_token and chat_id)
+        self.group_enabled = bool(bot_token and group_id)
         self.send_error_count = 0
         # Maps (symbol, passport_name) -> message_id for reply threading
         self.signal_message_ids: dict[tuple[str, str], int] = {}
@@ -100,7 +104,7 @@ class TelegramNotifier:
         msg += f"🤖 **AI Confluence:** {signal.confidence}%\n"
         
         print(f"[Notifier] Sending signal alert for {signal.symbol}")
-        msg_id = self._send_with_context(msg, symbol=signal.symbol)
+        msg_id = self._send_to_group(msg, symbol=signal.symbol)
         return msg_id
 
     def send_update(self, msg: str):
@@ -179,13 +183,61 @@ class TelegramNotifier:
         reply_to = self.signal_message_ids.get(key)
         
         print(f"[Notifier] Sending {event} alert for {signal.symbol}" + (f" (reply to #{reply_to})" if reply_to else ""))
-        self._send_with_context(
+        self._send_to_group(
             msg,
             reply_to_message_id=reply_to,
             symbol=signal.symbol,
             passport_name=passport_name,
             event=event,
         )
+
+    def _send_to_group(
+        self,
+        text: str,
+        reply_to_message_id: int = None,
+        symbol: str = None,
+        passport_name: str = None,
+        event: str = None,
+    ) -> int | None:
+        """Send a message to the trade group topic. Falls back to DM if group not configured."""
+        if not self.bot_token:
+            return None
+
+        # Fall back to DM if group not configured
+        if not self.group_enabled:
+            return self._send_with_context(text, reply_to_message_id=reply_to_message_id,
+                                           symbol=symbol, passport_name=passport_name, event=event)
+
+        url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+        payload = {
+            "chat_id": self.group_id,
+            "text": text,
+            "parse_mode": "Markdown",
+        }
+        if self.topic_id:
+            payload["message_thread_id"] = int(self.topic_id)
+        if reply_to_message_id:
+            payload["reply_to_message_id"] = reply_to_message_id
+            payload["allow_sending_without_reply"] = True
+
+        try:
+            resp = requests.post(url, json=payload, timeout=5)
+            data = resp.json()
+            if data.get("ok"):
+                return data["result"]["message_id"]
+            self.send_error_count += 1
+            logger.warning(
+                "Telegram group API rejected message group_id=%s topic_id=%s symbol=%s event=%s response=%s",
+                self.group_id, self.topic_id, symbol, event, data,
+            )
+        except Exception as e:
+            self.send_error_count += 1
+            logger.exception(
+                "Failed to send Telegram group message group_id=%s topic_id=%s symbol=%s event=%s",
+                self.group_id, self.topic_id, symbol, event,
+            )
+            print(f"[Notifier] Failed to send TG group message: {e}")
+        return None
 
     def _send_with_context(
         self,
