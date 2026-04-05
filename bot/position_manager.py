@@ -177,9 +177,9 @@ class PositionManager:
                 pos.status = "TP3_CLOSED"
                 events.append("TP3_HIT")
 
-        # Trailing stop logic (only active after TP1, if configured)
-        if pos.tp1_hit and getattr(config, 'USE_TRAILING_STOP', False) and pos.status != "TP3_CLOSED":
-            trail_dist = abs(sig.entry_price - sig.sl)
+        # Trailing stop logic (only active after TP2, if configured)
+        if pos.tp2_hit and getattr(config, 'USE_TRAILING_STOP', False) and pos.status != "TP3_CLOSED":
+            trail_dist = (sig.atr_at_entry or abs(sig.entry_price - sig.sl)) * getattr(config, 'ATR_TRAIL_MULTIPLIER', 2.0)
             if is_long:
                 new_sl = high - trail_dist
                 if pos.trailing_sl is None or new_sl > pos.trailing_sl:

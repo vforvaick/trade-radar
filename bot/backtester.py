@@ -132,6 +132,10 @@ def run_backtest(symbols: list[str], interval: str = "1h",
     """
     Run backtest across multiple pairs.
 
+    Aggregates per-symbol summaries (equal-weight portfolio interpretation) so
+    that return_pct and max_dd are meaningful — each symbol contributes one
+    independent equity curve starting at INITIAL_EQUITY.
+
     Returns summary stats + per-trade details.
     """
     end_ms = int(time.time() * 1000) - (end_offset_days * 24 * 3600 * 1000)
@@ -141,6 +145,7 @@ def run_backtest(symbols: list[str], interval: str = "1h",
     btc_df = fetch_klines_range("BTCUSDT", interval, start_ms, end_ms)
 
     all_trades = []
+    sym_summaries = []
     for i, sym in enumerate(symbols):
         print(f"[Backtest] ({i+1}/{len(symbols)}) {sym}...", flush=True)
         try:
@@ -150,12 +155,22 @@ def run_backtest(symbols: list[str], interval: str = "1h",
                 continue
             trades = backtest_pair(sym, klines, btc_df, cfg_override)
             all_trades.extend(trades)
+            sym_summaries.append(_summarize(trades))
             print(f"  → {len(trades)} trades", flush=True)
         except Exception as e:
             print(f"  Error {sym}: {e}", flush=True)
             continue
 
-    return _summarize(all_trades)
+    if not sym_summaries:
+        return _summarize([])
+
+    # Build aggregate from per-symbol summaries (equal-weight portfolio)
+    combined = _summarize(all_trades)
+    active = [s for s in sym_summaries if s["trades"] > 0]
+    if active:
+        combined["return_pct"] = sum(s["return_pct"] for s in active) / len(active)
+        combined["max_dd"] = sum(s["max_dd"] for s in active) / len(active)
+    return combined
 
 
 def run_grid_search(symbols: list[str], interval: str, days: int = 90):

@@ -11,3 +11,8 @@ pumpradar_session.session
 *.session-wal
 state.db
 .worktrees/
+.DS_Store
+**/.DS_Store
+logs/*.log
+*.bak
+research_experiments.db
