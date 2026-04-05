@@ -117,3 +117,18 @@ EXCLUDED_PAIRS = set()
 
 # Minimum 24h volume in USDT to consider a pair
 MIN_VOLUME_USDT = 5_000_000
+
+# ============================================================
+# TRAILING STOP
+# ============================================================
+
+USE_TRAILING_STOP = False
+ATR_TRAIL_MULTIPLIER = 2.0   # trail distance = 2x ATR at entry
+
+# ============================================================
+# WEEKDAY FILTER
+# ============================================================
+
+# Weekdays to skip (0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun)
+# Empty list = trade all days
+SKIP_WEEKDAYS = []

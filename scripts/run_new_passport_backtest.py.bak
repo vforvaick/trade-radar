@@ -73,17 +73,14 @@ def load_passport_cfg_override(filepath: str) -> dict:
     return flat
 
 
-def run_all(days: int, pairs: int, symbols: list = None) -> list[dict]:
+def run_all(days: int, pairs: int) -> list[dict]:
     """Run backtests for all passports and return ranked results."""
     os.makedirs(os.path.join(REPO_ROOT, "logs"), exist_ok=True)
 
-    # Fetch top pairs once or use provided symbols
-    if symbols:
-        print(f"Using {len(symbols)} provided symbols...", flush=True)
-    else:
-        print(f"Fetching top {pairs} pairs by volume...", flush=True)
-        all_syms = get_all_futures_symbols()
-        symbols = [s for s in all_syms if s.endswith("USDT")][:pairs]
+    # Fetch top pairs once
+    print(f"Fetching top {pairs} pairs by volume...", flush=True)
+    all_syms = get_all_futures_symbols()
+    symbols = [s for s in all_syms if s.endswith("USDT")][:pairs]
     print(f"Pairs: {symbols}\n", flush=True)
 
     all_files = [
@@ -179,7 +176,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Backtest all new passport candidates")
     parser.add_argument("--days", type=int, default=90, help="Days of history (default 90)")
     parser.add_argument("--pairs", type=int, default=15, help="Top N pairs by volume (default 15)")
-    parser.add_argument("--symbols", nargs="+", default=None, help="Space-separated list of symbols (e.g., BTCUSDT ETHUSDT)")
     args = parser.parse_args()
 
     logfile = os.path.join(
@@ -187,8 +183,8 @@ if __name__ == "__main__":
         f"new_passports_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
     )
 
-    print(f"🚀 New Passport Backtest — {args.days}d window, {args.pairs if not args.symbols else len(args.symbols)} pairs")
+    print(f"🚀 New Passport Backtest — {args.days}d window, {args.pairs} pairs")
     print(f"📁 Log: {logfile}\n")
 
-    results = run_all(args.days, args.pairs, symbols=args.symbols)
+    results = run_all(args.days, args.pairs)
     ranked = print_ranked(results, logfile)

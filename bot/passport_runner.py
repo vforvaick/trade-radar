@@ -205,6 +205,16 @@ class PassportRunner:
             self._apply_overrides(passport.config_overrides)
             self._apply_regime_guardrails(passport)
 
+            skip_days = getattr(config, 'SKIP_WEEKDAYS', [])
+            if skip_days and datetime.now().weekday() in skip_days:
+                print(
+                    f"[{passport.emoji} {passport.name}] Skipping scan — "
+                    f"weekday {datetime.now().weekday()} in SKIP_WEEKDAYS {skip_days}",
+                    flush=True,
+                )
+                self._restore_config(original_config)
+                continue
+
             try:
                 signals = self.scanner.scan_all()
 
@@ -352,11 +362,13 @@ class PassportRunner:
         keys = [
             'EMA_FAST', 'EMA_MID', 'EMA_SLOW',
             'CONFIDENCE_THRESHOLD',
+            'RSI_LONG_THRESHOLD', 'RSI_SHORT_THRESHOLD',
             'VOLUME_SPIKE_THRESHOLD', 'INDICATOR_WEIGHTS',
             'MAX_OPEN_POSITIONS_PER_PASSPORT', 'MAX_OPEN_POSITIONS_PER_SYMBOL',
             'REVERSAL_SIDEWAYS_CONFIDENCE_THRESHOLD',
             'REVERSAL_SIDEWAYS_MAX_OPEN_POSITIONS_PER_PASSPORT',
-            'USE_ATR_EXITS', 'USE_TRAILING_STOP',
+            'USE_ATR_EXITS', 'USE_TRAILING_STOP', 'ATR_TRAIL_MULTIPLIER',
+            'SKIP_WEEKDAYS',
         ]
         if override_keys:
             keys = list(dict.fromkeys([*keys, *override_keys]))

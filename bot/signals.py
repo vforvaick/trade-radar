@@ -24,6 +24,7 @@ class Signal:
     btc_trend: str
     timestamp: Optional[datetime] = None
     indicators: dict = field(default_factory=dict)
+    atr_at_entry: Optional[float] = None  # ATR value at signal time, for trailing stop
 
     @property
     def sl_distance_pct(self):
@@ -122,6 +123,7 @@ def generate_signal(symbol: str, entry_price: float, score_result: dict,
         btc_trend=score_result.get("btc_trend", "Unknown"),
         timestamp=timestamp,
         indicators=score_result.get("signals", {}),
+        atr_at_entry=score_result.get("atr"),
     )
 
 
