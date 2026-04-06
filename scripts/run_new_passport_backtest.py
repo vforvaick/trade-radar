@@ -28,7 +28,16 @@ from bot.backtester import run_backtest
 from bot.data_fetcher import get_all_futures_symbols
 from bot import config as _cfg
 
-CONFIGS_DIR = os.path.join(REPO_ROOT, "pumpradar-passports", "configs")
+PASSPORTS_ROOT = os.path.join(REPO_ROOT, "passports")
+
+
+def _find_passport_file(filename: str) -> str:
+    """Locate a passport JSON by filename in any subdirectory of passports/."""
+    for subdir in os.listdir(PASSPORTS_ROOT):
+        candidate = os.path.join(PASSPORTS_ROOT, subdir, filename)
+        if os.path.isfile(candidate):
+            return candidate
+    raise FileNotFoundError(f"Passport file not found: {filename} under {PASSPORTS_ROOT}")
 
 # Passports to test — new candidates + v0.3 rollbacks for reference
 NEW_PASSPORT_FILES = [
@@ -87,10 +96,10 @@ def run_all(days: int, pairs: int, symbols: list = None) -> list[dict]:
     print(f"Pairs: {symbols}\n", flush=True)
 
     all_files = [
-        (f, os.path.join(CONFIGS_DIR, f), "NEW")
+        (f, _find_passport_file(f), "NEW")
         for f in NEW_PASSPORT_FILES
     ] + [
-        (f, os.path.join(CONFIGS_DIR, f), "REF")
+        (f, _find_passport_file(f), "REF")
         for f in REFERENCE_PASSPORT_FILES
     ]
 

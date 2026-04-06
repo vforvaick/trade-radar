@@ -1,36 +1,37 @@
 {
-    "name": "MinimalEdge",
-    "emoji": "\ud83c\udfaf",
+    "name": "PureTrend",
+    "emoji": "\ud83d\udcc8",
+    "enabled": true,
     "version": "0.1",
     "changelog": [
         {
             "version": "0.1",
             "date": "2026-04-04",
             "git_sha": "91e1e37",
-            "description": "Ultra-selective EMA+Volume \u2014 inspired by the proven profitable pattern (HiddenGem/Sniper/VolumeKing all use 3 indicators and are profitable). This variant uses just EMA + Vol.",
+            "description": "Pure EMA trend-following \u2014 single indicator strategy inspired by reference S1 (Single MA). Uses only EMA trend with heavy weight. Simplest possible mechanical strategy.",
             "backtest_90d": {
-                "return_pct": 0.3,
+                "return_pct": 0.2,
                 "win_rate": 33.2,
                 "trades": 319,
                 "max_dd_pct": 0.0,
                 "profit_factor": 1.0,
-                "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Barely profitable 90d. EMA+Vol ultra-selective."
+                "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Barely profitable 90d. EMA-only single indicator."
             }
         }
     ],
-    "description": "Ultra-minimal: EMA trend + volume spike only. Follows proven profitable pattern of fewer indicators. Thesis: only trade when trend aligns AND volume confirms.",
+    "description": "Pure trend-following using only EMA alignment. Reference: 151 Strategies S1 \u2014 Single Moving Average. Thesis: simplicity reduces noise, trend is the strongest signal.",
     "config_overrides": {
         "EMA_FAST": 9,
         "EMA_MID": 21,
         "EMA_SLOW": 50,
         "VOLUME_SPIKE_THRESHOLD": 2.0,
         "INDICATOR_WEIGHTS": {
-            "ema_trend": 1.5,
+            "ema_trend": 3.0,
             "macd_signal": 0.0,
             "rsi_position": 0.0,
             "rsi_divergence": 0.0,
             "bb_position": 0.0,
-            "volume_spike": 2.5,
+            "volume_spike": 0.0,
             "pressure": 0.0,
             "candle_direction": 0.0
         },

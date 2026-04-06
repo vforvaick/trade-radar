@@ -48,7 +48,7 @@ def test_get_last_equity_returns_latest_row_when_same_second(tmp_path):
 
 def test_env_db_path_is_resolved_from_repo_root(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("PUMPRADAR_STATE_DB", "relative-state.db")
+    monkeypatch.setenv("CRYPTOPASS_STATE_DB", "relative-state.db")
 
     store = StateStore()
 

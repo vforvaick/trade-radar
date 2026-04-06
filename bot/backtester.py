@@ -102,8 +102,22 @@ def backtest_pair(symbol: str, klines: pd.DataFrame, btc_df: pd.DataFrame,
         last_close = klines.iloc[-1]["close"]
         entry = pos.signal.entry_price
         is_long = pos.signal.direction == "LONG"
+        leverage = pos.signal.leverage
+        sl_dist = abs(pos.signal.sl - entry) / entry
+
+        # Determine remaining open fraction (don't double-count already-closed TP portions)
+        if pos.tp2_hit:
+            remaining_fraction = config.TP3_CLOSE_PCT
+        elif pos.tp1_hit:
+            remaining_fraction = config.TP2_CLOSE_PCT + config.TP3_CLOSE_PCT
+        else:
+            remaining_fraction = 1.0
+
         pnl_pct = (last_close - entry) / entry if is_long else (entry - last_close) / entry
-        pos.realized_pnl = pos.risk_amount * pnl_pct / (abs(pos.signal.sl - entry) / entry)
+        pnl_on_remaining = pos.risk_amount * (pnl_pct / sl_dist) * leverage * remaining_fraction
+        fee = pos.risk_amount * leverage * remaining_fraction * (config.TRADING_FEE_PCT / 100) * 2
+        pos.realized_pnl += pnl_on_remaining - fee
+
         equity += pos.realized_pnl
         trades.append({
             "symbol": symbol,

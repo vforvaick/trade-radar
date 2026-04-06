@@ -19,7 +19,7 @@ def _json_default(value):
 
 
 def _resolve_db_path(db_path=None) -> str:
-    candidate = db_path or os.environ.get("PUMPRADAR_STATE_DB", "state.db")
+    candidate = db_path or os.environ.get("CRYPTOPASS_STATE_DB", "state.db")
     if os.path.isabs(candidate):
         return candidate
     return os.path.abspath(os.path.join(_REPO_ROOT, candidate))
@@ -72,6 +72,19 @@ class StateStore:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     passport_name TEXT NOT NULL,
                     trade_data_json TEXT NOT NULL,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+
+            # Table for equity snapshots with unrealized PnL (v2)
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS equity_snapshots_v2 (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    passport_name TEXT NOT NULL,
+                    realized_equity REAL NOT NULL,
+                    unrealized_pnl REAL NOT NULL DEFAULT 0.0,
+                    total_equity REAL NOT NULL,
+                    open_positions INTEGER NOT NULL DEFAULT 0,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
@@ -167,6 +180,25 @@ class StateStore:
                 VALUES (?, ?)
             ''', (passport_name, trade_json))
             conn.commit()
+
+    def save_equity_v2(self, passport_name: str, realized_equity: float, unrealized_pnl: float, open_positions: int):
+        """Save equity snapshot with unrealized PnL breakdown."""
+        total = realized_equity + unrealized_pnl
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                "INSERT INTO equity_snapshots_v2 (passport_name, realized_equity, unrealized_pnl, total_equity, open_positions) VALUES (?,?,?,?,?)",
+                (passport_name, realized_equity, unrealized_pnl, total, open_positions),
+            )
+
+    def get_equity_history_v2(self, passport_name: str, limit: int = 100) -> list[dict]:
+        """Get recent equity snapshots with unrealized PnL for a passport."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT * FROM equity_snapshots_v2 WHERE passport_name=? ORDER BY timestamp DESC LIMIT ?",
+                (passport_name, limit),
+            ).fetchall()
+        return [dict(r) for r in rows]
 
     def get_signal_message_id(self, symbol: str, passport_name: str) -> Optional[int]:
         """Find the telegram message ID associated with an active signal."""

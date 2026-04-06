@@ -81,21 +81,31 @@ def convert_v1_to_v2(v1_config: dict) -> dict:
 
 
 def scan_and_convert(passport_dir: str) -> list[dict]:
-    """Scan a directory of v1 passport JSON files and convert all to v2.
+    """Scan a directory (or directory with subdirectories) of v1 passport JSON files and convert all to v2.
 
     Args:
-        passport_dir: path to directory containing *.json passport configs
+        passport_dir: path to directory containing *.json passport configs (flat or with immediate subdirs)
 
     Returns:
         list of v2 passport dicts
     """
     results = []
-    for fname in sorted(os.listdir(passport_dir)):
-        if not fname.endswith(".json"):
-            continue
-        path = os.path.join(passport_dir, fname)
-        with open(path) as f:
-            v1 = json.load(f)
-        v2 = convert_v1_to_v2(v1)
-        results.append(v2)
+    entries = sorted(os.listdir(passport_dir))
+    for entry in entries:
+        entry_path = os.path.join(passport_dir, entry)
+        if os.path.isdir(entry_path):
+            # Recurse one level into subdirectories
+            for fname in sorted(os.listdir(entry_path)):
+                if not fname.endswith(".json"):
+                    continue
+                path = os.path.join(entry_path, fname)
+                with open(path) as f:
+                    v1 = json.load(f)
+                v2 = convert_v1_to_v2(v1)
+                results.append(v2)
+        elif entry.endswith(".json"):
+            with open(entry_path) as f:
+                v1 = json.load(f)
+            v2 = convert_v1_to_v2(v1)
+            results.append(v2)
     return results

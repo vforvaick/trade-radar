@@ -111,7 +111,7 @@ def test_command_poller_logs_send_failures_and_status_reports_state(
     store = StateStore(db_path=str(db_path))
     store.save_position("Pumpradar Reversal", _signal("ETHUSDT"), 1000.0, 25.0, tg_msg_id=777)
 
-    monkeypatch.setenv("PUMPRADAR_STATE_DB", str(db_path))
+    monkeypatch.setenv("CRYPTOPASS_STATE_DB", str(db_path))
     runner = PassportRunner(str(cfg_dir), interval="1h")
     notifier = TelegramNotifier(bot_token="token", chat_id="123")
     poller = TelegramCommandPoller(notifier, runner)
@@ -192,7 +192,7 @@ def test_tp_sl_send_failures_log_symbol_and_passport_context(monkeypatch, caplog
 
 
 def test_binance_requests_verify_tls_by_default_and_allow_explicit_escape_hatch(monkeypatch):
-    monkeypatch.delenv("PUMPRADAR_BINANCE_VERIFY_TLS", raising=False)
+    monkeypatch.delenv("CRYPTOPASS_BINANCE_VERIFY_TLS", raising=False)
 
     request_kwargs = []
 
@@ -214,7 +214,7 @@ def test_binance_requests_verify_tls_by_default_and_allow_explicit_escape_hatch(
     assert data_fetcher.get_all_futures_symbols(min_volume=0) == ["BTCUSDT"]
     assert request_kwargs[-1]["verify"] is True
 
-    monkeypatch.setenv("PUMPRADAR_BINANCE_VERIFY_TLS", "false")
+    monkeypatch.setenv("CRYPTOPASS_BINANCE_VERIFY_TLS", "false")
 
     assert data_fetcher.get_all_futures_symbols(min_volume=0) == ["BTCUSDT"]
     assert request_kwargs[-1]["verify"] is False
@@ -238,7 +238,7 @@ def test_restore_skips_corrupt_position_rows_and_keeps_valid_rows(tmp_path, monk
         )
         conn.commit()
 
-    monkeypatch.setenv("PUMPRADAR_STATE_DB", str(db_path))
+    monkeypatch.setenv("CRYPTOPASS_STATE_DB", str(db_path))
     caplog.set_level(logging.WARNING)
 
     runner = PassportRunner(str(cfg_dir), interval="1h")
@@ -271,7 +271,7 @@ def test_restore_skips_rows_with_malformed_signal_timestamp(tmp_path, monkeypatc
         )
         conn.commit()
 
-    monkeypatch.setenv("PUMPRADAR_STATE_DB", str(db_path))
+    monkeypatch.setenv("CRYPTOPASS_STATE_DB", str(db_path))
     caplog.set_level(logging.WARNING)
 
     runner = PassportRunner(str(cfg_dir), interval="1h")
@@ -308,7 +308,7 @@ def test_restore_skips_rows_with_non_string_timestamp_and_prints_actual_open_cou
         )
         conn.commit()
 
-    monkeypatch.setenv("PUMPRADAR_STATE_DB", str(db_path))
+    monkeypatch.setenv("CRYPTOPASS_STATE_DB", str(db_path))
     caplog.set_level(logging.WARNING)
 
     runner = PassportRunner(str(cfg_dir), interval="1h")

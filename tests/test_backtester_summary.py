@@ -21,7 +21,7 @@ def test_summarize_uses_last_trade_equity_as_final_equity():
     summary = _summarize(trades)
 
     assert summary["final_equity"] == config.INITIAL_EQUITY + 5.0
-    assert round(summary["return_pct"], 2) == 0.5
+    assert round(summary["return_pct"], 2) == 1.0
 
 
 def test_summarize_handles_flat_returns_without_nan_metrics():

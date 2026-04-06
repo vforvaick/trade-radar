@@ -54,6 +54,7 @@ class PassportRunner:
         self.state_restore_error_count = 0
         self.scan_cycle_error_count = 0
         self.price_fetch_error_count = 0
+        self._last_prices: dict[str, tuple] = {}
         self.state_store = StateStore()
         self.passports = self._load_passports(passport_dir)
         self.scanner = Scanner(interval=interval, limit=100)
@@ -77,38 +78,47 @@ class PassportRunner:
             )
 
     def _load_passports(self, passport_dir: str) -> List[Passport]:
-        """Load all *.json passport configs from a directory."""
+        """Load all *.json passport configs from passport_dir and its immediate subdirectories."""
         passports = []
         if not os.path.isdir(passport_dir):
             print(f"[PassportRunner] Warning: {passport_dir} not found", flush=True)
             return passports
 
-        for fname in sorted(os.listdir(passport_dir)):
-            if fname.endswith(".json"):
-                try:
-                    fpath = os.path.join(passport_dir, fname)
-                    with open(fpath) as f:
-                        passport_data = json.load(f)
-                    if not _is_enabled(passport_data):
-                        open_positions = self.state_store.load_open_positions(passport_data["name"])
-                        if open_positions:
-                            print(
-                                f"[PassportRunner] Restoring disabled passport with {len(open_positions)} open positions: {fname}",
-                                flush=True,
-                            )
-                        else:
-                            print(f"[PassportRunner] Skipping disabled passport config: {fname}", flush=True)
-                            continue
-                    p = Passport(fpath)
-                    passports.append(p)
-                except Exception as e:
-                    self.passport_load_error_count += 1
-                    logger.exception(
-                        "Failed to load passport config file=%s path=%s",
-                        fname,
-                        os.path.join(passport_dir, fname),
-                    )
-                    print(f"[PassportRunner] Error loading {fname}: {e}", flush=True)
+        # Collect .json files from the root dir and all immediate subdirectories
+        json_files: list[tuple[str, str]] = []
+        for entry in sorted(os.listdir(passport_dir)):
+            entry_path = os.path.join(passport_dir, entry)
+            if os.path.isdir(entry_path):
+                for fname in sorted(os.listdir(entry_path)):
+                    if fname.endswith(".json"):
+                        json_files.append((fname, os.path.join(entry_path, fname)))
+            elif entry.endswith(".json"):
+                json_files.append((entry, entry_path))
+
+        for fname, fpath in json_files:
+            try:
+                with open(fpath) as f:
+                    passport_data = json.load(f)
+                if not _is_enabled(passport_data):
+                    open_positions = self.state_store.load_open_positions(passport_data["name"])
+                    if open_positions:
+                        print(
+                            f"[PassportRunner] Restoring disabled passport with {len(open_positions)} open positions: {fname}",
+                            flush=True,
+                        )
+                    else:
+                        print(f"[PassportRunner] Skipping disabled passport config: {fname}", flush=True)
+                        continue
+                p = Passport(fpath)
+                passports.append(p)
+            except Exception as e:
+                self.passport_load_error_count += 1
+                logger.exception(
+                    "Failed to load passport config file=%s path=%s",
+                    fname,
+                    fpath,
+                )
+                print(f"[PassportRunner] Error loading {fname}: {e}", flush=True)
 
         return passports
 
@@ -274,6 +284,7 @@ class PassportRunner:
                             df.iloc[0]['low'],
                             df.iloc[0]['close']
                         )
+                        self._last_prices[sym] = current_prices[sym]
                 except Exception as e:
                     self.price_fetch_error_count += 1
                     logger.exception(
@@ -303,12 +314,25 @@ class PassportRunner:
                     passport.equity += pos.realized_pnl
                     passport.trade_count += 1
                     self.state_store.save_equity(passport.name, passport.equity)
+                    exit_price = current_prices.get(pos.signal.symbol, (None, None, None))[2]
                     self.state_store.log_trade(passport.name, {
                         "symbol": pos.signal.symbol,
+                        "direction": pos.signal.direction,
                         "event": event,
+                        "entry_price": pos.signal.entry_price,
+                        "exit_price": exit_price,
+                        "leverage": pos.signal.leverage,
+                        "confidence": pos.signal.confidence,
+                        "risk_amount": pos.risk_amount,
                         "realized_pnl": pos.realized_pnl,
+                        "fees_paid": pos.fees_paid,
                         "equity": passport.equity,
-                        "timestamp": datetime.now().isoformat()
+                        "tp1_hit": pos.tp1_hit,
+                        "tp2_hit": pos.tp2_hit,
+                        "tp3_hit": pos.tp3_hit,
+                        "opened_at": pos.created_at,
+                        "closed_at": datetime.now().isoformat(),
+                        "timestamp": datetime.now().isoformat(),
                     })
 
                 events.append({
@@ -318,6 +342,32 @@ class PassportRunner:
                 })
 
         return events
+
+    def snapshot_equity_all(self, current_prices: dict):
+        """Save equity snapshots for all passports, including unrealized PnL from open positions."""
+        if not current_prices:
+            logger.warning("snapshot_equity_all called with empty current_prices — unrealized PnL will be 0")
+
+        for passport in self.passports:
+            unrealized_pnl = 0.0
+            for pos in passport.position_manager.positions:
+                sym = pos.signal.symbol
+                price_data = current_prices.get(sym)
+                if price_data is not None:
+                    current_price = price_data[2] if isinstance(price_data, tuple) else price_data
+                    entry = pos.signal.entry_price
+                    leverage = pos.signal.leverage
+                    if pos.signal.direction == "LONG":
+                        unrealized_pnl += (current_price - entry) / entry * leverage * pos.risk_amount
+                    else:
+                        unrealized_pnl += (entry - current_price) / entry * leverage * pos.risk_amount
+
+            self.state_store.save_equity_v2(
+                passport.name,
+                passport.equity,
+                unrealized_pnl,
+                passport.position_manager.open_count,
+            )
 
     def get_summary(self) -> str:
         """Get summary of all passports' performance."""

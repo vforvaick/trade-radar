@@ -1,0 +1,15 @@
+[Unit]
+Description=Cryptopass Prometheus Metrics Exporter
+Wants=network-online.target
+After=network-online.target cryptopass.service
+
+[Service]
+User=vforvaick
+WorkingDirectory=/home/vforvaick/pumpradar-bot
+EnvironmentFile=/home/vforvaick/pumpradar-bot/.env
+ExecStart=/home/vforvaick/pumpradar-bot/.venv/bin/python bot/metrics_exporter.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

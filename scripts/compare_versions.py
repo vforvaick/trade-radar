@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 
 
-CONFIGS_DIR = Path(__file__).parent.parent / "pumpradar-passports" / "configs"
+PASSPORTS_ROOT = Path(__file__).parent.parent / "passports"
 
 
 def fmt_backtest(entry: dict) -> str:
@@ -22,7 +22,7 @@ def fmt_backtest(entry: dict) -> str:
 
 def load_passports() -> list[dict]:
     passports = []
-    for path in sorted(CONFIGS_DIR.glob("*.json")):
+    for path in sorted(PASSPORTS_ROOT.glob("**/*.json")):
         with path.open() as f:
             data = json.load(f)
         data["_file"] = path.name

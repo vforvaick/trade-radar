@@ -1,6 +1,7 @@
 {
     "name": "PressureReader",
     "emoji": "\ud83c\udf0a",
+    "enabled": true,
     "version": "0.1",
     "changelog": [
         {

@@ -1,6 +1,7 @@
 {
     "name": "TrendMomentum",
     "emoji": "\ud83d\ude84",
+    "enabled": true,
     "version": "0.1",
     "changelog": [
         {

@@ -2,7 +2,7 @@
     "name": "Pumpradar ReversalV2",
     "emoji": "🔃",
     "version": "0.2",
-    "enabled": false,
+    "enabled": true,
     "changelog": [
         {
             "version": "0.1",

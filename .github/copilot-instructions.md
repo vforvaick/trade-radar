@@ -1,8 +1,8 @@
-# Pumpradar — Copilot Instructions
+# Cryptopass — Copilot Instructions
 
 ## What this project is
 
-**Pumpradar** is an automated Binance Futures paper-trading bot that runs multiple independent strategy "passports" simultaneously. Each passport is a self-contained JSON config with its own indicator weights, thresholds, and trade rules. The bot scans the top-volume altcoin futures pairs on the 1H timeframe, scores confluence across up to 10 technical indicators, and sends trade signals to Telegram.
+**Cryptopass** is an automated Binance Futures paper-trading bot that runs multiple independent strategy "passports" simultaneously. Each passport is a self-contained JSON config with its own indicator weights, thresholds, and trade rules. The bot scans the top-volume altcoin futures pairs on the 1H timeframe, scores confluence across up to 10 technical indicators, and sends trade signals to Telegram. (The external alert service is called Pumpradar; this system is Cryptopass.)
 
 ## North Star & Goals
 
@@ -18,7 +18,7 @@ These docs are the source of truth. Always read them before starting work, and *
 | Doc | Purpose | Update when |
 |---|---|---|
 | `docs/FINDINGS.md` | All findings, bugs fixed, anti-patterns, proven patterns, backtest results | **After every iteration — non-negotiable** |
-| `pumpradar-passports/VERSIONS.md` | Passport version registry | Every passport config change |
+| `passports/VERSIONS.md` | Passport version registry | Every passport config change |
 | `ops/fight-tres-runbook.md` | VPS deployment and incident procedures | After any infra/deploy change |
 | `docs/superpowers/plans/` | Implementation plans and deep-dive analysis | After completing a plan |
 
@@ -30,7 +30,7 @@ These docs are the source of truth. Always read them before starting work, and *
 
 ```bash
 # Always use uv — `python` is not in PATH
-uv run pytest tests/ -v --tb=short           # full suite (206 tests)
+uv run pytest tests/ -v --tb=short           # full suite (238 tests)
 uv run pytest tests/test_backtester_summary.py -v  # single file
 uv run pytest tests/ -k "test_list_passports" -v   # single test by name
 
@@ -64,7 +64,7 @@ Scanner.scan_all()
 
 ### Multi-passport isolation
 
-`PassportRunner` in `bot/passport_runner.py` loads every `pumpradar-passports/configs/*.json` at startup. For each passport, before scanning it:
+`PassportRunner` in `bot/passport_runner.py` loads every passport from `passports/pumpradar/*.json` and `passports/cryptopass-research/*.json` at startup. For each passport, before scanning it:
 1. Snapshots current `bot/config` module attributes
 2. Applies `config_overrides` from the JSON via `setattr(config, k, v)`
 3. After scan: **always** restores original values (even on exception)
@@ -144,7 +144,7 @@ All passports must keep `"USE_TRAILING_STOP": false`. The fix requires an ATR-ba
 
 ### RSI thresholds are global, not per-passport
 
-`RSI_LONG_THRESHOLD = 50` and `RSI_SHORT_THRESHOLD = 50` are in `bot/config.py` and cannot be overridden per passport. This is why the Reversal strategy is permanently quarantined (`"enabled": false`) — its mean-reversion logic needs RSI < 30 / RSI > 70 but the code hardcodes 50/50.
+`RSI_LONG_THRESHOLD = 50` and `RSI_SHORT_THRESHOLD = 50` are in `bot/config.py` and can be overridden per-passport via `config_overrides`. Previously these were hardcoded globals; Session 7 fixed this. The Reversal strategy (which needs RSI < 30 / > 70) is now re-enabled with proper per-passport RSI thresholds.
 
 ### Config override safety pattern
 
@@ -171,22 +171,23 @@ git show 950e0ec:pumpradar-passports/configs/<file>.json
 ### Environment variables
 
 ```
-PUMPRADAR_TG_TOKEN   # Telegram bot token
-PUMPRADAR_TG_CHAT    # Telegram chat ID (DM — system logs only)
-PUMPRADAR_TG_GROUP_ID  # Supergroup chat_id for trade signals (e.g. Trader Zone)
-PUMPRADAR_TG_TOPIC_ID  # message_thread_id for the trade topic within group
-PUMPRADAR_STATE_DB   # SQLite path (default: state.db in cwd)
+CRYPTOPASS_TG_TOKEN          # Telegram bot token
+CRYPTOPASS_TG_CHAT           # DM chat ID (system logs only)
+CRYPTOPASS_TG_GROUP_ID       # Trade group supergroup ID
+CRYPTOPASS_TG_TRADE_TOPIC_ID # Topic ID for trade signals within group
+CRYPTOPASS_TG_LOG_TOPIC_ID   # Topic ID for system logs (General)
+CRYPTOPASS_STATE_DB          # SQLite path (default: state.db in cwd)
 ```
 Source from `.env` file (see `ops/env.example`). Never commit secrets.
 
 ## VPS Deployment (`fight-tres`)
 
 ```bash
-ssh fight-tres systemctl status pumpradar.service --no-pager
-ssh fight-tres "journalctl -u pumpradar.service -n 100 --no-pager -o short-iso"
+ssh fight-tres systemctl status cryptopass.service --no-pager
+ssh fight-tres "journalctl -u cryptopass.service -n 100 --no-pager -o short-iso"
 
 # After pushing code:
-ssh fight-tres "cd /home/vforvaick/pumpradar-bot && git pull && systemctl restart pumpradar.service"
+ssh fight-tres "cd /home/vforvaick/pumpradar-bot && git pull && systemctl restart cryptopass.service"
 ```
 
 Working dir on VPS: `/home/vforvaick/pumpradar-bot`. State DB: `/home/vforvaick/pumpradar-bot/state.db`.
@@ -201,18 +202,25 @@ See `ops/fight-tres-runbook.md` for full post-deploy validation checklist.
 | `bot/config.py` | Mutable global config — single source of truth for all thresholds |
 | `bot/backtester.py` | Backtest engine — equal-weight multi-symbol aggregation |
 | `bot/position_manager.py` | TP cascade 70/20/10, SL → breakeven logic |
+| `bot/metrics_exporter.py` | Prometheus metrics exporter on port 9103 |
 | `bot/research/pipeline.py` | 4-stage research pipeline orchestrator |
-| `pumpradar-passports/VERSIONS.md` | Passport version registry |
+| `passports/VERSIONS.md` | Passport version registry |
 | `docs/FINDINGS.md` | ⭐ Master findings doc — read first, update last |
 | `ops/fight-tres-runbook.md` | VPS deployment and emergency procedures |
 
-## Current Status (as of 2026-04-05 Session 4)
+## Current Status (as of 2026-04-06 Session 7)
 
-- **Branch:** `fix/strategy-parameter-tuning` — 51 commits ahead of master, PR #1 open
-- **Tests:** 206/206 passing
-- **Passports:** 22 total (7 original + 10 new candidates + reversal_v2 + seasonality_og + DualMA + Donchian + OBV)
-- **VPS:** Running on **old code** (pre-branch). Needs PR merge + deploy to activate all work.
+- **Branch:** `feat/cryptopass-overhaul`
+- **Tests:** 238/238 passing
+- **Passports:** 22 total (7 Pumpradar derivatives in `passports/pumpradar/` + 15 custom in `passports/cryptopass-research/`), all enabled, $500 fresh start
+- **PnL:** leverage-corrected, trading fees deducted (0.04% per side)
+- **VPS:** Needs `feat/cryptopass-overhaul` deploy + fresh_start migration (`scripts/fresh_start.py --confirm`)
 - **Top 90d quality-pair candidates:** MACDDivergence +9.1% (PF=1.39), BBMeanRev +7.7% (PF=1.32)
 - **180d v0.1→v0.2:** Momentum BETTER (+10.7pp), Dynamic BETTER (+16.0pp); OG/HiddenGem/Sniper/VolumeKing WORSE — selectivity principle confirmed
 - **Research engine:** Fully built (Plans 1–3), never run end-to-end on live data yet
-- **Fixed in Session 4:** Trailing stop ATR formula fixed, RSI thresholds now per-passport via config_overrides, weekday filter (SKIP_WEEKDAYS) added
+
+### PnL Formula (corrected in Session 7)
+```
+profit = risk_amount × (target_dist / sl_dist) × close_pct × leverage − fee
+fee    = notional × close_pct × 0.0008 (round-trip, 0.04% each side)
+```

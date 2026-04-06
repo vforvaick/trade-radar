@@ -1,6 +1,7 @@
 {
     "name": "BreakoutVol",
     "emoji": "\ud83d\udca5",
+    "enabled": true,
     "version": "0.1",
     "changelog": [
         {

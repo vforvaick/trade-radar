@@ -39,7 +39,7 @@ def test_runner_restores_equity_open_positions_and_message_ids(tmp_path, monkeyp
     pos_id = store.save_position("Pumpradar OG", signal, 1234.0, 37.02, tg_msg_id=77)
     store.save_equity("Pumpradar OG", 1234.0)
 
-    monkeypatch.setenv("PUMPRADAR_STATE_DB", str(db_path))
+    monkeypatch.setenv("CRYPTOPASS_STATE_DB", str(db_path))
     runner = PassportRunner(str(cfg_dir), interval="1h")
 
     assert [passport.name for passport in runner.passports] == ["Pumpradar OG"]
@@ -89,7 +89,7 @@ def test_disabled_passport_with_open_positions_is_restored_but_not_scanned(tmp_p
     store.save_position("Pumpradar Reversal", signal, 1000.0, 30.0)
     store.save_equity("Pumpradar Reversal", 970.0)
 
-    monkeypatch.setenv("PUMPRADAR_STATE_DB", str(db_path))
+    monkeypatch.setenv("CRYPTOPASS_STATE_DB", str(db_path))
     monkeypatch.setattr("bot.passport_runner.Scanner.update_btc_trend", lambda scanner: None)
 
     def fail_scan(scanner):
@@ -119,7 +119,7 @@ def test_runner_restores_zero_equity_snapshot(tmp_path, monkeypatch):
     store = StateStore(db_path=str(db_path))
     store.save_equity("Pumpradar OG", 0.0)
 
-    monkeypatch.setenv("PUMPRADAR_STATE_DB", str(db_path))
+    monkeypatch.setenv("CRYPTOPASS_STATE_DB", str(db_path))
     runner = PassportRunner(str(cfg_dir), interval="1h")
 
     assert runner.passports[0].equity == 0.0
@@ -152,7 +152,7 @@ def test_update_all_positions_logs_fetch_exception_details(tmp_path, monkeypatch
     store.save_position("Pumpradar OG", signal, 1000.0, 30.0, tg_msg_id=77)
     store.save_equity("Pumpradar OG", 1000.0)
 
-    monkeypatch.setenv("PUMPRADAR_STATE_DB", str(db_path))
+    monkeypatch.setenv("CRYPTOPASS_STATE_DB", str(db_path))
     runner = PassportRunner(str(cfg_dir), interval="1h")
 
     def fail_fetch(*args, **kwargs):

@@ -19,7 +19,7 @@ def test_convert_v1():
 
 def test_scan_and_convert():
     from bot.research.legacy_adapter import scan_and_convert
-    d = "pumpradar-passports/configs"
+    d = "passports"
     if not os.path.exists(d):
         pytest.skip("No legacy passports")
     results = scan_and_convert(d)
