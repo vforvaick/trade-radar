@@ -89,7 +89,8 @@ def run_multi_passport(tg_token: str = None, tg_chat: str = None,
     tg_topic = (os.environ.get("CRYPTOPASS_TG_TRADE_TOPIC_ID") or "").strip() or None
     tg_log_topic = (os.environ.get("CRYPTOPASS_TG_LOG_TOPIC_ID") or "").strip() or None
     notifier = TelegramNotifier(bot_token=tg_token, chat_id=tg_chat,
-                                group_id=tg_group, topic_id=tg_topic)
+                                group_id=tg_group, trade_topic_id=tg_topic,
+                                log_topic_id=tg_log_topic)
     notifier.restore_message_ids(runner.state_store)
 
     # Start telegram polling thread
@@ -147,7 +148,7 @@ def run_multi_passport(tg_token: str = None, tg_chat: str = None,
                     sig_msg = format_signal_message(sig, passport)
                     print(sig_msg, flush=True)
                     if tg_token:
-                        msg_id = notifier._send(sig_msg)
+                        msg_id = notifier.send_signal(sig, passport_name=passport.name, passport_emoji=passport.emoji)
                         notifier.store_signal_message_id(sig.symbol, msg_id, passport.name)
                         if msg_id and pos.pos_id:
                             runner.state_store.update_position(pos.pos_id, tg_msg_id=msg_id)

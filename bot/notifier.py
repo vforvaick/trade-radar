@@ -14,11 +14,14 @@ logger = logging.getLogger(__name__)
 
 class TelegramNotifier:
     def __init__(self, bot_token: str = None, chat_id: str = None,
-                 group_id: str = None, topic_id: str = None):
+                 group_id: str = None, trade_topic_id: str = None,
+                 log_topic_id: str = None, topic_id: str = None):
         self.bot_token = bot_token
         self.chat_id = chat_id            # DM chat — system logs/errors
         self.group_id = group_id          # Trade group chat ID
-        self.topic_id = topic_id          # message_thread_id for trade topic
+        # topic_id kept as alias for backward compat
+        self.trade_topic_id = trade_topic_id or topic_id  # message_thread_id for trade signals
+        self.log_topic_id = log_topic_id                  # message_thread_id for system logs
         self.enabled = bool(bot_token and chat_id)
         self.group_enabled = bool(bot_token and group_id)
         self.send_error_count = 0
@@ -80,11 +83,12 @@ class TelegramNotifier:
             print(f"[Notifier] Failed to send TG message: {e}")
         return None
 
-    def send_signal(self, signal: Signal):
-        """Format and send a new trade signal alert."""
+    def send_signal(self, signal: Signal, passport_name: str = None, passport_emoji: str = None) -> int | None:
+        """Format and send a new trade signal alert to the group."""
         emoji = "🟢 LONG" if signal.direction == "LONG" else "🔴 SHORT"
         
-        msg = f"🚀 **Pumpradar Replica Signal** 🚀\n\n"
+        prefix = f"{passport_emoji} **{passport_name}**" if passport_name else "🚀 **Cryptopass**"
+        msg = f"{prefix} — New Signal 📡\n\n"
         msg += f"**Symbol:** #{signal.symbol}\n"
         msg += f"**Direction:** {emoji}\n"
         msg += f"**Entry:** `{signal.entry_price}`\n\n"
@@ -108,9 +112,13 @@ class TelegramNotifier:
         return msg_id
 
     def send_update(self, msg: str):
-        """Send a general update or TP/SL hit alert."""
+        """Send a general update/system log to the group log topic."""
         print(f"[Notifier] {msg}")
-        self._send(f"🔔 **Bot Update:**\n{msg}")
+        self._send_to_group(f"🔔 {msg}", use_log_topic=True)
+
+    def send_error(self, msg: str):
+        """Send an error/alert to the group log topic."""
+        self._send_to_group(f"🚨 **System Error:**\n{msg}", use_log_topic=True)
 
     def store_signal_message_id(self, symbol: str, message_id: int, passport_name: str = None):
         """Store the message_id of a setup signal for reply threading."""
@@ -198,6 +206,7 @@ class TelegramNotifier:
         symbol: str = None,
         passport_name: str = None,
         event: str = None,
+        use_log_topic: bool = False,
     ) -> int | None:
         """Send a message to the trade group topic. Falls back to DM if group not configured."""
         if not self.bot_token:
@@ -214,8 +223,9 @@ class TelegramNotifier:
             "text": text,
             "parse_mode": "Markdown",
         }
-        if self.topic_id:
-            payload["message_thread_id"] = int(self.topic_id)
+        topic = self.log_topic_id if (use_log_topic and self.log_topic_id) else self.trade_topic_id
+        if topic:
+            payload["message_thread_id"] = int(topic)
         if reply_to_message_id:
             payload["reply_to_message_id"] = reply_to_message_id
             payload["allow_sending_without_reply"] = True
@@ -228,13 +238,13 @@ class TelegramNotifier:
             self.send_error_count += 1
             logger.warning(
                 "Telegram group API rejected message group_id=%s topic_id=%s symbol=%s event=%s response=%s",
-                self.group_id, self.topic_id, symbol, event, data,
+                self.group_id, topic, symbol, event, data,
             )
         except Exception as e:
             self.send_error_count += 1
             logger.exception(
                 "Failed to send Telegram group message group_id=%s topic_id=%s symbol=%s event=%s",
-                self.group_id, self.topic_id, symbol, event,
+                self.group_id, topic, symbol, event,
             )
             print(f"[Notifier] Failed to send TG group message: {e}")
         return None

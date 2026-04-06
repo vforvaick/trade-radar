@@ -109,8 +109,23 @@ class TestTelegramNotifierGroupRouting:
         n._send_to_group("hello")
         assert calls[0]["chat_id"] == "111"  # fell back to DM
 
-    def test_send_update_still_goes_to_dm(self, monkeypatch):
-        """send_update always uses DM _send, never group."""
+    def test_send_update_routes_to_group_log_topic(self, monkeypatch):
+        """send_update routes to group log topic when configured."""
+        calls = []
+        def fake_post(url, json=None, timeout=None):
+            calls.append(json)
+            class R:
+                def json(self): return {"ok": True, "result": {"message_id": 1}}
+            return R()
+        monkeypatch.setattr("bot.notifier.requests.post", fake_post)
+        n = TelegramNotifier(bot_token="tok", chat_id="111", group_id="-456",
+                             log_topic_id="999")
+        n.send_update("system log msg")
+        assert calls[0]["chat_id"] == "-456"  # group, not DM
+        assert calls[0]["message_thread_id"] == 999  # log topic
+
+    def test_send_update_falls_back_to_group_no_log_topic(self, monkeypatch):
+        """send_update uses group (no log topic) when log_topic_id not set."""
         calls = []
         def fake_post(url, json=None, timeout=None):
             calls.append(json)
@@ -120,4 +135,4 @@ class TestTelegramNotifierGroupRouting:
         monkeypatch.setattr("bot.notifier.requests.post", fake_post)
         n = TelegramNotifier(bot_token="tok", chat_id="111", group_id="-456")
         n.send_update("system log msg")
-        assert calls[0]["chat_id"] == "111"  # DM, not group
+        assert calls[0]["chat_id"] == "-456"  # group
