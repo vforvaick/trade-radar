@@ -16,3 +16,4 @@ state.db
 logs/*.log
 *.bak
 research_experiments.db
+.worktrees/
