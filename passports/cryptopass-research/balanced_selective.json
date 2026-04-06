@@ -1,6 +1,7 @@
 {
     "name": "BalancedSelective",
     "emoji": "\u2696\ufe0f",
+    "enabled": true,
     "version": "0.1",
     "changelog": [
         {

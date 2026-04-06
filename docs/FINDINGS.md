@@ -1,8 +1,44 @@
-# Pumpradar — Findings, Failures & Learnings
+# Cryptopass — Findings, Failures & Learnings
 
 > Living document. Updated after every iteration cycle.
 > Purpose: avoid repeating mistakes, build on proven insights, explore new lineages with context.
-> Last updated: 2026-04-05 (Session 6 — 3 new indicators, Telegram group routing, new passport backtest)
+> Last updated: 2026-04-06 (Session 7 — Cryptopass overhaul, PnL bug fix, fresh start)
+
+---
+
+## §13 — Session 7: Cryptopass Overhaul (2026-04-06)
+
+### What Changed
+1. **System renamed to Cryptopass** — "Pumpradar" is the external alert bot; "Cryptopass" is our system
+2. **Critical PnL Bug Fixed** — leverage was never applied to PnL calculations:
+   - Old: `profit = risk_amount × (target_dist / sl_dist) × close_pct`
+   - New: `profit = risk_amount × (target_dist / sl_dist) × close_pct × leverage`
+   - Impact: All historical returns were understated by 4-7x
+3. **Trading fees added** — 0.04% per side (0.08% round-trip), deducted proportionally per close tier
+4. **Passport directory restructured:**
+   - `pumpradar-passports/configs/` → `passports/pumpradar/` (7 OG derivatives)
+   - New: `passports/cryptopass-research/` (15 custom strategies)
+5. **Telegram threading fixed** — signals now routed through `send_signal()` → group, TP/SL replies correctly threaded
+6. **Prometheus metrics exporter** — `bot/metrics_exporter.py` on port 9103, Grafana dashboard at `ops/grafana-cryptopass-dashboard.json`
+7. **$500 fresh start** — All 22 passports re-enabled, clean equity reset
+
+### PnL Formula Reference (corrected)
+```
+Per-level profit = risk_amount × (target_dist / sl_dist) × close_pct × leverage - fee
+Fee per close    = notional × close_pct × 0.0008  (0.04% entry + 0.04% exit)
+SL remaining     = remaining_fraction × (1.0 / 0.30 / 0.10 depending on TPs hit)
+```
+
+### Env Vars (post-rename)
+```
+CRYPTOPASS_TG_TOKEN       → Telegram bot token
+CRYPTOPASS_TG_CHAT        → DM chat ID (fallback/logs)
+CRYPTOPASS_TG_GROUP_ID    → Trade group supergroup ID
+CRYPTOPASS_TG_TRADE_TOPIC_ID → Topic ID for trade signals
+CRYPTOPASS_TG_LOG_TOPIC_ID   → Topic ID for system logs (General)
+CRYPTOPASS_STATE_DB       → SQLite path (default: state.db)
+CRYPTOPASS_BINANCE_VERIFY_TLS → TLS verification (default: true)
+```
 
 ---
 

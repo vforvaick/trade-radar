@@ -1,6 +1,7 @@
 {
     "name": "Pumpradar OG",
     "emoji": "🏆",
+    "enabled": true,
     "version": "0.3",
     "changelog": [
         {

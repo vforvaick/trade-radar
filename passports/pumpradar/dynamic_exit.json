@@ -1,6 +1,7 @@
 {
     "name": "Pumpradar Dynamic",
     "emoji": "🎯",
+    "enabled": true,
     "version": "0.2",
     "changelog": [
         {

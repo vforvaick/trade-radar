@@ -1,6 +1,7 @@
 {
     "name": "Pumpradar Sniper",
     "emoji": "🎯",
+    "enabled": true,
     "version": "0.3",
     "changelog": [
         {

@@ -1,5 +1,9 @@
 # Passport Version Registry
 
+> **Session 7 (2026-04-06):** All passports reset to v1.0 fresh start under Cryptopass.
+> Directory: `passports/pumpradar/` (7 OG) + `passports/cryptopass-research/` (15 custom)
+> Initial equity: $500 per passport. PnL now includes leverage multiplier + trading fees.
+
 > Auto-maintained alongside passport JSON configs.
 > Source of truth for tracking strategy evolution and performance.
 

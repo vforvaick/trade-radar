@@ -1,6 +1,7 @@
 {
     "name": "TrendConfirm",
     "emoji": "\u2705",
+    "enabled": true,
     "version": "0.1",
     "changelog": [
         {

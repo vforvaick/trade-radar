@@ -1,6 +1,7 @@
 {
     "name": "RSIContrarian",
     "emoji": "🔮",
+    "enabled": true,
     "version": "0.1",
     "changelog": [
         {

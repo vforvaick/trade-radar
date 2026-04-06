@@ -1,6 +1,62 @@
-# fight-tres Pumpradar Runbook
+# fight-tres Runbook
 
-## Current Service State
+## Post-Cryptopass-Overhaul (2026-04-06)
+
+Service renamed: `pumpradar.service` → `cryptopass.service`
+Metrics exporter added: `cryptopass-metrics.service` on port 9103
+
+### Service Commands (new)
+```bash
+ssh fight-tres systemctl status cryptopass.service --no-pager
+ssh fight-tres systemctl status cryptopass-metrics.service --no-pager
+ssh fight-tres "journalctl -u cryptopass.service -n 100 --no-pager -o short-iso"
+```
+
+### Env Vars (updated)
+All `PUMPRADAR_*` vars → `CRYPTOPASS_*` on VPS .env
+New: `CRYPTOPASS_TG_TRADE_TOPIC_ID` and `CRYPTOPASS_TG_LOG_TOPIC_ID`
+
+### Fresh Start Deploy Steps
+```bash
+# On VPS fight-tres:
+cd /home/vforvaick/pumpradar-bot && git pull
+pip install  # if new deps
+
+# Update .env: rename PUMPRADAR_* → CRYPTOPASS_*, add LOG_TOPIC_ID
+# Copy new service files
+sudo cp ops/cryptopass.service /etc/systemd/system/
+sudo cp ops/cryptopass-metrics.service /etc/systemd/system/
+sudo systemctl daemon-reload
+
+# Fresh start: clear state.db
+python scripts/fresh_start.py --db /home/vforvaick/pumpradar-bot/state.db --confirm
+
+# Swap services
+sudo systemctl stop pumpradar.service
+sudo systemctl disable pumpradar.service
+sudo systemctl enable cryptopass.service
+sudo systemctl start cryptopass.service
+sudo systemctl enable cryptopass-metrics.service
+sudo systemctl start cryptopass-metrics.service
+
+# Verify
+systemctl status cryptopass.service --no-pager
+curl localhost:9103/health
+```
+
+### On fight-uno (Grafana/Prometheus):
+1. Update `prometheus.yml` to add:
+   ```yaml
+   - job_name: 'cryptopass'
+     static_configs:
+       - targets: ['fight-tres:9103']
+   ```
+2. Restart Prometheus container: `docker compose -f docker-compose.observability.yml restart prometheus`
+3. Import `ops/grafana-cryptopass-dashboard.json` via Grafana UI (+ > Import)
+
+---
+
+## Current Service State (pre-overhaul: pumpradar.service)
 
 - Service: `pumpradar.service`
 - Host alias: `fight-tres`
