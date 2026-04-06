@@ -32,16 +32,19 @@ class MetricsCache:
             with sqlite3.connect(DB_PATH) as conn:
                 conn.row_factory = sqlite3.Row
 
-                # --- Per-passport equity ---
+                # --- Per-passport equity (isolated: table may not exist yet) ---
+                equity_rows = []
+                try:
+                    equity_rows = conn.execute(
+                        """SELECT passport_name, realized_equity, unrealized_pnl, total_equity, open_positions, timestamp
+                           FROM equity_snapshots_v2 e1
+                           WHERE timestamp = (SELECT MAX(timestamp) FROM equity_snapshots_v2 e2 WHERE e2.passport_name = e1.passport_name)"""
+                    ).fetchall()
+                except Exception:
+                    pass  # Table not yet created — bot hasn't run its first scan
+
                 lines.append("# HELP cryptopass_equity Current realized equity per passport")
                 lines.append("# TYPE cryptopass_equity gauge")
-
-                equity_rows = conn.execute(
-                    """SELECT passport_name, realized_equity, unrealized_pnl, total_equity, open_positions, timestamp
-                       FROM equity_snapshots_v2 e1
-                       WHERE timestamp = (SELECT MAX(timestamp) FROM equity_snapshots_v2 e2 WHERE e2.passport_name = e1.passport_name)"""
-                ).fetchall()
-
                 for row in equity_rows:
                     name = row["passport_name"].replace('"', '')
                     lines.append(f'cryptopass_equity{{passport="{name}"}} {row["realized_equity"]:.4f}')
@@ -69,7 +72,7 @@ class MetricsCache:
 
                 # --- Total open positions ---
                 total_open = conn.execute(
-                    "SELECT COUNT(*) as c FROM positions WHERE status = 'OPEN'"
+                    "SELECT COUNT(*) as c FROM positions WHERE status NOT IN ('TP3_CLOSED', 'SL_CLOSED')"
                 ).fetchone()["c"]
                 lines.append("# HELP cryptopass_open_positions_total Total open positions across all passports")
                 lines.append("# TYPE cryptopass_open_positions_total gauge")
@@ -160,9 +163,8 @@ class MetricsCache:
 
                 if last_snap:
                     try:
-                        from datetime import timezone
-                        last_dt = datetime.fromisoformat(last_snap.replace("Z", "+00:00"))
-                        age = (datetime.now(timezone.utc) - last_dt).total_seconds()
+                        last_dt = datetime.fromisoformat(last_snap)
+                        age = (datetime.utcnow() - last_dt).total_seconds()
                         lines.append(f"cryptopass_heartbeat_age_seconds {age:.1f}")
                     except Exception:
                         lines.append("cryptopass_heartbeat_age_seconds -1")

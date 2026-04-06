@@ -135,7 +135,7 @@ def _update_positions(pm: PositionManager, initial_equity: float, executor, noti
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Pumpradar Replica Bot")
+    parser = argparse.ArgumentParser(description="Cryptopass Bot")
     parser.add_argument("--mode", choices=["paper", "live"], default="paper")
     parser.add_argument("--interval", default="1h")
     parser.add_argument("--tg-token", default=None, help="Telegram Bot Token")

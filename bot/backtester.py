@@ -301,7 +301,7 @@ def _summarize(trades: list[dict]) -> dict:
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Pumpradar Strategy Backtester")
+    parser = argparse.ArgumentParser(description="Cryptopass Strategy Backtester")
     parser.add_argument("--mode", choices=["backtest", "optimize"], default="backtest")
     parser.add_argument("--interval", default="1h", help="Candle timeframe")
     parser.add_argument("--days", type=int, default=30, help="Days of history")
