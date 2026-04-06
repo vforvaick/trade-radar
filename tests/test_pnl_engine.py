@@ -270,3 +270,60 @@ class TestSLRemainingFraction:
 
         expected_fee = (pos.risk_amount * 7) * config.TP3_CLOSE_PCT * (0.04 / 100) * 2
         assert abs(pnl_after_tp2 - pos.realized_pnl - expected_fee) < 1e-9
+
+
+# ── SHORT direction ──────────────────────────────────────────────────────────
+
+class TestShortDirection:
+    def test_short_tp1_leveraged_profit(self, monkeypatch):
+        """SHORT TP1: profit = risk_amount * leverage * (tp1_dist/sl_dist) * TP1_CLOSE_PCT - fee."""
+        monkeypatch.setattr(config, "TRADING_FEE_PCT", 0.04, raising=False)
+        pm = PositionManager()
+        # entry=100, sl=103 (3% above), tp1=98.75 (1.25% below)
+        sig = _make_signal(
+            direction="SHORT",
+            entry=100.0,
+            sl=103.0,
+            tp1=98.75,
+            tp2=96.0,
+            tp3=93.0,
+            leverage=7,
+        )
+        pos = pm.open_position(sig, equity=1000.0)
+
+        sl_dist = abs(sig.sl - sig.entry_price) / sig.entry_price    # 0.03
+        tp1_dist = abs(sig.tp1 - sig.entry_price) / sig.entry_price  # 0.0125
+        gross = pos.risk_amount * (tp1_dist / sl_dist) * config.TP1_CLOSE_PCT * 7
+        fee = (pos.risk_amount * 7) * config.TP1_CLOSE_PCT * (0.04 / 100) * 2
+        expected = gross - fee
+
+        # low <= tp1 triggers TP1 for SHORT; high must stay below sl
+        pm.update_positions({"TESTUSDT": (99.5, 98.5, 98.75)})  # low=98.5 <= tp1=98.75, high=99.5 < sl=103
+
+        assert pos.realized_pnl > 0.0
+        assert abs(pos.realized_pnl - expected) < 1e-9
+
+    def test_short_sl_leveraged_loss(self, monkeypatch):
+        """SHORT SL hit before TP1: loss = risk_amount * leverage * 1.0 + fee."""
+        monkeypatch.setattr(config, "TRADING_FEE_PCT", 0.04, raising=False)
+        pm = PositionManager()
+        sig = _make_signal(
+            direction="SHORT",
+            entry=100.0,
+            sl=103.0,
+            tp1=98.75,
+            tp2=96.0,
+            tp3=93.0,
+            leverage=7,
+        )
+        pos = pm.open_position(sig, equity=1000.0)
+
+        loss = pos.risk_amount * 7 * 1.0
+        fee = (pos.risk_amount * 7) * 1.0 * (0.04 / 100) * 2
+        expected = -(loss + fee)
+
+        # high >= sl triggers SL for SHORT
+        pm.update_positions({"TESTUSDT": (103.5, 99.0, 101.0)})  # high=103.5 >= sl=103
+
+        assert pos.realized_pnl < 0.0
+        assert abs(pos.realized_pnl - expected) < 1e-9

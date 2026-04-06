@@ -80,7 +80,7 @@ TP3_CLOSE_PCT = 0.10
 # RISK MANAGEMENT
 # ============================================================
 
-RISK_PER_TRADE_PCT = 3.0   # % of equity risked per trade
+RISK_PER_TRADE_PCT = 0.5   # % of equity risked per trade (keeps max SL loss ~3% at 7x leverage)
 MAX_SIMULTANEOUS = 999     # effectively unlimited for paper trading
 MAX_OPEN_POSITIONS_PER_PASSPORT = 50
 MAX_OPEN_POSITIONS_PER_SYMBOL = 1

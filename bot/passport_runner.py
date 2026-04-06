@@ -54,6 +54,7 @@ class PassportRunner:
         self.state_restore_error_count = 0
         self.scan_cycle_error_count = 0
         self.price_fetch_error_count = 0
+        self._last_prices: dict[str, tuple] = {}
         self.state_store = StateStore()
         self.passports = self._load_passports(passport_dir)
         self.scanner = Scanner(interval=interval, limit=100)
@@ -283,6 +284,7 @@ class PassportRunner:
                             df.iloc[0]['low'],
                             df.iloc[0]['close']
                         )
+                        self._last_prices[sym] = current_prices[sym]
                 except Exception as e:
                     self.price_fetch_error_count += 1
                     logger.exception(
