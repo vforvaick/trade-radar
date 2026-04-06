@@ -20,7 +20,7 @@ DEFAULT_OUTPUT = DATA_DIR / "validated_ledger.csv"
 
 
 def _verify_tls() -> bool:
-    raw = os.environ.get("PUMPRADAR_BINANCE_VERIFY_TLS", "true").strip().lower()
+    raw = os.environ.get("CRYPTOPASS_BINANCE_VERIFY_TLS", "true").strip().lower()
     return raw not in {"0", "false", "no", "off"}
 
 

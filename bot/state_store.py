@@ -19,7 +19,7 @@ def _json_default(value):
 
 
 def _resolve_db_path(db_path=None) -> str:
-    candidate = db_path or os.environ.get("PUMPRADAR_STATE_DB", "state.db")
+    candidate = db_path or os.environ.get("CRYPTOPASS_STATE_DB", "state.db")
     if os.path.isabs(candidate):
         return candidate
     return os.path.abspath(os.path.join(_REPO_ROOT, candidate))

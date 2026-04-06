@@ -10,7 +10,7 @@ from bot.notifier import TelegramNotifier
 
 def run_pipeline(symbols: list[str], interval: str, args):
     print("=" * 60)
-    print("🔬 PUMPRADAR STRATEGY DISCOVERY ENGINE")
+    print("🔬 CRYPTOPASS STRATEGY DISCOVERY ENGINE")
     print("=" * 60)
     
     engine = StrategyDiscoveryEngine(symbols, interval, days=180)
@@ -49,7 +49,7 @@ def run_pipeline(symbols: list[str], interval: str, args):
     print(f"📁 AUTO-GENERATING PASSPORTS ({len(validated)} KEEPs)")
     print("=" * 60)
     
-    out_dir = os.path.join(os.path.dirname(__file__), "pumpradar-passports", "configs", "discovered")
+    out_dir = os.path.join(os.path.dirname(__file__), "passports", "cryptopass-research", "discovered")
     os.makedirs(out_dir, exist_ok=True)
     
     report_lines = ["🔬 **Discovery Engine Results**\n"]

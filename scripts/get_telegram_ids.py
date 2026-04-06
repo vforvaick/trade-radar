@@ -5,7 +5,7 @@ Utility: Find Telegram group_id and topic_id (message_thread_id).
 Usage:
   1. Invite your bot to the Trader Zone group
   2. Send any message in the Tradar: Trade Radar topic
-  3. Run: PUMPRADAR_TG_TOKEN=your-token python scripts/get_telegram_ids.py
+  3. Run: CRYPTOPASS_TG_TOKEN=your-token python scripts/get_telegram_ids.py
 
 Output: list of recent chats with their IDs and topic IDs.
 """
@@ -13,9 +13,9 @@ import os, sys, json
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import requests
 
-token = os.environ.get("PUMPRADAR_TG_TOKEN", "").strip()
+token = os.environ.get("CRYPTOPASS_TG_TOKEN", "").strip()
 if not token:
-    print("ERROR: Set PUMPRADAR_TG_TOKEN env var first")
+    print("ERROR: Set CRYPTOPASS_TG_TOKEN env var first")
     sys.exit(1)
 
 resp = requests.get(f"https://api.telegram.org/bot{token}/getUpdates",
@@ -42,10 +42,10 @@ print("\n=== Telegram Chats Found ===\n")
 for cid, info in seen.items():
     print(f"  Title: {info['title']}")
     print(f"  Type:  {info['type']}")
-    print(f"  Chat ID: {cid}  ← set as PUMPRADAR_TG_GROUP_ID for groups")
+    print(f"  Chat ID: {cid}  ← set as CRYPTOPASS_TG_GROUP_ID for groups")
     if info["thread_ids"]:
         for tid in info["thread_ids"]:
-            print(f"  Topic ID (message_thread_id): {tid}  ← set as PUMPRADAR_TG_TOPIC_ID")
+            print(f"  Topic ID (message_thread_id): {tid}  ← set as CRYPTOPASS_TG_TRADE_TOPIC_ID")
     print()
 
 print("If your group is not listed, send a message in the topic first, then re-run.")

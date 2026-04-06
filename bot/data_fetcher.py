@@ -22,7 +22,7 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 def _verify_tls() -> bool:
     """Keep TLS verification enabled unless an explicit proxy escape hatch is set."""
-    raw = os.environ.get("PUMPRADAR_BINANCE_VERIFY_TLS", "true").strip().lower()
+    raw = os.environ.get("CRYPTOPASS_BINANCE_VERIFY_TLS", "true").strip().lower()
     return raw not in {"0", "false", "no", "off"}
 
 

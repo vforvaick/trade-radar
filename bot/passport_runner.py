@@ -77,38 +77,47 @@ class PassportRunner:
             )
 
     def _load_passports(self, passport_dir: str) -> List[Passport]:
-        """Load all *.json passport configs from a directory."""
+        """Load all *.json passport configs from passport_dir and its immediate subdirectories."""
         passports = []
         if not os.path.isdir(passport_dir):
             print(f"[PassportRunner] Warning: {passport_dir} not found", flush=True)
             return passports
 
-        for fname in sorted(os.listdir(passport_dir)):
-            if fname.endswith(".json"):
-                try:
-                    fpath = os.path.join(passport_dir, fname)
-                    with open(fpath) as f:
-                        passport_data = json.load(f)
-                    if not _is_enabled(passport_data):
-                        open_positions = self.state_store.load_open_positions(passport_data["name"])
-                        if open_positions:
-                            print(
-                                f"[PassportRunner] Restoring disabled passport with {len(open_positions)} open positions: {fname}",
-                                flush=True,
-                            )
-                        else:
-                            print(f"[PassportRunner] Skipping disabled passport config: {fname}", flush=True)
-                            continue
-                    p = Passport(fpath)
-                    passports.append(p)
-                except Exception as e:
-                    self.passport_load_error_count += 1
-                    logger.exception(
-                        "Failed to load passport config file=%s path=%s",
-                        fname,
-                        os.path.join(passport_dir, fname),
-                    )
-                    print(f"[PassportRunner] Error loading {fname}: {e}", flush=True)
+        # Collect .json files from the root dir and all immediate subdirectories
+        json_files: list[tuple[str, str]] = []
+        for entry in sorted(os.listdir(passport_dir)):
+            entry_path = os.path.join(passport_dir, entry)
+            if os.path.isdir(entry_path):
+                for fname in sorted(os.listdir(entry_path)):
+                    if fname.endswith(".json"):
+                        json_files.append((fname, os.path.join(entry_path, fname)))
+            elif entry.endswith(".json"):
+                json_files.append((entry, entry_path))
+
+        for fname, fpath in json_files:
+            try:
+                with open(fpath) as f:
+                    passport_data = json.load(f)
+                if not _is_enabled(passport_data):
+                    open_positions = self.state_store.load_open_positions(passport_data["name"])
+                    if open_positions:
+                        print(
+                            f"[PassportRunner] Restoring disabled passport with {len(open_positions)} open positions: {fname}",
+                            flush=True,
+                        )
+                    else:
+                        print(f"[PassportRunner] Skipping disabled passport config: {fname}", flush=True)
+                        continue
+                p = Passport(fpath)
+                passports.append(p)
+            except Exception as e:
+                self.passport_load_error_count += 1
+                logger.exception(
+                    "Failed to load passport config file=%s path=%s",
+                    fname,
+                    fpath,
+                )
+                print(f"[PassportRunner] Error loading {fname}: {e}", flush=True)
 
         return passports
 

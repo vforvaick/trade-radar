@@ -19,13 +19,13 @@ from bot.data_fetcher import fetch_klines
 
 def resolve_telegram_credentials(tg_token: str = None, tg_chat: str = None) -> tuple[str, str]:
     """Resolve Telegram credentials from CLI overrides or the environment."""
-    token = (tg_token or os.environ.get("PUMPRADAR_TG_TOKEN") or "").strip() or None
-    chat = (tg_chat or os.environ.get("PUMPRADAR_TG_CHAT") or "").strip() or None
+    token = (tg_token or os.environ.get("CRYPTOPASS_TG_TOKEN") or "").strip() or None
+    chat = (tg_chat or os.environ.get("CRYPTOPASS_TG_CHAT") or "").strip() or None
     if token is None and chat is None:
         return None, None
     if token is None or chat is None:
         raise SystemExit(
-            "Missing Telegram credentials. Set PUMPRADAR_TG_TOKEN and PUMPRADAR_TG_CHAT "
+            "Missing Telegram credentials. Set CRYPTOPASS_TG_TOKEN and CRYPTOPASS_TG_CHAT "
             "or pass --tg-token and --tg-chat, or omit both to disable Telegram."
         )
     return token, chat

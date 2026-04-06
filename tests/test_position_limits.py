@@ -87,7 +87,7 @@ def test_reversal_sideways_scan_replay_is_confidence_filtered_and_capped(
         )
     )
 
-    monkeypatch.setenv("PUMPRADAR_STATE_DB", str(tmp_path / "state.db"))
+    monkeypatch.setenv("CRYPTOPASS_STATE_DB", str(tmp_path / "state.db"))
 
     def fake_update_btc_trend(scanner):
         scanner.btc_trend = "Sideways"

@@ -1,0 +1,15 @@
+[Unit]
+Description=Cryptopass Multi-Passport Trading Bot
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=vforvaick
+WorkingDirectory=/home/vforvaick/pumpradar-bot
+EnvironmentFile=/home/vforvaick/pumpradar-bot/.env
+ExecStart=/home/vforvaick/pumpradar-bot/.venv/bin/python -m bot.main_multi --interval=1h
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
