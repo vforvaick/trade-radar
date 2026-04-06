@@ -147,7 +147,7 @@ class TelegramNotifier:
         event_emoji = emoji_map.get(event, "📢")
         direction_emoji = "🟢" if signal.direction == "LONG" else "🔴"
         
-        prefix = display_name or passport_name or "🚀 **Pumpradar Replica**"
+        prefix = display_name or passport_name or "🚀 **Cryptopass**"
         
         msg = f"{prefix}\n\n"
         msg += f"{event_emoji} **{event.replace('_', ' ')}** — #{signal.symbol}\n"

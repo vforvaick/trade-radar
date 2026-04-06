@@ -125,11 +125,17 @@ def run_multi_passport(tg_token: str = None, tg_chat: str = None,
                     passport = event_data["passport"]
                     pos = event_data["position"]
                     event = event_data["event"]
+                    # For partial closes (TP1/TP2), passport.equity hasn't been updated
+                    # yet — add cumulative realized_pnl to show correct current equity.
+                    if event in ("TP1_HIT", "TP2_HIT"):
+                        equity_display = passport.equity + pos.realized_pnl
+                    else:
+                        equity_display = passport.equity
                     notifier.send_tp_sl_alert(
                         signal=pos.signal,
                         event=event,
                         realized_pnl=pos.realized_pnl,
-                        equity=passport.equity,
+                        equity=equity_display,
                         passport_name=passport.name,
                         display_name=f"{passport.emoji} [{passport.name}]",
                     )
@@ -171,7 +177,7 @@ def run_multi_passport(tg_token: str = None, tg_chat: str = None,
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Pumpradar Multi-Passport Runner")
+    parser = argparse.ArgumentParser(description="Cryptopass Multi-Passport Runner")
     parser.add_argument("--interval", default="1h")
     parser.add_argument("--tg-token", default=None, help="Telegram Bot Token")
     parser.add_argument("--tg-chat", default=None, help="Telegram Chat ID")

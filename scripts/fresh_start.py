@@ -49,8 +49,12 @@ def run_fresh_start(db_path: str, confirm: bool = False):
         conn.execute("DELETE FROM positions")
         conn.execute("DELETE FROM equity_snapshots")
         conn.execute("DELETE FROM trade_log")
+        # Also clear v2 snapshots if the table exists
+        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if "equity_snapshots_v2" in tables:
+            conn.execute("DELETE FROM equity_snapshots_v2")
         conn.commit()
-        print("[fresh_start] ✅ Cleared positions, equity_snapshots, trade_log")
+        print("[fresh_start] ✅ Cleared positions, equity_snapshots, equity_snapshots_v2, trade_log")
 
     # Ensure equity_snapshots_v2 table exists
     conn.execute("""

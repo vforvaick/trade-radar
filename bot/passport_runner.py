@@ -350,21 +350,38 @@ class PassportRunner:
 
         for passport in self.passports:
             unrealized_pnl = 0.0
+            # TP1/TP2 partial profits are in pos.realized_pnl but not yet credited
+            # to passport.equity (which only updates at final close). Sum them here
+            # so realized_equity reflects the true current state.
+            pending_realized = 0.0
+
             for pos in passport.position_manager.positions:
+                pending_realized += pos.realized_pnl
+
                 sym = pos.signal.symbol
                 price_data = current_prices.get(sym)
                 if price_data is not None:
                     current_price = price_data[2] if isinstance(price_data, tuple) else price_data
                     entry = pos.signal.entry_price
                     leverage = pos.signal.leverage
-                    if pos.signal.direction == "LONG":
-                        unrealized_pnl += (current_price - entry) / entry * leverage * pos.risk_amount
-                    else:
-                        unrealized_pnl += (entry - current_price) / entry * leverage * pos.risk_amount
 
+                    # Use remaining open fraction only (don't double-count already-closed TPs)
+                    if pos.tp2_hit:
+                        remaining_fraction = config.TP3_CLOSE_PCT
+                    elif pos.tp1_hit:
+                        remaining_fraction = config.TP2_CLOSE_PCT + config.TP3_CLOSE_PCT
+                    else:
+                        remaining_fraction = 1.0
+
+                    if pos.signal.direction == "LONG":
+                        unrealized_pnl += (current_price - entry) / entry * leverage * pos.risk_amount * remaining_fraction
+                    else:
+                        unrealized_pnl += (entry - current_price) / entry * leverage * pos.risk_amount * remaining_fraction
+
+            true_realized = passport.equity + pending_realized
             self.state_store.save_equity_v2(
                 passport.name,
-                passport.equity,
+                true_realized,
                 unrealized_pnl,
                 passport.position_manager.open_count,
             )

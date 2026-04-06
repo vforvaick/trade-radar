@@ -1,5 +1,5 @@
 """
-Central strategy configuration for the Pumpradar Replication Bot.
+Central strategy configuration for Cryptopass.
 All parameters derived from reverse engineering of 49 historical trades.
 """
 

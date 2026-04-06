@@ -1,5 +1,5 @@
 """
-Main entry point for Pumpradar Replication Bot.
+Main entry point for Cryptopass.
 Runs the continuous scanning and position management loop.
 """
 import argparse
@@ -32,7 +32,7 @@ def resolve_telegram_credentials(tg_token: str = None, tg_chat: str = None) -> t
 
 
 def run_bot(mode: str, interval: str = "1h", tg_token: str = None, tg_chat: str = None):
-    print(f"\n🚀 Starting Pumpradar Replication Bot")
+    print(f"\n🚀 Starting Cryptopass")
     print(f"Mode: {mode.upper()}")
     print(f"Interval: {interval}\n")
 
