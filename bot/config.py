@@ -84,7 +84,8 @@ RISK_PER_TRADE_PCT = 3.0   # % of equity risked per trade
 MAX_SIMULTANEOUS = 999     # effectively unlimited for paper trading
 MAX_OPEN_POSITIONS_PER_PASSPORT = 50
 MAX_OPEN_POSITIONS_PER_SYMBOL = 1
-INITIAL_EQUITY = 1000.0    # for backtesting
+INITIAL_EQUITY = 500.0     # for backtesting
+TRADING_FEE_PCT = 0.04     # Binance taker fee per side (0.04%), so 0.08% round-trip
 
 # BTC anomaly
 BTC_ANOMALY_PCT = 1.5      # alert if BTC moves > 1.5%

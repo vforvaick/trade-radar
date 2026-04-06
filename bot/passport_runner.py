@@ -303,12 +303,25 @@ class PassportRunner:
                     passport.equity += pos.realized_pnl
                     passport.trade_count += 1
                     self.state_store.save_equity(passport.name, passport.equity)
+                    exit_price = current_prices.get(pos.signal.symbol, (None, None, None))[2]
                     self.state_store.log_trade(passport.name, {
                         "symbol": pos.signal.symbol,
+                        "direction": pos.signal.direction,
                         "event": event,
+                        "entry_price": pos.signal.entry_price,
+                        "exit_price": exit_price,
+                        "leverage": pos.signal.leverage,
+                        "confidence": pos.signal.confidence,
+                        "risk_amount": pos.risk_amount,
                         "realized_pnl": pos.realized_pnl,
+                        "fees_paid": pos.fees_paid,
                         "equity": passport.equity,
-                        "timestamp": datetime.now().isoformat()
+                        "tp1_hit": pos.tp1_hit,
+                        "tp2_hit": pos.tp2_hit,
+                        "tp3_hit": pos.tp3_hit,
+                        "opened_at": pos.created_at,
+                        "closed_at": datetime.now().isoformat(),
+                        "timestamp": datetime.now().isoformat(),
                     })
 
                 events.append({
@@ -318,6 +331,32 @@ class PassportRunner:
                 })
 
         return events
+
+    def snapshot_equity_all(self, current_prices: dict):
+        """Save equity snapshots for all passports, including unrealized PnL from open positions."""
+        if not current_prices:
+            logger.warning("snapshot_equity_all called with empty current_prices — unrealized PnL will be 0")
+
+        for passport in self.passports:
+            unrealized_pnl = 0.0
+            for pos in passport.position_manager.positions:
+                sym = pos.signal.symbol
+                price_data = current_prices.get(sym)
+                if price_data is not None:
+                    current_price = price_data[2] if isinstance(price_data, tuple) else price_data
+                    entry = pos.signal.entry_price
+                    leverage = pos.signal.leverage
+                    if pos.signal.direction == "LONG":
+                        unrealized_pnl += (current_price - entry) / entry * leverage * pos.risk_amount
+                    else:
+                        unrealized_pnl += (entry - current_price) / entry * leverage * pos.risk_amount
+
+            self.state_store.save_equity_v2(
+                passport.name,
+                passport.equity,
+                unrealized_pnl,
+                passport.position_manager.open_count,
+            )
 
     def get_summary(self) -> str:
         """Get summary of all passports' performance."""

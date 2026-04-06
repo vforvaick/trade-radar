@@ -2,6 +2,7 @@
 Position manager — tracks open positions and implements the 70/20/10 TP cascade.
 """
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Optional
 from bot import config
 from bot.signals import Signal
@@ -21,6 +22,8 @@ class Position:
     realized_pnl: float = 0.0
     trailing_sl: Optional[float] = None
     pos_id: Optional[int] = None
+    fees_paid: float = 0.0
+    created_at: str = ""
 
     @property
     def active_sl(self):
@@ -76,6 +79,7 @@ class PositionManager:
             signal=signal,
             equity_at_entry=equity,
             risk_amount=risk_amount,
+            created_at=datetime.now().isoformat(),
         )
         self.positions.append(pos)
         return pos
@@ -121,22 +125,43 @@ class PositionManager:
         sl = pos.active_sl
         if is_long and low <= sl:
             if pos.tp1_hit:
-                # SL at breakeven after TP1 — close remaining at zero loss
+                # SL at breakeven after TP1 — close remaining at zero loss but still pay fees
+                remaining_fraction = (
+                    config.TP3_CLOSE_PCT if pos.tp2_hit
+                    else config.TP2_CLOSE_PCT + config.TP3_CLOSE_PCT
+                )
+                fee_sl = (pos.risk_amount * pos.signal.leverage) * remaining_fraction * (config.TRADING_FEE_PCT / 100) * 2
+                pos.realized_pnl -= fee_sl
+                pos.fees_paid += fee_sl
                 pos.status = "SL_CLOSED"
-                # Already captured 70% profit at TP1, rest at breakeven
                 events.append("SL_BREAKEVEN")
             else:
-                pos.realized_pnl -= pos.risk_amount
+                remaining_fraction = 1.0
+                loss = pos.risk_amount * pos.signal.leverage * remaining_fraction
+                fee_sl = (pos.risk_amount * pos.signal.leverage) * remaining_fraction * (config.TRADING_FEE_PCT / 100) * 2
+                pos.realized_pnl -= (loss + fee_sl)
+                pos.fees_paid += fee_sl
                 pos.status = "SL_CLOSED"
                 events.append("SL_HIT")
             return events
 
         if not is_long and high >= sl:
             if pos.tp1_hit:
+                remaining_fraction = (
+                    config.TP3_CLOSE_PCT if pos.tp2_hit
+                    else config.TP2_CLOSE_PCT + config.TP3_CLOSE_PCT
+                )
+                fee_sl = (pos.risk_amount * pos.signal.leverage) * remaining_fraction * (config.TRADING_FEE_PCT / 100) * 2
+                pos.realized_pnl -= fee_sl
+                pos.fees_paid += fee_sl
                 pos.status = "SL_CLOSED"
                 events.append("SL_BREAKEVEN")
             else:
-                pos.realized_pnl -= pos.risk_amount
+                remaining_fraction = 1.0
+                loss = pos.risk_amount * pos.signal.leverage * remaining_fraction
+                fee_sl = (pos.risk_amount * pos.signal.leverage) * remaining_fraction * (config.TRADING_FEE_PCT / 100) * 2
+                pos.realized_pnl -= (loss + fee_sl)
+                pos.fees_paid += fee_sl
                 pos.status = "SL_CLOSED"
                 events.append("SL_HIT")
             return events
@@ -147,11 +172,12 @@ class PositionManager:
             if tp1_hit:
                 pos.tp1_hit = True
                 pos.sl_is_breakeven = True
-                # 70% of position closed at TP1
                 sl_dist = abs(sig.sl - sig.entry_price) / sig.entry_price
                 tp1_dist = abs(sig.tp1 - sig.entry_price) / sig.entry_price
-                profit_70 = pos.risk_amount * (tp1_dist / sl_dist) * config.TP1_CLOSE_PCT
-                pos.realized_pnl += profit_70
+                profit_70 = pos.risk_amount * (tp1_dist / sl_dist) * config.TP1_CLOSE_PCT * pos.signal.leverage
+                fee_70 = (pos.risk_amount * pos.signal.leverage) * config.TP1_CLOSE_PCT * (config.TRADING_FEE_PCT / 100) * 2
+                pos.realized_pnl += profit_70 - fee_70
+                pos.fees_paid += fee_70
                 pos.status = "TP1"
                 events.append("TP1_HIT")
 
@@ -161,8 +187,10 @@ class PositionManager:
                 pos.tp2_hit = True
                 sl_dist = abs(sig.sl - sig.entry_price) / sig.entry_price
                 tp2_dist = abs(sig.tp2 - sig.entry_price) / sig.entry_price
-                profit_20 = pos.risk_amount * (tp2_dist / sl_dist) * config.TP2_CLOSE_PCT
-                pos.realized_pnl += profit_20
+                profit_20 = pos.risk_amount * (tp2_dist / sl_dist) * config.TP2_CLOSE_PCT * pos.signal.leverage
+                fee_20 = (pos.risk_amount * pos.signal.leverage) * config.TP2_CLOSE_PCT * (config.TRADING_FEE_PCT / 100) * 2
+                pos.realized_pnl += profit_20 - fee_20
+                pos.fees_paid += fee_20
                 pos.status = "TP2"
                 events.append("TP2_HIT")
 
@@ -172,8 +200,10 @@ class PositionManager:
                 pos.tp3_hit = True
                 sl_dist = abs(sig.sl - sig.entry_price) / sig.entry_price
                 tp3_dist = abs(sig.tp3 - sig.entry_price) / sig.entry_price
-                profit_10 = pos.risk_amount * (tp3_dist / sl_dist) * config.TP3_CLOSE_PCT
-                pos.realized_pnl += profit_10
+                profit_10 = pos.risk_amount * (tp3_dist / sl_dist) * config.TP3_CLOSE_PCT * pos.signal.leverage
+                fee_10 = (pos.risk_amount * pos.signal.leverage) * config.TP3_CLOSE_PCT * (config.TRADING_FEE_PCT / 100) * 2
+                pos.realized_pnl += profit_10 - fee_10
+                pos.fees_paid += fee_10
                 pos.status = "TP3_CLOSED"
                 events.append("TP3_HIT")
 

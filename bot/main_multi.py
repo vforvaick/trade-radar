@@ -155,6 +155,9 @@ def run_multi_passport(tg_token: str = None, tg_chat: str = None,
                 summary = runner.get_summary()
                 print(summary, flush=True)
 
+                # Snapshot equity (unrealized PnL requires live prices; call with empty dict for now)
+                runner.snapshot_equity_all({})
+
                 last_scan_time = now
 
             # Sleep briefly
