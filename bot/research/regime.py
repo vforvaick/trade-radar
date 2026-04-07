@@ -44,11 +44,17 @@ def _calc_adx(df: pd.DataFrame, period: int = 14) -> pd.Series:
     return adx
 
 
-def _calc_realized_vol(close: pd.Series, window: int = 30) -> pd.Series:
-    """Rolling realized volatility (annualized std of log returns)."""
+def _calc_realized_vol(
+    close: pd.Series, window: int = 30, candles_per_year: int = 365 * 24,
+) -> pd.Series:
+    """Rolling realized volatility (annualized std of log returns).
+
+    Args:
+        candles_per_year: Bars per year for annualization. Default 365*24=8760 for 1H.
+            Use 252*6=1512 for 4H, 252*24=6048 for 1H on trading days only.
+    """
     log_returns = np.log(close / close.shift(1))
-    # 252 trading days x 6 bars/day for 4H
-    return log_returns.rolling(window).std() * np.sqrt(252 * 6)
+    return log_returns.rolling(window).std() * np.sqrt(candles_per_year)
 
 
 def classify_regime(df: pd.DataFrame, window: int = 180) -> RegimeType:
@@ -102,6 +108,8 @@ def classify_regime_series(df: pd.DataFrame, window: int = 180) -> pd.Series:
     adx = _calc_adx(df)
     rvol = _calc_realized_vol(close, candles_per_year=365 * 24)
     rvol_median = rvol.rolling(60, min_periods=30).median()
+
+    regimes = []
     for i in range(len(df)):
         if i < _MIN_BARS or pd.isna(ret_rolling.iloc[i]):
             regimes.append(RegimeType.LOW_VOL_COMPRESSION.value)
