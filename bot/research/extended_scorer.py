@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from bot import config
 from bot import indicators as orig_ind
 from bot.research import indicators as new_ind
 
@@ -121,9 +122,8 @@ def score_extended(
     else:
         return _no_signal("No directional consensus")
 
-    # BTC trend filter
-    BTC_WEIGHT = {"Uptrend": 1.15, "Downtrend": 0.85, "Sideways": 1.0}
-    confidence = raw_confidence * BTC_WEIGHT.get(btc_trend, 1.0)
+    # BTC trend filter — use live config weights, clamp result to [0, 100]
+    confidence = min(100.0, max(0.0, raw_confidence * config.BTC_TREND_WEIGHTS.get(btc_trend, 1.0)))
 
     go = confidence >= confidence_threshold
 
