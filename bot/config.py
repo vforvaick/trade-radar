@@ -98,7 +98,9 @@ BTC_ANOMALY_WINDOW_MIN = 5 # within 5 minutes
 BTC_TREND_WEIGHTS = {
     "Sideways": 1.0,    # trade freely
     "Downtrend": 1.0,   # trade (75% WR historically)
-    "Uptrend": 0.5,     # reduce confidence by 50%
+    "Uptrend": 0.8,     # reduce confidence by 20% — requires raw ≥67.5% to pass threshold=54
+    # NOTE: 0.5 was a bug — max raw confidence is 100%, so 100×0.5=50 < threshold=54 = never fires
+    # 0.8 preserves selectivity: only high-conviction setups pass in bull markets
 }
 
 # Tactical guardrail for Reversal until a full regime classifier exists.
