@@ -139,3 +139,33 @@ def test_regime_map_value_to_live_uptrend():
 
 def test_regime_map_value_to_live_unknown_defaults_sideways():
     assert map_regime_value_to_live("UNKNOWN") == "Sideways"
+
+
+# --- M4: _calc_realized_vol candles_per_year param ---
+
+def test_m4_calc_realized_vol_default_is_1h():
+    """Default candles_per_year must be 365*24=8760, not the old 252*6=1512."""
+    import inspect
+    from bot.research.regime import _calc_realized_vol
+    sig = inspect.signature(_calc_realized_vol)
+    assert sig.parameters["candles_per_year"].default == 365 * 24, (
+        f"Expected default 8760, got {sig.parameters['candles_per_year'].default}"
+    )
+
+def test_m4_calc_realized_vol_candles_per_year_affects_output():
+    """Higher candles_per_year → higher annualized vol (same raw data)."""
+    import pandas as pd
+    import numpy as np
+    from bot.research.regime import _calc_realized_vol
+
+    np.random.seed(42)
+    # 50 price points, random walk
+    prices = pd.Series(100 + np.random.randn(50).cumsum())
+
+    vol_1h = _calc_realized_vol(prices, window=20, candles_per_year=365 * 24).iloc[-1]
+    vol_4h = _calc_realized_vol(prices, window=20, candles_per_year=252 * 6).iloc[-1]
+
+    # 1H has more candles per year → scales up more → higher vol
+    assert vol_1h > vol_4h, (
+        f"1H vol ({vol_1h:.4f}) should exceed 4H vol ({vol_4h:.4f})"
+    )
