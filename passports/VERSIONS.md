@@ -69,6 +69,7 @@
 |---------|------------|-------------|
 | v0.1    | 2026-03-31 | Initial deployment — overtrade issue discovered in live (337 signals/3 days), quarantined |
 | v0.2    | 2026-04-04 | Tightened quarantine: threshold 60→85, vol 2.0→2.5x, positions 20→5, sideways 80→90; keep disabled |
+| v0.3    | 2026-04-07 | Add BTC_TREND_WEIGHTS Uptrend:1.0 — mean-reversion has no BTC direction dependency (still disabled) |
 
 ### 🎯 Sniper (`sniper.json`)
 
@@ -89,18 +90,29 @@
 | Version | Date       | Description |
 |---------|------------|-------------|
 | v0.1    | 2026-04-05 | Rebuilt from scratch: RSI 30/70 true mean-reversion, threshold 70, enabled=false pending backtest |
+| v0.2    | 2026-04-06 | RSI thresholds per-passport (RSI_LONG_THRESHOLD=30, RSI_SHORT_THRESHOLD=70), enabled=true |
+| v0.3    | 2026-04-07 | Add BTC_TREND_WEIGHTS Uptrend:1.0 — RSI mean-reversion has no BTC direction dependency |
 
 ### 📊 MACDDivergence (`macd_divergence.json`)
 
 | Version | Date | Description |
 |---------|------|-------------|
 | v0.1 | 2026-04-05 | Enabled for paper trading — quality-pair 90d: +9.1%, PF=1.39, WR=41.5%, 123 trades |
+| v0.2 | 2026-04-07 | Add BTC_TREND_WEIGHTS Uptrend:1.0 — MACD divergence + RSI is sideways-focused, remove 0.8 uptrend penalty |
 
 ### 🔄 BBMeanRev (`bb_mean_rev.json`)
 
 | Version | Date | Description |
 |---------|------|-------------|
 | v0.1 | 2026-04-05 | Enabled for paper trading — quality-pair 90d: +7.7%, PF=1.32, WR=47.3%, 131 trades |
+| v0.2 | 2026-04-07 | Add BTC_TREND_WEIGHTS Uptrend:1.0 — BB mean-reversion has no BTC direction dependency, remove 0.8 uptrend penalty |
+
+### 🔄 RSIContrarian (`rsi_contrarian.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v0.1 | 2026-04-05 | Enabled for paper trading — quality-pair 90d: +0.5%, PF=1.02, WR=36.1%, 97 trades. Marginal but enabled. |
+| v0.2 | 2026-04-07 | Add BTC_TREND_WEIGHTS Uptrend:1.0 — RSI contrarian has no BTC direction dependency, remove 0.8 uptrend penalty |
 
 ### 📅 Seasonality OG (`seasonality_og.json`)
 
