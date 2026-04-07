@@ -51,21 +51,21 @@ def test_m2_sortino_zero_when_mean_not_positive_and_no_neg():
 # --- L4: No duplicate equity start point ---
 
 def test_l4_no_duplicate_when_start_time_already_present():
-    """If the computed start_time already exists in the series, it should not be overwritten."""
+    """Guard prevents duplicate equity point when start_time already in series (idempotency test)."""
     eq = config.INITIAL_EQUITY
-    # We can't easily force start_time collision through _summarize since start_time
-    # is computed as times.min() - 1 day, but we verify behaviour is stable when
-    # trades span multiple dates (typical case).
     trades = [
         _make_trade(20.0, eq + 20.0, datetime(2026, 4, 5)),
         _make_trade(15.0, eq + 35.0, datetime(2026, 4, 10)),
         _make_trade(10.0, eq + 45.0, datetime(2026, 4, 15)),
     ]
-    summary = _summarize(trades)
-    # Metrics should be finite and not NaN/inf — confirms no duplicate pollution
-    assert summary["sharpe"] == summary["sharpe"]  # not NaN
-    assert summary["sortino"] == summary["sortino"]  # not NaN
-    assert summary["return_pct"] > 0
+    # Run _summarize twice on identical trades — must produce identical metrics
+    # If guard weren't present, duplicate index entry could corrupt metrics on re-run
+    summary1 = _summarize(trades)
+    summary2 = _summarize(trades)
+    assert summary1["sharpe"] == summary2["sharpe"], "Sharpe changed on re-run (duplicate pollution)"
+    assert summary1["sortino"] == summary2["sortino"], "Sortino changed on re-run (duplicate pollution)"
+    assert summary1["return_pct"] == summary2["return_pct"], "Return changed on re-run (duplicate pollution)"
+    assert summary1["return_pct"] > 0, "Expected positive return"
 
 
 def test_l4_equity_series_length_not_inflated():

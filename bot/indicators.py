@@ -329,7 +329,6 @@ def calc_obv_signal(df: pd.DataFrame, period: int = 20):
 
     # Normalized distance from EMA (0-1 capped)
     gap_pct = abs(last_obv - last_ema) / (abs(last_ema) + 1e-10)
-    gap_pct = min(gap_pct, 500.0)  # Prevent overflow from near-zero EMA
     strength = min(gap_pct, 1.0)
 
     if last_obv > last_ema and prev_obv >= prev_ema:
