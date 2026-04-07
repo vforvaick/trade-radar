@@ -34,11 +34,15 @@ def calc_trade_overlap(trades_a: list[dict], trades_b: list[dict]) -> float:
 
     overlap_count = 0
     for ta in trades_a:
+        ta_entry = pd.Timestamp(ta["entry_time"])
+        ta_exit = pd.Timestamp(ta["exit_time"])
         for tb in trades_b:
+            tb_entry = pd.Timestamp(tb["entry_time"])
+            tb_exit = pd.Timestamp(tb["exit_time"])
             if (ta["symbol"] == tb["symbol"]
                     and ta["direction"] == tb["direction"]
-                    and ta["entry_bar"] <= tb["exit_bar"]
-                    and ta["exit_bar"] >= tb["entry_bar"]):
+                    and ta_entry <= tb_exit
+                    and ta_exit >= tb_entry):
                 overlap_count += 1
                 break
 
@@ -84,7 +88,7 @@ def calc_composite_utility(
     """Composite utility: (sharpe + calmar) / (max_dd / 30)."""
     dd_factor = max_dd / 30.0
     if dd_factor <= 0:
-        return 0.0
+        return (sharpe + calmar) * 10.0 + 100.0
     return (sharpe + calmar) / dd_factor
 
 

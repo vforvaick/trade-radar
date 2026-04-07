@@ -14,14 +14,14 @@ def test_equity_correlation():
 
 def test_trade_overlap_zero():
     from bot.research.stage4 import calc_trade_overlap
-    a = [{"symbol": "BTC", "direction": "LONG", "entry_bar": 0, "exit_bar": 10}]
-    b = [{"symbol": "ETH", "direction": "LONG", "entry_bar": 0, "exit_bar": 10}]
+    a = [{"symbol": "BTC", "direction": "LONG", "entry_time": "2024-01-15T08:00:00", "exit_time": "2024-01-15T10:00:00"}]
+    b = [{"symbol": "ETH", "direction": "LONG", "entry_time": "2024-01-15T08:00:00", "exit_time": "2024-01-15T10:00:00"}]
     assert calc_trade_overlap(a, b) == 0.0
 
 
 def test_trade_overlap_full():
     from bot.research.stage4 import calc_trade_overlap
-    t = [{"symbol": "BTC", "direction": "LONG", "entry_bar": 0, "exit_bar": 10}]
+    t = [{"symbol": "BTC", "direction": "LONG", "entry_time": "2024-01-15T08:00:00", "exit_time": "2024-01-15T12:00:00"}]
     assert calc_trade_overlap(t, t) == 1.0
 
 
@@ -52,7 +52,7 @@ def test_select_portfolio():
             "max_dd": 15.0 + i,
             "equity_curve": list(np.cumsum(rng.normal(0.1, 1, 60))),
             "trades": [{"symbol": f"S{i}", "direction": "LONG",
-                        "entry_bar": i * 10, "exit_bar": i * 10 + 5}],
+                        "entry_time": f"2024-01-{15+i}T08:00:00", "exit_time": f"2024-01-{15+i}T12:00:00"}],
             "dd_series": list(rng.uniform(-20, 0, 60)),
         })
     result = Stage4Evaluator(family_cap=3, cluster_cap=3).select_portfolio(cands)
