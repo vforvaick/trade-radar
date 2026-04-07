@@ -255,7 +255,8 @@ def _summarize(trades: list[dict]) -> dict:
             times = pd.to_datetime([t["exit_time"] for t in trades])
             eq_series = pd.Series(equities[1:], index=times)
             start_time = times.min() - pd.Timedelta(days=1)
-            eq_series.loc[start_time] = config.INITIAL_EQUITY
+            if start_time not in eq_series.index:  # Only insert if not already there
+                eq_series.loc[start_time] = config.INITIAL_EQUITY
             eq_series = eq_series.sort_index()
             
             daily_equity = eq_series.resample('D').last().ffill()
@@ -273,7 +274,7 @@ def _summarize(trades: list[dict]) -> dict:
             if not np.isnan(neg_std) and neg_std != 0:
                 sortino = (daily_returns.mean() / neg_std) * np.sqrt(365)
             elif len(neg_returns) == 0 and len(daily_returns) > 0:
-                sortino = 100.0 if daily_returns.mean() > 0 else 0.0
+                sortino = 999.99 if daily_returns.mean() > 0 else 0.0
                 
             calmar = annual_ret / (max_dd / 100) if max_dd > 0 else 100.0
         except Exception:

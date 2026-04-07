@@ -53,10 +53,19 @@ def perturb_config(
     if rng is None:
         rng = np.random.RandomState()
 
+    weights_magnitude = 0.20
+
     result = {}
     for key, value in config_overrides.items():
         if key == "INDICATOR_WEIGHTS":
-            result[key] = value.copy()
+            perturbed_weights = {}
+            for w_name, w_val in value.items():
+                if w_val == 0.0:
+                    perturbed_weights[w_name] = 0.0  # zero = disabled, never perturb
+                else:
+                    factor = 1.0 + rng.uniform(-weights_magnitude, weights_magnitude)
+                    perturbed_weights[w_name] = max(0.01, w_val * factor)
+            result[key] = perturbed_weights
             continue
 
         if param_types and key in param_types:

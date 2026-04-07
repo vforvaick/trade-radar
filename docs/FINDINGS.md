@@ -188,6 +188,92 @@ git checkout 950e0ec -- pumpradar-passports/configs/<file>.json
 - **Root cause:** Backtester may not differentiate `USE_ATR_EXITS=true` in the test window, OR ATR exit is not active for the specific trade duration. Both show 1095 trades, 37.6% WR, -20.0%.
 - **Status:** Not investigated. Needs a test where ATR exits are the differentiating factor.
 
+### Bugs 8–19 — Systematic Calculation Audit (Session 8, 2026-04-07, branch `feat/systematic-calc-audit`)
+
+Full audit of all calculation modules — 12 bugs found and fixed, 49 new tests added (241→289).
+
+#### HIGH Severity
+
+**Bug 8 — `extended_scorer.py` hardcoded BTC weights opposite to live system**
+- **File:** `bot/research/extended_scorer.py` (H1)
+- **Root cause:** `BTC_WEIGHT = {"Uptrend": 1.15, "Downtrend": 0.85, "Sideways": 1.0}` — hardcoded, completely different from live `config.BTC_TREND_WEIGHTS`. Research scoring boosted uptrend candidates by 15% but live penalizes them by 20%. Research backtests were inflated and not comparable to live.
+- **Fix:** Replaced with `config.BTC_TREND_WEIGHTS` + `from bot import config`.
+
+**Bug 9 — Research confidence could exceed 100%**
+- **File:** `bot/research/extended_scorer.py` (H2)
+- **Root cause:** `100 × 1.15 = 115%` — unclamped. Sharpe ratio calculations based on inflated confidence.
+- **Fix:** `confidence = min(100.0, max(0.0, ...))` clamped to [0, 100].
+
+**Bug 10 — `stage4.calc_trade_overlap()` used non-existent fields**
+- **File:** `bot/research/stage4.py` (H3)
+- **Root cause:** Used `entry_bar`/`exit_bar` but backtester produces `entry_time`/`exit_time` strings. Function always returned 0.0 overlap (KeyError silently swallowed or field not present). Portfolio orthogonality filter was broken.
+- **Fix:** Parse `pd.Timestamp(trade["entry_time"])` / `exit_time`, check interval overlap `ta_entry <= tb_exit and ta_exit >= tb_entry`.
+
+**Bug 11 — Research regime names don't match live system**
+- **File:** `bot/research/regime.py` (H4)
+- **Root cause:** Research uses 4 enum values (`TREND_UP`, `TREND_DOWN`, `HIGH_VOL_CHOP`, `LOW_VOL_COMPRESSION`) but live scanner uses 3 strings (`Uptrend`, `Downtrend`, `Sideways`). Walk-forward regime filtering was comparing incompatible types.
+- **Fix:** Added `map_to_live_regime(RegimeType)` and `map_regime_value_to_live(str)` mapping functions. `HIGH_VOL_CHOP` and `LOW_VOL_COMPRESSION` both map to `"Sideways"`.
+
+#### MEDIUM Severity
+
+**Bug 12 — Stage 3 Monte Carlo skipped INDICATOR_WEIGHTS**
+- **File:** `bot/research/stage3.py` (M1)
+- **Root cause:** `perturb_config()` iterated over `INDICATOR_WEIGHTS` keys but immediately `continue`d — no perturbation applied. Monte Carlo was testing zero parameter variance for the most important config. Robustness scores were meaningless.
+- **Fix:** Perturb each weight ±20% (`w * random.uniform(0.8, 1.2)`). Zero weights preserved as 0.0 (disabled = off switch).
+
+**Bug 13 — Sortino sentinel 100.0 identical to actual high Sortino**
+- **File:** `bot/backtester.py` (M2)
+- **Root cause:** `sortino = 100.0` when no negative returns — but a genuinely excellent strategy can also produce Sortino ~100. The sentinel was indistinguishable from real data.
+- **Fix:** `sortino = 999.99` — clearly a sentinel, outside plausible real values.
+
+**Bug 14 — `composite_utility` returned 0 for best strategies (max_dd=0)**
+- **File:** `bot/research/stage4.py` (M3)
+- **Root cause:** `dd_factor = 1 / max_dd` → `1/0 = ZeroDivisionError` caught with `return 0` fallback. A strategy with no drawdown got the worst possible composite utility score, causing it to be ranked last in portfolio selection.
+- **Fix:** `if dd_factor <= 0: return (sharpe + calmar) * 10.0 + 100.0` — returns high utility.
+
+**Bug 15 — Volatility annualization uses 4H formula on 1H data**
+- **File:** `bot/research/regime.py` (M4)
+- **Root cause:** `_calc_realized_vol()` hardcoded `candles_per_year = 252 * 6 = 1512` (4H * 252 trading days). 1H data has 8760 candles/year. Regime volatility was understated by √(8760/1512) = 2.4×. HIGH_VOL regime was nearly never triggered.
+- **Fix:** `candles_per_year: int = 365 * 24` parameter, default 8760 for 1H.
+
+#### LOW Severity
+
+**Bug 16 — RSI fillna(50) masks extreme conditions**
+- **File:** `bot/indicators.py` (L1)
+- **Root cause:** `rsi.fillna(50)` fills ALL NaN — including mid-series gaps from missing candles, which should inherit previous value. A sudden NaN in a 20-bar RSI mid-series would snap to 50 (neutral) instead of carrying the previous extreme value.
+- **Fix:** `rsi.ffill().fillna(50)` — forward-fill first, only 50-fill the leading NaN (startup).
+
+**Bug 17 — MACD crashes with insufficient data**
+- **File:** `bot/indicators.py` (L2)
+- **Root cause:** MACD needs `slow + signal` bars minimum (e.g., 26+9=35). With short history or ultra-fresh symbols, `calc_macd()` would raise IndexError.
+- **Fix:** `if len(df) < slow + signal: return "NEUTRAL", 0` early guard.
+
+**Bug 18 — OBV gap_pct effectively uncapped (prior L3)**
+- **File:** `bot/indicators.py` (L3 → resolved)
+- **Note:** Originally capped at 500.0, but since `strength = min(gap_pct, 1.0)` immediately follows, the 500.0 cap was redundant dead code. Removed the intermediate cap for clarity. The epsilon denominator (1e-10) prevents division by zero; the `min(strength, 1.0)` is the effective cap.
+
+**Bug 19 — Backtester equity starting point duplicated if already present**
+- **File:** `bot/backtester.py` (L4)
+- **Root cause:** Always inserted artificial equity starting point `(start_time, initial_equity)`. If a trade exits at the same timestamp as `start_time`, the duplicate skewed Sharpe calculation.
+- **Fix:** `if start_time not in eq_series.index: eq_series[start_time] = initial_equity`
+
+---
+
+### Phase 2 — Per-Passport BTC_TREND_WEIGHTS Override (Session 8)
+
+**Problem:** All passports shared `BTC_TREND_WEIGHTS = {"Uptrend": 0.8, ...}` (global). Mean-reversion strategies (BBMeanRev, RSIContrarian, Reversal) don't depend on BTC direction — the 0.8× uptrend penalty suppressed them unnecessarily during bull markets.
+
+**Fix applied:**
+1. Added `'BTC_TREND_WEIGHTS'` to `passport_runner._save_config()` key list — prevents cross-contamination between passport scan cycles.
+2. Added `"BTC_TREND_WEIGHTS": {"Uptrend": 1.0, "Sideways": 1.0, "Downtrend": 1.0}` to `config_overrides` of 5 mean-reversion passports:
+   - `bb_mean_rev.json` → v0.2
+   - `rsi_contrarian.json` → v0.2
+   - `reversal_v2.json` → v0.3
+   - `reversal.json` → v0.3 (still `enabled: false`)
+   - `macd_divergence.json` → v0.2
+
+**Lesson:** BTC trend filter is only appropriate for directional strategies. Mean-reversion strategies trade price reversion regardless of BTC trend direction.
+
 ---
 
 ## 5. What Destroys Performance (Anti-Patterns)

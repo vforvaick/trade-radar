@@ -50,6 +50,8 @@ def calc_macd(df: pd.DataFrame,
     fast = fast or config.MACD_FAST
     slow = slow or config.MACD_SLOW
     signal = signal or config.MACD_SIGNAL
+    if len(df) < slow + signal:  # Need enough bars for MACD
+        return "NEUTRAL", 0
 
     ema_fast = calc_ema(df['close'], fast)
     ema_slow = calc_ema(df['close'], slow)
@@ -87,7 +89,7 @@ def calc_rsi(df: pd.DataFrame, period: int = None) -> pd.Series:
 
     rs = avg_gain / avg_loss.replace(0, np.nan)
     rsi = 100 - (100 / (1 + rs))
-    return rsi.fillna(50)
+    return rsi.ffill().fillna(50)
 
 
 def calc_rsi_signal(df: pd.DataFrame, period: int = None):

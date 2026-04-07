@@ -2,7 +2,7 @@
     "name": "BBMeanRev",
     "enabled": true,
     "emoji": "🔄",
-    "version": "0.1",
+    "version": "0.2",
     "changelog": [
         {
             "version": "0.1",
@@ -28,6 +28,12 @@
                 "trades": 131,
                 "profit_factor": 1.32
             }
+        },
+        {
+            "version": "0.2",
+            "date": "2026-04-07",
+            "git_sha": "pending",
+            "description": "Add BTC_TREND_WEIGHTS: Uptrend 1.0 — mean-reversion strategies don't depend on BTC direction, remove the 0.8 penalty during bull markets"
         }
     ],
     "description": "BB mean reversion + RSI extremes confirmation. Reference: 151 Strategies S4. Thesis: price tends to revert to mean in ranging markets; RSI confirms oversold/overbought.",
@@ -50,6 +56,7 @@
         "USE_ATR_EXITS": false,
         "USE_TRAILING_STOP": false,
         "MAX_OPEN_POSITIONS_PER_PASSPORT": 25,
-        "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+        "MAX_OPEN_POSITIONS_PER_SYMBOL": 1,
+        "BTC_TREND_WEIGHTS": {"Uptrend": 1.0, "Sideways": 1.0, "Downtrend": 1.0}
     }
 }

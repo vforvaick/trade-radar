@@ -435,7 +435,7 @@ class PassportRunner:
             'REVERSAL_SIDEWAYS_CONFIDENCE_THRESHOLD',
             'REVERSAL_SIDEWAYS_MAX_OPEN_POSITIONS_PER_PASSPORT',
             'USE_ATR_EXITS', 'USE_TRAILING_STOP', 'ATR_TRAIL_MULTIPLIER',
-            'SKIP_WEEKDAYS',
+            'SKIP_WEEKDAYS', 'BTC_TREND_WEIGHTS',
         ]
         if override_keys:
             keys = list(dict.fromkeys([*keys, *override_keys]))
