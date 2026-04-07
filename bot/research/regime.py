@@ -100,10 +100,8 @@ def classify_regime_series(df: pd.DataFrame, window: int = 180) -> pd.Series:
     close = df["close"]
     ret_rolling = close.pct_change(min(window, len(close) - 1)) * 100
     adx = _calc_adx(df)
-    rvol = _calc_realized_vol(close)
+    rvol = _calc_realized_vol(close, candles_per_year=365 * 24)
     rvol_median = rvol.rolling(60, min_periods=30).median()
-
-    regimes = []
     for i in range(len(df)):
         if i < _MIN_BARS or pd.isna(ret_rolling.iloc[i]):
             regimes.append(RegimeType.LOW_VOL_COMPRESSION.value)
@@ -122,3 +120,25 @@ def classify_regime_series(df: pd.DataFrame, window: int = 180) -> pd.Series:
             regimes.append(RegimeType.LOW_VOL_COMPRESSION.value)
 
     return pd.Series(regimes, index=df.index)
+
+
+def map_to_live_regime(regime: "RegimeType") -> str:
+    """Map research 4-regime to live 3-regime naming."""
+    mapping = {
+        RegimeType.TREND_UP: "Uptrend",
+        RegimeType.TREND_DOWN: "Downtrend",
+        RegimeType.HIGH_VOL_CHOP: "Sideways",
+        RegimeType.LOW_VOL_COMPRESSION: "Sideways",
+    }
+    return mapping.get(regime, "Sideways")
+
+
+def map_regime_value_to_live(regime_value: str) -> str:
+    """Map RegimeType.value string to live regime name."""
+    mapping = {
+        "TREND_UP": "Uptrend",
+        "TREND_DOWN": "Downtrend",
+        "HIGH_VOL_CHOP": "Sideways",
+        "LOW_VOL_COMPRESSION": "Sideways",
+    }
+    return mapping.get(regime_value, "Sideways")
