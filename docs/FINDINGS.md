@@ -2,7 +2,7 @@
 
 > Living document. Updated after every iteration cycle.
 > Purpose: avoid repeating mistakes, build on proven insights, explore new lineages with context.
-> Last updated: 2026-04-06 (Session 7 — Cryptopass overhaul, PnL bug fix, fresh start)
+> Last updated: 2026-04-07 (Session 7 — Cryptopass overhaul, PnL bug fix, fresh start, VPS deploy)
 
 ---
 
@@ -498,20 +498,31 @@ _v0.2 (EMA gate: ema_trend=0.5, rsi_position=1.5, bb_position=1.5, threshold=65)
 
 ## 11. Deployment & Infrastructure Notes
 
-### VPS Setup
+### VPS Setup (updated Session 7 — 2026-04-07)
 - **Host:** `fight-tres`
-- **Service:** `pumpradar.service` (systemd)
-- **Start/stop:** `systemctl restart pumpradar.service`
+- **Service:** `cryptopass.service` (systemd — was `pumpradar.service`)
+- **Metrics service:** `cryptopass-metrics.service` — Prometheus exporter on port 9103
+- **Start/stop:** `systemctl restart cryptopass.service`
 - **Entry:** `python -m bot.main_multi --interval=1h`
-- **Config auto-load:** `main_multi.py` loads all `*.json` from `pumpradar-passports/configs/`
+- **Passport dir:** `passports/` (scans `passports/pumpradar/` + `passports/cryptopass-research/`)
 - **New passports auto-activate** — just push to VPS and restart service
+- **Fresh start:** `python scripts/fresh_start.py --db state.db --confirm` (clears positions + equity history)
+- **Deploy sequence:** `git pull && python scripts/fresh_start.py --db state.db --confirm && systemctl restart cryptopass.service`
 
 ### Telegram
 - HTTP API via bot token in `.env`
-- Threading: signal message → TP/SL replies in same thread
+- Threading: signal message → TP/SL replies in same thread (group_msg_id stored in notifier)
 - Commands: `/status`, `/ping`, `/summary`
 - New formatters in `bot/telegram_commands.py`: strategies, compare, health, promotion, digest
-- **Group routing (Session 6):** Trade signals → `PUMPRADAR_TG_GROUP_ID=-1003773269891` topic `PUMPRADAR_TG_TOPIC_ID=6` (Trader Zone > Tradar: Trade Radar). System logs/errors/updates → DM only. Set in VPS `.env`. Falls back to DM if group vars not set.
+- **Group routing (Session 7):** Trade signals → `CRYPTOPASS_TG_GROUP_ID=-1003773269891` topic `CRYPTOPASS_TG_TRADE_TOPIC_ID=6`. System logs → `CRYPTOPASS_TG_LOG_TOPIC_ID=1` (General topic). DM only for `/status` etc. command replies.
+
+### Monitoring (Prometheus + Grafana)
+- **Prometheus:** fight-uno `http://localhost:9090` — scrapes `fight-tres:9103` (job: `cryptopass`)
+- **Grafana:** fight-uno `http://localhost:3333` (faiq/trader2026) — dashboard: "Cryptopass Trading Dashboard"
+- **Dashboard UID:** `cryptopass-main` — URL: `/d/cryptopass-main/cryptopass-trading-dashboard`
+- **Metrics exposed (port 9103):** equity, unrealized_pnl, drawdown, trades_total, win_rate, profit_factor, open_positions, heartbeat_age_seconds
+- **Heartbeat:** updates every scan cycle (1h). `-1` = no snapshots yet (expected on fresh start)
+- **Config:** `ops/grafana-cryptopass-dashboard.json` — import via Grafana UI or API
 
 ### State Persistence
 - `bot/state_store.py`: SQLite with `positions`, `equity_snapshots`, `trade_log`
@@ -537,25 +548,51 @@ _v0.2 (EMA gate: ema_trend=0.5, rsi_position=1.5, bb_position=1.5, threshold=65)
 
 ## 12. What's Next
 
-### Current State (2026-04-05 Session 6)
-- **VPS:** Running on master, 22 passports loaded (7 original + 15 new candidates), service healthy
-- **Enabled passports:** MACDDivergence, BBMeanRev, SeasonalityOG, OG, HiddenGem, Sniper, VolumeKing, Momentum, Dynamic
-- **Disabled (quarantine):** Reversal, ReversalV2
-- **Disabled (pending backtest/trending regime):** DualMA, Donchian, OBV, RSIContrarian + others
-- **Telegram routing:** Trade signals → Trader Zone group topic (ID=-1003773269891, thread=6). System logs → DM only.
+### Current State (2026-04-07 Session 7)
+- **VPS:** `cryptopass.service` running on master, 22 passports loaded ($500 fresh start)
+- **Monitoring:** `cryptopass-metrics.service` on port 9103 → Prometheus/Grafana live on fight-uno
+- **Enabled passports:** All 22 except Reversal (quarantined)
+- **Disabled (quarantine):** `reversal.json` (`enabled: false`)
+- **Telegram routing:** Trade signals → Trader Zone group topic (thread=6). System logs → General topic (thread=1). TP/SL replies threaded.
+- **Tests:** 240/240 passing on master (HEAD `e323087`)
 
-### Immediate — Done ✅
-- [x] 3 new indicators added (Donchian, OBV — DualMA uses existing EMA)
-- [x] 3 new passports created and backtested
-- [x] Telegram group routing deployed
-- [x] VPS .env updated with GROUP_ID + TOPIC_ID
+### Bugs Fixed in Session 7 (post-merge audit)
+1. **Heartbeat timezone** — `datetime.utcnow()` vs SQLite CURRENT_TIMESTAMP (UTC) — matched correctly
+2. **`open_positions_total` undercount** — `status='OPEN'` → `NOT IN ('TP3_CLOSED', 'SL_CLOSED')` 
+3. **`reversal.json` still enabled** — quarantined: `enabled: false`
+4. **`equity_snapshots_v2` missing** — all 3 queries now individually wrapped in try/except
+5. **TP1/TP2 equity display in Telegram** — was showing pre-trade equity, now correctly shows `passport.equity + pos.realized_pnl`
+6. **`snapshot_equity_all`** — `remaining_fraction` now applied per TP tier; `pending_realized` added to true_realized
+
+### 30-Day Paper Trade Countdown (started 2026-04-07)
+- **Goal:** Identify passports that hit PromotionPolicy 7-gate threshold (≥30d live, PF≥1.2, WR≥40%, MaxDD<15%)
+- **Check weekly:** Grafana dashboard for equity curves + `cryptopass_heartbeat_age_seconds` for health
+- **Expected signals:** MACDDivergence and BBMeanRev are top candidates based on 90d quality-pair backtest
+- **Monitor:** If any passport fires >30 trades/week, audit for overtrade condition
 
 ### Short-term Priorities
-1. **Monitor MACDDivergence + BBMeanRev** — top performers, watch for >50 trades/day overtrade signals
-2. **Donchian re-test in trending market** — if a clear trend emerges Q2 2026, re-run 90d backtest and enable if PF > 1.1
-3. **OBV as secondary confirmation** — build hybrid passport: `bb_position=1.5, obv_signal=0.5, volume_spike=2.0`
-4. **Research engine output** — VPS has PID 1472995 running `run_research.py --all --days 90 --pairs 10` (started 2026-04-05 ~15:00 UTC). Check results: `ssh fight-tres "tail -30 ~/pumpradar-bot/logs/research_run_*.log"`
-5. **Verify Telegram group routing** — after next deploy, confirm trade signals appear in Trader Zone > Tradar: Trade Radar (thread 6) not DM
+1. **Let 30d paper trade run** — resist tweaking; collect real signal data
+2. **Grafana dashboard** — add equity curve panel once snapshots accumulate (48h)
+3. **Research engine (local only)** — VPS is compute-constrained; run `run_research.py` locally
+4. **reversal_v2 next attempt** — raise `CONFIDENCE_THRESHOLD` to 75+, OR implement EMA as hard pre-filter (not weight)
+5. **OBV hybrid passport** — `bb_position=1.5, obv_signal=0.5, volume_spike=2.0` — test on quality pairs
+
+### Key Commands
+```bash
+# VPS health
+ssh fight-tres "systemctl status cryptopass.service cryptopass-metrics.service --no-pager"
+ssh fight-tres "journalctl -u cryptopass.service -n 50 --no-pager -o short-iso"
+
+# Metrics
+curl fight-tres:9103/metrics | grep cryptopass_equity
+curl fight-tres:9103/health
+
+# Grafana
+open http://fight-uno:3333/d/cryptopass-main/cryptopass-trading-dashboard
+
+# After code changes
+ssh fight-tres "cd /home/vforvaick/pumpradar-bot && git pull && systemctl restart cryptopass.service"
+```
 
 ### Research Engine — First Live Run (2026-04-05)
 
