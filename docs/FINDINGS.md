@@ -174,6 +174,15 @@ git checkout 950e0ec -- pumpradar-passports/configs/<file>.json
 - **Impact:** 337 signals in 3 days live before quarantine.
 - **Fix needed:** Make RSI thresholds per-passport overridable, OR rewrite reversal logic as a separate indicator. NOT fixed yet.
 
+### Bug 7 — BTC Uptrend multiplier 0.5 makes ALL signals mathematically impossible
+- **File:** `bot/config.py` L101 (fixed in commit `10ec9b5`)
+- **Root cause:** `BTC_TREND_WEIGHTS["Uptrend"] = 0.5`. Max raw confidence = 100%. After ×0.5 = 50%. `CONFIDENCE_THRESHOLD = 54`. Since 50 < 54, `go = False` for every single pair — **forever** during BTC Uptrend.
+- **Impact:** 5+ hours of live paper trading with 0 signals on 2026-04-07. All 21 passports silenced.
+- **Fix:** Changed `Uptrend: 0.5 → 0.8`. Now needs raw confidence ≥67.5% to fire — still selective in bull markets, but not impossible.
+- **Lesson:** Whenever you apply a multiplier to a threshold system, verify that `max_possible_value × multiplier ≥ threshold`. With confidence max=100 and threshold=54: any multiplier below 0.54 silences everything.
+- **Detected by:** Observing 0 signals across 21 passports + 310 pairs for 5.5 hours.
+- **Long-term fix needed:** Make `BTC_TREND_WEIGHTS` per-passport overridable (mean-reversion passports like BBMeanRev/RSIContrarian should use `Uptrend: 1.0`).
+
 ### Bug 6 — Dynamic v0.2 = Momentum v0.2 identical metrics
 - **Files:** `pumpradar-passports/configs/dynamic_exit.json`, `momentum.json`
 - **Root cause:** Backtester may not differentiate `USE_ATR_EXITS=true` in the test window, OR ATR exit is not active for the specific trade duration. Both show 1095 trades, 37.6% WR, -20.0%.
