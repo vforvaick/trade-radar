@@ -128,38 +128,44 @@ class MetricsCache:
                 lines.append("# HELP cryptopass_max_drawdown_pct Max drawdown percentage from peak (per passport)")
                 lines.append("# TYPE cryptopass_max_drawdown_pct gauge")
 
-                all_snapshots = conn.execute(
-                    "SELECT passport_name, total_equity, timestamp FROM equity_snapshots_v2 ORDER BY timestamp ASC"
-                ).fetchall()
+                try:
+                    all_snapshots = conn.execute(
+                        "SELECT passport_name, total_equity, timestamp FROM equity_snapshots_v2 ORDER BY timestamp ASC"
+                    ).fetchall()
 
-                passport_equity_history: dict[str, list] = {}
-                for row in all_snapshots:
-                    pname = row["passport_name"]
-                    if pname not in passport_equity_history:
-                        passport_equity_history[pname] = []
-                    passport_equity_history[pname].append(row["total_equity"])
+                    passport_equity_history: dict[str, list] = {}
+                    for row in all_snapshots:
+                        pname = row["passport_name"]
+                        if pname not in passport_equity_history:
+                            passport_equity_history[pname] = []
+                        passport_equity_history[pname].append(row["total_equity"])
 
-                for pname, equities in passport_equity_history.items():
-                    if len(equities) < 2:
-                        continue
-                    peak = equities[0]
-                    max_dd = 0.0
-                    for e in equities:
-                        if e > peak:
-                            peak = e
-                        dd = (peak - e) / peak * 100 if peak > 0 else 0.0
-                        if dd > max_dd:
-                            max_dd = dd
-                    name = pname.replace('"', '')
-                    lines.append(f'cryptopass_max_drawdown_pct{{passport="{name}"}} {max_dd:.2f}')
+                    for pname, equities in passport_equity_history.items():
+                        if len(equities) < 2:
+                            continue
+                        peak = equities[0]
+                        max_dd = 0.0
+                        for e in equities:
+                            if e > peak:
+                                peak = e
+                            dd = (peak - e) / peak * 100 if peak > 0 else 0.0
+                            if dd > max_dd:
+                                max_dd = dd
+                        name = pname.replace('"', '')
+                        lines.append(f'cryptopass_max_drawdown_pct{{passport="{name}"}} {max_dd:.2f}')
+                except Exception:
+                    pass  # Table not yet created
 
                 # --- Heartbeat ---
                 lines.append("# HELP cryptopass_heartbeat_age_seconds Seconds since last equity snapshot")
                 lines.append("# TYPE cryptopass_heartbeat_age_seconds gauge")
 
-                last_snap = conn.execute(
-                    "SELECT MAX(timestamp) as ts FROM equity_snapshots_v2"
-                ).fetchone()["ts"]
+                try:
+                    last_snap = conn.execute(
+                        "SELECT MAX(timestamp) as ts FROM equity_snapshots_v2"
+                    ).fetchone()["ts"]
+                except Exception:
+                    last_snap = None  # Table not yet created
 
                 if last_snap:
                     try:
