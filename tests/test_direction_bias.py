@@ -102,45 +102,63 @@ def test_direction_bias_none_passes_all_signals(monkeypatch):
     assert short_count > 0, "None bias should allow SHORT trades"
 
 
-def test_passport_runner_short_only_skips_long_signal(monkeypatch):
-    """PassportRunner with SHORT_ONLY must not call open_position for LONG signals."""
+def _make_runner_with_signals(signals, config_overrides):
+    """Build a PassportRunner-like object with mocked internals for testing."""
     from bot.passport_runner import PassportRunner
     from bot.signals import Signal
 
-    monkeypatch.setattr(config, "DIRECTION_BIAS", "SHORT_ONLY", raising=False)
+    # Build a mock passport with the given config_overrides
+    passport = MagicMock()
+    passport.enabled = True
+    passport.emoji = "🧪"
+    passport.name = "TestPassport"
+    passport.config_overrides = config_overrides
+    passport.position_manager = MagicMock()
+    passport.position_manager.can_open.return_value = True
+    passport.position_manager.open_count = 0
+    passport.equity = 500.0
+    passport.signal_count = 0
 
+    # Build runner with mocked scanner and state_store
     runner = PassportRunner.__new__(PassportRunner)
-    runner.position_manager = MagicMock()
-    runner.position_manager.can_open.return_value = True
-    runner.position_manager.open_count = 0
-
-    long_signal = MagicMock(spec=Signal)
-    long_signal.direction = "LONG"
-    long_signal.confidence = 70.0
-
-    # Simulate the filter logic that should be in passport_runner
-    bias = getattr(config, 'DIRECTION_BIAS', None)
-    if bias == "SHORT_ONLY" and long_signal.direction == "LONG":
-        should_open = False
-    else:
-        should_open = True
-
-    assert not should_open, "SHORT_ONLY runner should skip LONG signal"
+    runner.passports = [passport]
+    runner.scan_cycle_error_count = 0
+    runner.scanner = MagicMock()
+    runner.scanner.scan_all.return_value = signals
+    runner.state_store = MagicMock()
+    runner.state_store.save_position.return_value = 1
+    return runner, passport
 
 
-def test_passport_runner_short_only_allows_short_signal(monkeypatch):
-    """PassportRunner with SHORT_ONLY must allow SHORT signals through."""
-    monkeypatch.setattr(config, "DIRECTION_BIAS", "SHORT_ONLY", raising=False)
-
+def test_passport_runner_short_only_skips_long_signal():
+    """PassportRunner.run_scan_cycle with SHORT_ONLY must not call open_position for LONG signals."""
     from bot.signals import Signal
-    short_signal = MagicMock(spec=Signal)
-    short_signal.direction = "SHORT"
-    short_signal.confidence = 70.0
 
-    bias = getattr(config, 'DIRECTION_BIAS', None)
-    if bias == "SHORT_ONLY" and short_signal.direction == "LONG":
-        should_open = False
-    else:
-        should_open = True
+    long_sig = MagicMock(spec=Signal)
+    long_sig.direction = "LONG"
+    long_sig.confidence = 75.0
 
-    assert should_open, "SHORT_ONLY runner should allow SHORT signal"
+    runner, passport = _make_runner_with_signals(
+        signals=[long_sig],
+        config_overrides={"DIRECTION_BIAS": "SHORT_ONLY"},
+    )
+    runner.run_scan_cycle()
+
+    passport.position_manager.open_position.assert_not_called()
+
+
+def test_passport_runner_short_only_allows_short_signal():
+    """PassportRunner.run_scan_cycle with SHORT_ONLY must call open_position for SHORT signals."""
+    from bot.signals import Signal
+
+    short_sig = MagicMock(spec=Signal)
+    short_sig.direction = "SHORT"
+    short_sig.confidence = 75.0
+
+    runner, passport = _make_runner_with_signals(
+        signals=[short_sig],
+        config_overrides={"DIRECTION_BIAS": "SHORT_ONLY"},
+    )
+    runner.run_scan_cycle()
+
+    passport.position_manager.open_position.assert_called_once()
