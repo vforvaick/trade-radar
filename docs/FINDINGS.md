@@ -2,11 +2,49 @@
 
 > Living document. Updated after every iteration cycle.
 > Purpose: avoid repeating mistakes, build on proven insights, explore new lineages with context.
-> Last updated: 2026-04-07 (Session 7 — Cryptopass overhaul, PnL bug fix, fresh start, VPS deploy)
+> Last updated: 2026-04-08 (Session 9 — ATR fix, direction_bias feature, quality pairs research, Phase 4 running)
 
 ---
 
-## §13 — Session 7: Cryptopass Overhaul (2026-04-06)
+## §16 — Session 9: ATR Fix, direction_bias, Quality Pairs Research (2026-04-08)
+
+### ATR Bug (Critical, Fixed)
+
+**Root cause:** `add_atr(df, period=14)` in `bot/indicators.py` was never called in the live pipeline.  
+**Effect:** `sig.atr_at_entry` was `None` for every position ever created. Both `USE_TRAILING_STOP=True` and `USE_ATR_EXITS=True` were silently broken.  
+**Fix:** One line — `indicators.add_atr(df, period=14)` added after the length guard in `score_confluence()` (commit `1b2ad09`).  
+**Note:** The trailing stop logic in `position_manager.py` was correctly written — it already handled ATR via `sig.atr_at_entry`. ATR comparison script added: `scripts/backtest_atr_comparison.py` — run before enabling `USE_TRAILING_STOP=True` on any passport.
+
+### direction_bias Feature (New)
+
+**What it does:** New `DIRECTION_BIAS` config key (`None` / `"SHORT_ONLY"` / `"LONG_ONLY"`). When set, blocks signals of the opposite direction before position open.  
+**Where applied:** Both `bot/backtester.py` (candle loop) and `bot/passport_runner.py` (signal loop). Same logic in both — `getattr(config, 'DIRECTION_BIAS', None)`.  
+**Usage:** Add `"DIRECTION_BIAS": "SHORT_ONLY"` to any passport's `config_overrides`. Enables dedicated downtrend passports without changing scorer or signal logic.  
+**Config isolation:** `PassportRunner._save_config()` snapshots all `config_overrides` keys, including `DIRECTION_BIAS` — restored after each passport scan (no cross-passport leakage).
+
+### Research Engine Improvements
+
+1. **`pressure_flow_short` family added** to `bot/research/families.py` — pressure=2.5 + candle=1.5 + ema=1.0, SHORT_ONLY, generates 4 candidates. Targets TREND_DOWN/HIGH_VOL_CHOP regimes.
+2. **`--quality-pairs` flag** added to `run_research.py` — uses 10 hardcoded tier-1 pairs (BTC/ETH/SOL/BNB/XRP/ADA/DOGE/AVAX/LINK/DOT) instead of meme-coin top-volume Binance scan. Produces reproducible, stable backtest results.
+3. **Phase 4 re-run launched** (2026-04-08 17:33 local) — 107 candidates, 180d, quality pairs, all families including `pressure_flow_short`. Log: `logs/research_phase4_quality_20260408_173313.log`.
+
+### Session 9 Commits
+
+| SHA | Change |
+|---|---|
+| `1b2ad09` | fix: add_atr() in score_confluence — atr_at_entry always None |
+| `46a8640` | feat: DIRECTION_BIAS config — SHORT_ONLY / LONG_ONLY passports |
+| `29939c7` | feat: DIRECTION_BIAS filter in passport_runner live scan |
+| `fdd4bd7` | scripts: backtest_atr_comparison.py for ATR validation |
+| `3a758e0` | feat: pressure_flow_short strategy family |
+| `56af2c1` | feat: --quality-pairs flag in run_research.py |
+| `3d4673b` | test: fix passport_runner tests (real run_scan_cycle coverage) |
+
+### Tests: 296/296 passing
+
+---
+
+
 
 ### What Changed
 1. **System renamed to Cryptopass** — "Pumpradar" is the external alert bot; "Cryptopass" is our system
