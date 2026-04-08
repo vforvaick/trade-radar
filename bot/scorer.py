@@ -25,6 +25,8 @@ def score_confluence(df, btc_trend="Sideways"):
     if len(df) < 55:  # need enough history for indicators
         return _no_signal("Insufficient data")
 
+    indicators.add_atr(df, period=14)  # enables trailing stop + ATR exits
+
     # Run all indicators
     ema_dir, ema_str = indicators.calc_ema_trend(df)
     macd_dir, macd_val = indicators.calc_macd(df)
