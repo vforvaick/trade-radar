@@ -17,6 +17,13 @@ import time
 from bot.data_fetcher import get_all_futures_symbols
 from bot.research.pipeline import ResearchPipeline
 
+# Tier-1 futures pairs for reliable, reproducible backtests.
+# Use with --quality-pairs to avoid meme coin results.
+QUALITY_PAIRS = [
+    "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT",
+    "ADAUSDT", "DOGEUSDT", "AVAXUSDT", "LINKUSDT", "DOTUSDT",
+]
+
 os.makedirs("logs", exist_ok=True)
 
 logging.basicConfig(
@@ -40,6 +47,8 @@ def main():
                         help="Max passports per family (default: no limit)")
     parser.add_argument("--pairs", type=int, default=15,
                         help="Number of trading pairs (default: 15)")
+    parser.add_argument("--quality-pairs", action="store_true",
+                        help="Use hardcoded tier-1 pairs instead of top-volume Binance scan")
     parser.add_argument("--interval", type=str, default="1h",
                         help="Timeframe (default: 1h)")
     parser.add_argument("--days", type=int, default=180,
@@ -55,8 +64,12 @@ def main():
         logger.error("Specify --families or --all")
         sys.exit(1)
 
-    logger.info("Fetching top %d symbols by volume...", args.pairs)
-    symbols = get_all_futures_symbols()[:args.pairs]
+    if args.quality_pairs:
+        symbols = QUALITY_PAIRS
+        logger.info("Using quality pairs (%d): %s", len(symbols), symbols)
+    else:
+        logger.info("Fetching top %d symbols by volume...", args.pairs)
+        symbols = get_all_futures_symbols()[:args.pairs]
     logger.info("Trading pairs: %s", symbols)
 
     pipeline = ResearchPipeline(
