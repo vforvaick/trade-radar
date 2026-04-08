@@ -1,42 +1,46 @@
 # Cryptopass — What's Next
 
-> Updated: 2026-04-07 (Session 8 — Systematic Calc Audit complete)
-> Branch: `master` (`b790192`) — 289/289 tests passing, VPS deployed
+> Updated: 2026-04-09 (Session 10 — Strategic roadmap, 4-regime design, North Star reframe)
+> Branch: `master` — tests passing, VPS deployed with Session 8 bug fixes
+> Strategic direction: see `docs/STRATEGIC_ROADMAP.md` for North Star and long-term vision
 
 ---
 
 ## 🟢 Right Now (In Progress)
 
-### Phase 4 — Research Pipeline End-to-End
-Running on VPS fight-tres (Binance blocked locally):
+### Phase 4 — Research Pipeline (Retry #2, Local MacBook)
+Running locally with quality pairs (Binance works from local now):
 ```bash
-# VPS: nohup .venv/bin/python run_research.py --all --max-per-family 3 --days 180 --pairs 10
-# Log: /home/vforvaick/pumpradar-bot/logs/research_phase4_20260407.log
-# Monitor:
-ssh fight-tres "tail -f /home/vforvaick/pumpradar-bot/logs/research_phase4_20260407.log"
+# PID 15203 — started 2026-04-09 00:04
+nohup uv run python run_research.py --all --max-per-family 2 --days 180 --quality-pairs
+# Log: logs/research_phase4_quality_retry_20260408_180331.log
+tail -f logs/research_phase4_quality_retry_20260408_180331.log
 ```
 
-**What to look for when it completes:**
-- Did any new candidates pass all 4 stages?
-- Which strategies succeeded in which regimes?
-- Check `research_experiments.db` for full results: `sqlite3 research_experiments.db "SELECT name,status,return_pct FROM experiments ORDER BY return_pct DESC LIMIT 20"`
-- Update `docs/FINDINGS.md` §9 with results
-- Promote winners to `passports/cryptopass-research/` if return > +10%, PF > 1.2
+**52 candidates, 180d quality pairs.** ~75% complete. Early Stage 1 results: 14/38 passing so far, best Sharpe 2.24.
+
+### 4-Regime Upgrade — Design Approved, Plan Next
+Spec committed: `docs/superpowers/specs/2026-04-09-4-regime-upgrade-design.md`
+Replaces EMA 9/21 3-regime detector with ADX-based 4-regime system (TREND_UP, TREND_DOWN, HIGH_VOL_CHOP, LOW_VOL_COMPRESSION).
+**Next step:** Write implementation plan, then execute.
 
 ---
 
 ## 🔴 Immediate Priorities
 
-### 1. Market Condition Coverage Gap — Downtrend Strategy
-We have confirmed strategies for 2 of 3 BTC regimes:
-- ✅ **Uptrend** → HiddenGem (+25.9%), Sniper (+26.0%), VolumeKing (+9.1%)
-- ✅ **Sideways** → BBMeanRev (+7.7%), MACDDivergence (+9.1%) — now with Uptrend:1.0 fix
-- ❌ **Downtrend** → **No confirmed strategy.** Existing passports show negative returns in bear markets.
+### 1. Market Condition Coverage Gap — Downtrend & Low-Vol Strategies
+We have confirmed strategies for 2 of 4 BTC regimes (upgraded to 4-regime model):
+- ✅ **TREND_UP** → HiddenGem (+25.9%), Sniper (+26.0%), VolumeKing (+9.1%)
+- ✅ **SIDEWAYS/HIGH_VOL_CHOP** → BBMeanRev (+7.7%), MACDDivergence (+9.1%) — with Uptrend:1.0 fix
+- ❌ **TREND_DOWN** → **No confirmed strategy.** Priority research target.
+- ❌ **LOW_VOL_COMPRESSION** → **Untested regime.** BB Squeeze Breakout hypothesis ready.
 
-**Options to explore:**
-- Short-bias passport with `rsi_position` reversed (SHORT when RSI > 50 in Downtrend)
-- Passive: Current passports short with same logic — check which has highest short WR in bear regime
-- Research pipeline Stage 2 output will show regime-specific performance — look for downtrend survivors
+**Research approaches for TREND_DOWN:**
+1. Short-bias passport with `DIRECTION_BIAS: "short"` on HiddenGem indicators (lowest effort)
+2. RSI Overbought Reversal in bear rallies
+3. Funding Rate Carry (needs API endpoint)
+
+See `docs/STRATEGIC_ROADMAP.md` §Research Priorities for full list.
 
 ### 2. ATR-Based Trailing Stop Fix
 `USE_TRAILING_STOP` is permanently disabled because the current formula destroys performance (-81pp).
@@ -155,11 +159,12 @@ Current architecture: scanner fetches 1H klines only. Multi-TF would require:
 | Issue | File | Severity | Notes |
 |---|---|---|---|
 | `USE_TRAILING_STOP` formula broken | `bot/position_manager.py` | HIGH | ATR-based fix designed, not implemented |
+| 3-regime detector simplistic | `bot/data_fetcher.py` | HIGH | 4-regime upgrade designed, plan pending |
+| No Sharpe ratio in backtester | `bot/backtester.py` | MEDIUM | Research pipeline has it; backtester needs it |
+| No portfolio-level risk cap | `bot/risk/` | MEDIUM | 22 passports can all fire same symbol simultaneously |
 | ReversalV2 negative returns | `passports/cryptopass-research/reversal_v2.json` | MEDIUM | Needs hard EMA pre-filter in signal logic |
 | Dynamic v0.2 = Momentum v0.2 metrics | `bot/backtester.py` | LOW | ATR exits may not differentiate in test window |
 | `BreakoutVol` VPS equity $455 | VPS state | INFO | Paper trading live, watching |
-| Binance blocked locally (MacBook) | Network | INFO | All Binance API calls must run on VPS |
-| Research pipeline note: Binance blocked locally | `run_research.py` | INFO | Run on VPS: `ssh fight-tres` |
 
 ---
 
@@ -188,3 +193,5 @@ Any new strategy must beat these to be worth deploying:
 | 6 | 2026-04-05 | Research pipeline Stages 1-4, regime walk-forward fix |
 | 7 | 2026-04-06 | Cryptopass overhaul: 22 passports, $500 fresh start, BTC Uptrend bug fix |
 | 8 | 2026-04-07 | **Systematic calc audit: 12 bugs fixed, per-passport BTC weights, 49 new tests, VPS deployed** |
+| 9 | 2026-04-08 | ATR fix, direction_bias, Phase 4 research launched, quality-pairs flag |
+| **10** | **2026-04-09** | **4-regime design spec, v0.1→v0.2 analysis (§17), North Star reframe, strategic roadmap** |
