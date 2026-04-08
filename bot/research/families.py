@@ -317,6 +317,18 @@ SCORING_FAMILIES: dict[str, dict] = {
         "compatible_regimes": ["HIGH_VOL_CHOP", "LOW_VOL_COMPRESSION"],
         "min_trades": 20,
     },
+    "pressure_flow_short": {
+        "name": "Pressure Flow (SHORT-biased)",
+        "description": "Pressure + candle direction SHORT_ONLY for downtrend conditions",
+        "weights": _w(pressure=2.5, candle_direction=1.5, ema_trend=1.0),
+        "param_ranges": {
+            "CONFIDENCE_THRESHOLD": [60, 65],
+            "VOLUME_SPIKE_THRESHOLD": [1.5, 2.0],
+            "DIRECTION_BIAS": ["SHORT_ONLY"],
+        },
+        "compatible_regimes": ["TREND_DOWN", "HIGH_VOL_CHOP"],
+        "min_trades": 20,
+    },
 }
 
 
