@@ -232,6 +232,12 @@ class PassportRunner:
                     if sig.confidence < config.CONFIDENCE_THRESHOLD:
                         continue
 
+                    bias = getattr(config, 'DIRECTION_BIAS', None)
+                    if bias == "SHORT_ONLY" and sig.direction == "LONG":
+                        continue
+                    if bias == "LONG_ONLY" and sig.direction == "SHORT":
+                        continue
+
                     if passport.position_manager.can_open(sig):
                         pos = passport.position_manager.open_position(sig, passport.equity)
                         if pos:
