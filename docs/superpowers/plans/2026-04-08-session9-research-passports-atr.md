@@ -880,14 +880,15 @@ Create `passports/cryptopass-research/pressure_reader_short.json`:
 
 - [ ] **Step 8.3: Backtest new passports before live deployment**
 
+Note: `run_new_passport_backtest.py` uses `--symbols` (not `--quality-pairs`).
+
 ```bash
-uv run python scripts/run_new_passport_backtest.py \
-  --passport rsi_momentum \
-  --days 90 --pairs 10 --quality-pairs
+QUALITY_PAIRS="BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT ADAUSDT DOGEUSDT AVAXUSDT LINKUSDT DOTUSDT"
 
 uv run python scripts/run_new_passport_backtest.py \
-  --passport pressure_reader_short \
-  --days 90 --pairs 10 --quality-pairs
+  --days 90 --symbols $QUALITY_PAIRS
+
+# (Script runs all enabled passports; verify rsi_momentum + pressure_reader_short are in output)
 ```
 Expected: `return_pct > 0%`, `PF > 1.0`, `max_dd < 30%` for each.
 
