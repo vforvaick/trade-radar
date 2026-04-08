@@ -2,7 +2,7 @@
 
 > Living document. Updated after every iteration cycle.
 > Purpose: avoid repeating mistakes, build on proven insights, explore new lineages with context.
-> Last updated: 2026-04-08 (Session 9 — ATR fix, direction_bias feature, quality pairs research, Phase 4 running)
+> Last updated: 2026-04-09 (Session 10 — §17 deep analysis of v0.1→v0.2 passport failures)
 
 ---
 
@@ -785,6 +785,361 @@ Full log: `logs/new_passports_20260405_105110.log`
 - **Volatility regime switching** — ATR percentile selects trend vs mean-reversion mode
 - **Short-only passport** — shorts WR 65.2% vs longs 50.0% historically
 - **OI + Liquidation clusters** — high-conviction reversal entries
+
+---
+
+## §17 — Why v0.1→v0.2 Passport Upgrades Failed (Deep Analysis)
+
+> Added: 2026-04-09. Source: scorer.py math + passport changelog forensics.
+> Purpose: Definitive root-cause analysis so this class of mistake is never repeated.
+
+### Summary
+
+Three profitable v0.1 passports were destroyed by v0.2 "improvements":
+
+| Passport | v0.1 Return | v0.2 Return | Delta | v0.2 Trade Count |
+|---|---|---|---|---|
+| 💎 HiddenGem | **+25.9%** | -26.8% | **-52.7pp** | 450→771 (+72%) |
+| 🎯 Sniper | **+26.0%** | -14.7% | **-40.7pp** | 450→812 (+80%) |
+| 📢 VolumeKing | **+9.1%** | -20.5% | **-29.6pp** | 790→919 (+16%) |
+
+All three were rolled back to v0.1 params as v0.3. This analysis explains the exact mechanisms that caused each failure.
+
+### The Scoring Formula (Reference)
+
+From `bot/scorer.py` L76–128:
+
+```
+For each non-volume indicator with weight > 0:
+    total_weight += weight              (ALWAYS — even when NEUTRAL)
+    dominant_score += weight            (ONLY when direction matches dominant)
+
+Volume spike (special):
+    If vol_spike=True AND dominant exists:
+        total_weight += vol_weight
+        dominant_score += vol_weight
+    If vol_spike=False: completely ignored (0 weight, 0 score)
+
+raw_confidence = dominant_score / total_weight × 100
+confidence = raw_confidence × btc_weight
+```
+
+**Critical property:** Setting weight=0.0 removes an indicator entirely (adds 0 to total_weight). Setting weight=0.5 adds 0.5 to total_weight on EVERY candle, but only adds 0.5 to score when the indicator is directional and agrees with the dominant side. When NEUTRAL, it's pure dilution.
+
+### Per-Passport Breakdown
+
+---
+
+#### 💎 HiddenGem: +25.9% → -26.8% (-52.7pp)
+
+**What changed v0.1→v0.2:**
+- `ema_trend`: 1.0 → 1.5
+- `pressure`: 0.0 → 0.5 (NEW indicator activated)
+- `CONFIDENCE_THRESHOLD`: 54 → 58
+- `bb_position`: 1.0 (unchanged), `volume_spike`: 2.0 (unchanged)
+
+**v0.1 base total_weight:** 2.0 (ema=1.0 + bb=1.0)
+**v0.2 base total_weight:** 3.0 (ema=1.5 + bb=1.0 + pressure=0.5) — **+50% dilution surface**
+
+**Root Cause #1: Asymmetric EMA weight broke tie-breaking**
+
+In v0.1, EMA and BB had equal weight (1.0 each). When they disagreed, the result was a TIE → no signal. This was a crucial quality filter: the strategy only traded when trend (EMA) and mean-reversion (BB) agreed.
+
+In v0.2, EMA weight=1.5 > BB weight=1.0. Now EMA can override BB's dissent:
+
+| Market Condition | v0.1 (ema=1.0, bb=1.0) | v0.2 (ema=1.5, bb=1.0, pressure=0.5) |
+|---|---|---|
+| EMA=LONG, BB=SHORT, vol spike | Tie (1.0 vs 1.0) → **NO SIGNAL** | long=1.5 > short=1.0 → vol confirms → raw=(1.5+2.0)/(3.0+2.0)=**70%** → **FIRES** |
+| EMA=LONG, BB=SHORT, pressure=LONG, vol spike | Tie → **NO SIGNAL** | long=1.5+0.5=2.0, short=1.0 → vol → raw=(2.0+2.0)/5.0=**80%** → **FIRES** |
+| EMA=SHORT, BB=LONG, vol spike | Tie → **NO SIGNAL** | short=1.5 > long=1.0 → vol confirms → raw=**70%** → **FIRES** |
+
+These are BAD entries. EMA says "trending" while BB says "overextended" — entering with trend here means buying overbought or selling oversold. This is exactly the type of trade that loses money.
+
+**Root Cause #2: Pressure's NEUTRAL dilution**
+
+`calc_pressure()` returns NEUTRAL when buy pressure is between 40-60% (the `PRESSURE_THRESHOLD=60` check in `indicators.py` L227-232). On 1H crypto candles, this happens on approximately 40-50% of candles — pressure is indecisive more often than not.
+
+When pressure is NEUTRAL, its 0.5 weight inflates total_weight without contributing to score:
+
+| Scenario | v0.1 Confidence | v0.2 Confidence (pressure=NEUTRAL) |
+|---|---|---|
+| EMA✓ BB✓ vol✓ | (1+1+2)/(1+1+2) = **100%** | (1.5+1+2)/(1.5+1+0.5+2) = **90%** |
+| EMA✓ BB✓ no vol | (1+1)/(1+1) = **100%** | (1.5+1)/(1.5+1+0.5) = **83.3%** |
+| EMA✓ BB=N vol✓ | (1+2)/(1+1+2) = **75%** | (1.5+2)/(1.5+1+0.5+2) = **70%** |
+| BB✓ EMA=N vol✓ | (1+2)/(1+1+2) = **75%** | (1+2)/(1.5+1+0.5+2) = **60%** |
+
+Every scenario loses 5-17pp of confidence. Trades that were 100% conviction become 83-90%. Trades at 75% drop to 60-70%. This pushes entries into lower leverage tiers (7×→5×→4×), reducing profit on wins while losses stay the same.
+
+**Combined effect:**
+- v0.1 possible raw confidences: {50%, 75%, 100%} — only 75% and 100% fire (binary, clean)
+- v0.2 possible raw confidences: {33%, 50%, 58%, 60%, 66%, 70%, 80%, 83%, 90%, 100%} — many intermediate values fire
+- v0.1 fires when EMA+BB agree or one agrees+vol spike (high-quality setups only)
+- v0.2 fires when EMA overrides BB in disagreement, creating 321 NEW low-quality entries
+- Trade count: 450→771 (+72%), turning +25.9% into -26.8%
+
+---
+
+#### 🎯 Sniper: +26.0% → -14.7% (-40.7pp)
+
+**What changed v0.1→v0.2:**
+- `ema_trend`: 1.0 → 1.5
+- `macd_signal`: 0.0 → 1.0 (NEW indicator activated)
+- `CONFIDENCE_THRESHOLD`: 70 → 65
+- `bb_position`: 1.0 (unchanged), `volume_spike`: 2.0 (unchanged)
+
+**v0.1 base total_weight:** 2.0 (ema=1.0 + bb=1.0)
+**v0.2 base total_weight:** 3.5 (ema=1.5 + macd=1.0 + bb=1.0) — **+75% dilution surface**
+
+**Root Cause #1: Same tie-breaking destruction as HiddenGem**
+
+EMA=1.5 overrides BB=1.0 dissent:
+
+| Market Condition | v0.1 | v0.2 |
+|---|---|---|
+| EMA=LONG, BB=SHORT, MACD=LONG, vol spike | Tie (EMA=BB=1.0) → **NO SIGNAL** | long=1.5+1.0=2.5, short=1.0 → raw=4.5/5.5=**81.8%** → **FIRES** |
+| EMA=LONG, BB=SHORT, MACD=NEUTRAL, vol spike | Tie → **NO SIGNAL** | long=1.5, short=1.0 → raw=3.5/5.5=**63.6%** → doesn't fire at 65 |
+
+When MACD confirms EMA (which it often does — both are trend-following), the 2-vs-1 supermajority (EMA+MACD vs BB) creates a false sense of confluence. In reality, MACD and EMA are highly correlated (both derived from exponential moving averages), so MACD "confirming" EMA provides almost no independent information.
+
+**Root Cause #2: MACD nearly never returns NEUTRAL**
+
+Unlike pressure (NEUTRAL ~40-50% of time), MACD returns LONG or SHORT on almost every candle (histogram > 0 = LONG, < 0 = SHORT, per `indicators.py` L66-77). This means MACD's 1.0 weight almost always adds to total_weight AND to one side's score.
+
+This creates a new failure mode: MACD can CREATE a majority where none existed:
+
+| Scenario | v0.1 | v0.2 |
+|---|---|---|
+| EMA=NEUTRAL, BB=NEUTRAL, MACD=LONG, vol spike | No direction (both 0) → **NO SIGNAL** | long=1.0, short=0 → vol → raw=3.0/5.5=**54.5%** → doesn't fire at 65 |
+| EMA=LONG, MACD=LONG, BB=NEUTRAL, no vol | long=1 → raw=50% → **NO SIGNAL** (threshold 70) | long=2.5 → raw=2.5/3.5=**71.4%** → **FIRES at 65** |
+
+The last scenario is critical: EMA+MACD agreement without volume confirmation now fires. In v0.1, this required vol spike (75% at threshold 70). In v0.2, the extra MACD weight pushes confidence above the lowered 65% threshold even without volume. These unconfirmed-by-volume entries are lower quality.
+
+**Root Cause #3: Threshold lowered 70→65**
+
+v0.1 Sniper's edge was extreme selectivity: threshold=70 with minimum achievable confidence=75% meant EVERY trade had at least 75% conviction. Lowering to 65 opened the door for weaker setups.
+
+**Combined effect:**
+- v0.1: Only fires when EMA+BB agree (75-100%), extremely selective
+- v0.2: Fires on EMA+MACD agreement (71.4%), EMA override of BB (81.8%), and intermediate scenarios
+- Trade count: 450→812 (+80%), turning +26.0% into -14.7%
+
+---
+
+#### 📢 VolumeKing: +9.1% → -20.5% (-29.6pp)
+
+**What changed v0.1→v0.2:**
+- `volume_spike` weight: 3.0 → 2.5
+- `VOLUME_SPIKE_THRESHOLD`: 2.5 → 2.0
+- `macd_signal`: 0.0 → 0.5 (NEW indicator activated)
+- `pressure`: 0.0 → 0.5 (NEW indicator activated)
+- `ema_trend`: 1.0 (unchanged), `candle_direction`: 1.0 (unchanged)
+
+**v0.1 base total_weight:** 2.0 (ema=1.0 + candle=1.0)
+**v0.2 base total_weight:** 3.0 (ema=1.0 + macd=0.5 + pressure=0.5 + candle=1.0) — **+50% dilution surface**
+
+**Root Cause #1: Volume threshold lowered 2.5x→2.0x**
+
+VolumeKing's entire thesis is "only trade on genuine volume spikes." The 2.5x threshold was specifically high to filter for unusual institutional-grade volume events. Lowering to 2.0x means:
+- A volume bar at 2.0x average is relatively common (happens several times per day per pair)
+- A volume bar at 2.5x average is genuinely unusual (happens a few times per week)
+- Estimated ~40% more candles qualify as "spikes" at 2.0x vs 2.5x
+- This floods the strategy with mediocre volume events that don't represent real momentum
+
+**Root Cause #2: Dilution destroyed the volume dominance**
+
+v0.1's genius was volume_spike=3.0 being the dominant weight. When vol spike fires alongside one directional indicator:
+
+| Scenario | v0.1 (vol=3.0, base=2.0) | v0.2 (vol=2.5, base=3.0) |
+|---|---|---|
+| EMA✓ candle=N vol✓ | (1+3)/(1+1+3)=**80%** | (1+2.5)/(1+0.5+0.5+1+2.5)=**63.6%** |
+| candle✓ EMA=N vol✓ | (1+3)/(1+1+3)=**80%** | (1+2.5)/(1+0.5+0.5+1+2.5)=**63.6%** |
+| EMA✓ candle✓ vol✓ | (1+1+3)/(1+1+3)=**100%** | varies by MACD/pressure: **81.8-100%** |
+| EMA✓ candle✓ no vol | (1+1)/(1+1)=**100%** | (1+1)/(3.0)=**66.7%** |
+
+The 80%→63.6% drop is devastating: entries that were in the 7× leverage tier (70-100%) now fall to the 4× tier (54-60%). Wins shrink by ~43% (4×/7×) while losses stay proportional to risk.
+
+**Root Cause #3: New low-quality MACD/pressure entries**
+
+| New scenario (v0.2 only) | Confidence |
+|---|---|
+| MACD✓ only + vol spike | (0.5+2.5)/5.5 = **54.5%** → barely fires |
+| Pressure✓ only + vol spike | (0.5+2.5)/5.5 = **54.5%** → barely fires |
+
+These 54.5% entries didn't exist in v0.1 (MACD and pressure were weight=0). They're the lowest quality entries possible — a single minor indicator plus volume. They fire near the 54% threshold floor with 4× leverage, meaning small wins and regular losses.
+
+**Combined effect:**
+- Volume threshold reduction: more fake spikes → more bad entries
+- Weight dilution: 80% confidence → 63.6% → lower leverage on same market conditions
+- New indicators: created 54.5% bottom-scraping entries
+- Trade count: 790→919 (+16%), turning +9.1% into -20.5%
+
+---
+
+#### 🏆 OG: -13.1% → -28.8% (-15.7pp) — Different Mechanism
+
+**What changed:** Only `VOLUME_SPIKE_THRESHOLD`: 1.5 → 2.0 (weights unchanged, all 8 at 1.0)
+
+OG was already unprofitable at v0.1 (-13.1%) due to all 8 indicators being active (massive NEUTRAL dilution). The v0.2 change made it worse through a subtler mechanism:
+
+With all 8 indicators active, volume confirmation is the primary quality filter. A typical scenario:
+- 4 of 7 directional indicators agree + vol spike: (4+1)/(7+1) = **62.5%** → tier 2 (5× leverage)
+- Same 4 agree + NO vol spike: 4/7 = **57.1%** → tier 1 (4× leverage)
+
+Raising vol threshold from 1.5x to 2.0x caused entries with volume between 1.5-2.0x to lose their vol confirmation. These entries dropped from 62.5% to 57.1% confidence — still firing, but at 4× instead of 5× leverage. The volume-confirmed entries (62.5%) were systematically the BETTER trades (genuine momentum). Removing their vol confirmation didn't stop them from trading, it just reduced their profit potential while keeping the same downside.
+
+Trade count: 1267→1148 (-9%). Fewer trades AND worse quality on remaining trades.
+
+---
+
+#### 🚀 Momentum: -39.5% → -20.0% (+19.5pp) — Why v0.2 IMPROVED
+
+**What changed:** ema=1→2, rsi_div=1→0.5, pressure=1→0.5, candle=1→0.5, vol=1→1.5, threshold=54→60, max_positions=50→30
+
+This moved TOWARD selectivity:
+- Higher threshold (60 vs 54) filtered borderline entries
+- Reduced noise indicator weights (rsi_div, pressure, candle from 1.0 to 0.5) cut their dilution impact
+- EMA emphasis (2.0) gave trend direction more decisive weight
+- Trade count: 1317→1095 (-17%) — fewer, better trades
+- Still negative (-20.0%) because 8 indicators remain active (total base weight = 6.5)
+
+---
+
+#### 🎯 Dynamic: -16.3% → -20.0% (-3.7pp net, but +12.3pp MaxDD improvement)
+
+**What changed:** Same weight changes as Momentum + `USE_TRAILING_STOP`: true→false
+
+The improvement in MaxDD (85.9%→73.6%) came from disabling the broken trailing stop. The weight changes were identical to Momentum v0.2. Net return slightly worse but risk profile dramatically better.
+
+---
+
+### The Math: Confidence Dilution Worked Examples
+
+#### Example 1: HiddenGem — Adding pressure=0.5 to a 3-indicator passport
+
+**Setup:** EMA=LONG, BB=LONG, vol_spike=True, pressure=NEUTRAL (the most common pressure state)
+
+```
+v0.1: dominant = 1.0 + 1.0 + 2.0 = 4.0
+       total   = 1.0 + 1.0 + 2.0 = 4.0
+       raw     = 4.0/4.0 × 100   = 100.0%  → 7× leverage (tier 3)
+
+v0.2: dominant = 1.5 + 1.0 + 2.0 = 4.5       (pressure NEUTRAL: +0 to score)
+       total   = 1.5 + 1.0 + 0.5 + 2.0 = 5.0 (pressure NEUTRAL: +0.5 to total)
+       raw     = 4.5/5.0 × 100   = 90.0%  → 7× leverage (tier 3)
+
+Confidence delta: -10pp on the SAME market condition.
+Still in tier 3, but the safety margin above threshold eroded significantly.
+```
+
+#### Example 2: The deadly tie-break (HiddenGem/Sniper)
+
+**Setup:** EMA=LONG, BB=SHORT, vol_spike=True
+
+```
+v0.1: long_score = 1.0 (EMA), short_score = 1.0 (BB)
+       TIE → "No directional consensus" → NO SIGNAL
+
+v0.2: long_score = 1.5 (EMA), short_score = 1.0 (BB)
+       EMA wins → vol confirms LONG → total=5.0, long=3.5
+       raw = 3.5/5.0 × 100 = 70.0%  → SIGNAL FIRES at 7× leverage
+
+This entry is BUYING into an overbought BB condition (BB=SHORT means price > 80th
+percentile of Bollinger range). EMA says trend, BB says overextended. v0.1 correctly
+refused this trade. v0.2 takes it because EMA's extra 0.5 weight breaks the tie.
+```
+
+#### Example 3: VolumeKing — Volume weight dilution
+
+**Setup:** EMA=LONG, candle=NEUTRAL, vol_spike=True
+
+```
+v0.1: dominant = 1.0 + 3.0 = 4.0, total = 1.0 + 1.0 + 3.0 = 5.0
+       raw = 4.0/5.0 × 100 = 80.0%  → 7× leverage
+
+v0.2: dominant = 1.0 + 2.5 = 3.5, total = 1.0 + 0.5 + 0.5 + 1.0 + 2.5 = 5.5
+       raw = 3.5/5.5 × 100 = 63.6%  → 4× leverage
+
+Same market condition: leverage drops from 7× to 4× — a 43% reduction in profit
+potential per winning trade, while the risk amount per trade stays the same.
+```
+
+#### Example 4: The general dilution formula
+
+For a passport with `n` active non-volume indicators of equal weight `w` and volume weight `v`:
+
+```
+When k of n indicators agree + vol spike:
+    confidence = (k×w + v) / (n×w + v) × 100
+
+Adding 1 indicator (n→n+1) with weight w:
+    If it agrees:   new_conf = ((k+1)×w + v) / ((n+1)×w + v) × 100  (slightly higher)
+    If it's NEUTRAL: new_conf = (k×w + v) / ((n+1)×w + v) × 100     (LOWER — diluted)
+    If it opposes:   new_conf = (k×w + v) / ((n+1)×w + v) × 100     (same as NEUTRAL!)
+
+The NEUTRAL case is the common case for most indicators on most candles.
+```
+
+Example with HiddenGem numbers (k=2, n=2, w=1.0, v=2.0):
+```
+Before: (2×1 + 2) / (2×1 + 2) = 4/4 = 100%
+After adding 1 NEUTRAL indicator:
+        (2×1 + 2) / (3×1 + 2) = 4/5 = 80%  → instant 20pp drop
+```
+
+### The Three Failure Mechanisms
+
+| # | Mechanism | Affected Passports | How It Destroys Performance |
+|---|---|---|---|
+| 1 | **Tie-breaking destruction** | HiddenGem, Sniper | Asymmetric weights (ema>bb) let trend override mean-reversion dissent. Creates entries where EMA says "go" but BB says "overextended." These are the worst entries. |
+| 2 | **NEUTRAL dilution** | All three | Adding weight to indicators that are frequently NEUTRAL (pressure ~40-50%, BB in middle ~60%) inflates total_weight without adding to score. Every entry loses 5-20pp of confidence. |
+| 3 | **Threshold/filter relaxation** | VolumeKing, Sniper | Lowering vol threshold (2.5→2.0) or confidence threshold (70→65) admits lower-quality setups that the original passport specifically filtered out. |
+
+### Why Win Rate Barely Changed But Returns Collapsed
+
+| Passport | v0.1 WR | v0.2 WR | Δ WR | v0.1 Return | v0.2 Return |
+|---|---|---|---|---|---|
+| HiddenGem | 33.8% | 33.9% | +0.1pp | +25.9% | -26.8% |
+| Sniper | 33.8% | 33.6% | -0.2pp | +26.0% | -14.7% |
+| VolumeKing | 34.1% | 33.8% | -0.3pp | +9.1% | -20.5% |
+
+Win rate barely moved because the NEW entries (from tie-breaking destruction) have roughly the same ~34% hit rate as existing entries. But the QUALITY of wins degraded:
+
+1. **Lower leverage on all trades** — confidence dilution pushes trades from tier 3 (7×) to tier 2 (5×) or tier 1 (4×). A 7× win at 2:1 R:R = +14% of risk. A 4× win at 1.25:1 = +5% of risk. Same loss either way: -1× risk.
+
+2. **More trades = more fees** — At 0.04% per side (0.08% round-trip), 321 extra trades at average 4× leverage = 321 × 0.08% × 4 = ~10.3% of portfolio eaten by fees alone.
+
+3. **More concurrent positions = worse drawdowns** — More entries means more simultaneous losers during adverse regimes. MaxDD: HiddenGem 60.1%→68.2%, VolumeKing 73.1%→79.9%.
+
+### Lessons (Actionable Rules)
+
+1. **Never break indicator tie-breaking.** If two indicators have equal weight and opposite thesis (trend vs mean-reversion), their tie = "no signal" is a FEATURE. Giving one extra weight to "break ties" is actually removing a safety filter.
+
+2. **Never add an indicator without calculating the NEUTRAL dilution cost.**
+   Before adding indicator X with weight w to a passport with base total_weight T:
+   ```
+   dilution_cost = w / (T + w) × 100
+   ```
+   For HiddenGem adding pressure=0.5: 0.5/(2.0+0.5)×100 = **20% dilution** on every NEUTRAL candle.
+   This must be justified by a proportional improvement in signal quality.
+
+3. **Every indicator added must be independently informative.** MACD "confirming" EMA is almost worthless — both are EMA-derived. Pressure "confirming" trend is low-value — pressure is noisy on 1H candles. Only add indicators that filter a specific failure mode the existing set misses.
+
+4. **The minimum achievable confidence IS the strategy's selectivity floor.** Calculate it before deploying:
+   ```
+   min_confidence = min_agreeing_weight / (base_total_weight + vol_weight) × 100
+   ```
+   If min_confidence is close to CONFIDENCE_THRESHOLD, the strategy will fire on marginal setups.
+
+5. **Volume threshold is the quality-of-entry filter, not a tuning parameter.** VolumeKing at 2.5x was selective for a reason. Lowering it "for more trades" is lowering the bar for what counts as unusual volume — the exact thing the strategy is built to detect.
+
+6. **If a passport is profitable, the ONLY safe changes are:**
+   - Raising CONFIDENCE_THRESHOLD (fewer, higher-quality trades)
+   - Raising VOLUME_SPIKE_THRESHOLD (stricter volume filter)
+   - Removing an indicator (set weight to 0.0) — reduces dilution
+   - Position sizing changes (max_positions, risk_pct)
+   - NEVER: adding indicators, lowering thresholds, or changing relative weight ratios
+
+7. **Momentum/Dynamic improved because they moved TOWARD selectivity** — reduced noise indicator weights, raised threshold, capped positions. The pattern is universal: less is more.
 
 ---
 
