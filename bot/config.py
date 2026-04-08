@@ -128,6 +128,9 @@ MIN_VOLUME_USDT = 5_000_000
 USE_TRAILING_STOP = False
 ATR_TRAIL_MULTIPLIER = 2.0   # trail distance = 2x ATR at entry
 
+# Per-passport direction filter: "SHORT_ONLY", "LONG_ONLY", or None (both directions)
+DIRECTION_BIAS = None
+
 # ============================================================
 # WEEKDAY FILTER
 # ============================================================

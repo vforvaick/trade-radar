@@ -95,6 +95,11 @@ def backtest_pair(symbol: str, klines: pd.DataFrame, btc_df: pd.DataFrame,
             if result["go"]:
                 signal = generate_signal(symbol, close, result, timestamp=ts)
                 if signal:
+                    bias = getattr(config, 'DIRECTION_BIAS', None)
+                    if bias == "SHORT_ONLY" and signal.direction == "LONG":
+                        continue
+                    if bias == "LONG_ONLY" and signal.direction == "SHORT":
+                        continue
                     pm.open_position(signal, equity)
 
     # Close any remaining positions at market
