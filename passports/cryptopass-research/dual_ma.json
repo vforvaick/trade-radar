@@ -1,46 +1,53 @@
 {
-    "name": "DualMA Crossover",
-    "enabled": true,
-    "emoji": "\ud83d\udcc8",
-    "version": "0.1",
-    "changelog": [
-        {
-            "version": "0.1",
-            "date": "2026-04-05",
-            "description": "EMA(10/20) crossover with volume confirmation. Thesis: dual MA crossover captures trend shifts early; volume confirms breakout. All non-EMA indicators zeroed to avoid dilution. Modeled on 151-strategies S5 (MA-based trend).",
-            "backtest_90d": {
-                "pairs": ["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","AAVEUSDT","ADAUSDT"],
-                "return_pct": -8.96,
-                "profit_factor": 0.806,
-                "trades": 137,
-                "win_rate": 29.9,
-                "max_dd": 24.93,
-                "verdict": "DISABLED — unprofitable in choppy Jan-Apr 2026. Pure EMA crossover generates too many whipsaw entries without additional filters."
-            }
-        }
-    ],
-    "description": "Pure EMA(10/20) dual MA crossover + volume confirmation. Fast/Mid EMA alignment drives signal; slow EMA (50) provides trend context. All other indicators zeroed — selectivity is the edge.",
-    "config_overrides": {
-        "EMA_FAST": 10,
-        "EMA_MID": 20,
-        "EMA_SLOW": 50,
-        "VOLUME_SPIKE_THRESHOLD": 1.8,
-        "INDICATOR_WEIGHTS": {
-            "ema_trend": 4.0,
-            "macd_signal": 0.0,
-            "rsi_position": 0.0,
-            "rsi_divergence": 0.0,
-            "bb_position": 0.0,
-            "volume_spike": 2.0,
-            "pressure": 0.0,
-            "candle_direction": 0.0,
-            "donchian_signal": 0.0,
-            "obv_signal": 0.0
-        },
-        "CONFIDENCE_THRESHOLD": 58,
-        "USE_ATR_EXITS": false,
-        "USE_TRAILING_STOP": false,
-        "MAX_OPEN_POSITIONS_PER_PASSPORT": 30,
-        "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  "name": "DualMA Crossover",
+  "enabled": false,
+  "emoji": "\ud83d\udcc8",
+  "version": "0.1",
+  "changelog": [
+    {
+      "version": "0.1",
+      "date": "2026-04-05",
+      "description": "EMA(10/20) crossover with volume confirmation. Thesis: dual MA crossover captures trend shifts early; volume confirms breakout. All non-EMA indicators zeroed to avoid dilution. Modeled on 151-strategies S5 (MA-based trend).",
+      "backtest_90d": {
+        "pairs": [
+          "BTCUSDT",
+          "ETHUSDT",
+          "SOLUSDT",
+          "BNBUSDT",
+          "AAVEUSDT",
+          "ADAUSDT"
+        ],
+        "return_pct": -8.96,
+        "profit_factor": 0.806,
+        "trades": 137,
+        "win_rate": 29.9,
+        "max_dd": 24.93,
+        "verdict": "DISABLED \u2014 unprofitable in choppy Jan-Apr 2026. Pure EMA crossover generates too many whipsaw entries without additional filters."
+      }
     }
+  ],
+  "description": "Pure EMA(10/20) dual MA crossover + volume confirmation. Fast/Mid EMA alignment drives signal; slow EMA (50) provides trend context. All other indicators zeroed \u2014 selectivity is the edge.",
+  "config_overrides": {
+    "EMA_FAST": 10,
+    "EMA_MID": 20,
+    "EMA_SLOW": 50,
+    "VOLUME_SPIKE_THRESHOLD": 1.8,
+    "INDICATOR_WEIGHTS": {
+      "ema_trend": 4.0,
+      "macd_signal": 0.0,
+      "rsi_position": 0.0,
+      "rsi_divergence": 0.0,
+      "bb_position": 0.0,
+      "volume_spike": 2.0,
+      "pressure": 0.0,
+      "candle_direction": 0.0,
+      "donchian_signal": 0.0,
+      "obv_signal": 0.0
+    },
+    "CONFIDENCE_THRESHOLD": 58,
+    "USE_ATR_EXITS": false,
+    "USE_TRAILING_STOP": false,
+    "MAX_OPEN_POSITIONS_PER_PASSPORT": 30,
+    "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  }
 }

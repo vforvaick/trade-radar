@@ -1,43 +1,43 @@
 {
-    "name": "MinimalEdge",
-    "emoji": "\ud83c\udfaf",
-    "enabled": true,
-    "version": "0.1",
-    "changelog": [
-        {
-            "version": "0.1",
-            "date": "2026-04-04",
-            "git_sha": "91e1e37",
-            "description": "Ultra-selective EMA+Volume \u2014 inspired by the proven profitable pattern (HiddenGem/Sniper/VolumeKing all use 3 indicators and are profitable). This variant uses just EMA + Vol.",
-            "backtest_90d": {
-                "return_pct": 0.3,
-                "win_rate": 33.2,
-                "trades": 319,
-                "max_dd_pct": 0.0,
-                "profit_factor": 1.0,
-                "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Barely profitable 90d. EMA+Vol ultra-selective."
-            }
-        }
-    ],
-    "description": "Ultra-minimal: EMA trend + volume spike only. Follows proven profitable pattern of fewer indicators. Thesis: only trade when trend aligns AND volume confirms.",
-    "config_overrides": {
-        "EMA_FAST": 9,
-        "EMA_MID": 21,
-        "EMA_SLOW": 50,
-        "VOLUME_SPIKE_THRESHOLD": 2.0,
-        "INDICATOR_WEIGHTS": {
-            "ema_trend": 1.5,
-            "macd_signal": 0.0,
-            "rsi_position": 0.0,
-            "rsi_divergence": 0.0,
-            "bb_position": 0.0,
-            "volume_spike": 2.5,
-            "pressure": 0.0,
-            "candle_direction": 0.0
-        },
-        "USE_ATR_EXITS": false,
-        "USE_TRAILING_STOP": false,
-        "MAX_OPEN_POSITIONS_PER_PASSPORT": 30,
-        "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  "name": "MinimalEdge",
+  "emoji": "\ud83c\udfaf",
+  "enabled": false,
+  "version": "0.1",
+  "changelog": [
+    {
+      "version": "0.1",
+      "date": "2026-04-04",
+      "git_sha": "91e1e37",
+      "description": "Ultra-selective EMA+Volume \u2014 inspired by the proven profitable pattern (HiddenGem/Sniper/VolumeKing all use 3 indicators and are profitable). This variant uses just EMA + Vol.",
+      "backtest_90d": {
+        "return_pct": 0.3,
+        "win_rate": 33.2,
+        "trades": 319,
+        "max_dd_pct": 0.0,
+        "profit_factor": 1.0,
+        "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Barely profitable 90d. EMA+Vol ultra-selective."
+      }
     }
+  ],
+  "description": "Ultra-minimal: EMA trend + volume spike only. Follows proven profitable pattern of fewer indicators. Thesis: only trade when trend aligns AND volume confirms.",
+  "config_overrides": {
+    "EMA_FAST": 9,
+    "EMA_MID": 21,
+    "EMA_SLOW": 50,
+    "VOLUME_SPIKE_THRESHOLD": 2.0,
+    "INDICATOR_WEIGHTS": {
+      "ema_trend": 1.5,
+      "macd_signal": 0.0,
+      "rsi_position": 0.0,
+      "rsi_divergence": 0.0,
+      "bb_position": 0.0,
+      "volume_spike": 2.5,
+      "pressure": 0.0,
+      "candle_direction": 0.0
+    },
+    "USE_ATR_EXITS": false,
+    "USE_TRAILING_STOP": false,
+    "MAX_OPEN_POSITIONS_PER_PASSPORT": 30,
+    "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  }
 }
