@@ -1164,3 +1164,61 @@ Win rate barely moved because the NEW entries (from tie-breaking destruction) ha
 | Strategy spec | `docs/strategy_spec.md` |
 | Deep dive analysis | `docs/superpowers/plans/2026-04-04-strategy-deepdive-parameter-fix.md` |
 | Historical signals | `data/validated_ledger.csv`, `data/equity_summary.json` |
+
+---
+
+## §18 — 4-Regime Upgrade (Session 10)
+
+**Date:** 2026-04-09
+**Branch:** master
+**Tests:** 332 passing (was 296 before upgrade)
+
+### Change
+Replaced 3-regime EMA-based BTC trend detector with 4-regime ADX+volatility classifier.
+
+**Old system:** `fetch_btc_trend()` → EMA 9/21 crossover on 4H → `"Uptrend"`/`"Downtrend"`/`"Sideways"`
+**New system:** `RegimeDetector.get_current_regime()` → 4H `classify_regime()` + 1H EMA confirmation → `"TREND_UP"`/`"TREND_DOWN"`/`"HIGH_VOL_CHOP"`/`"LOW_VOL_COMPRESSION"`
+
+### Key design decisions
+- 1H confirmation only DOWNGRADES trending regimes (never upgrades)
+- Cache TTL = 1 hour, safe default = `HIGH_VOL_CHOP`
+- Passive mode (Phase 1): `active_regimes` field parsed + logged, but NOT enforced
+- `RegimeLogger` collects per-scan, per-signal, per-trade regime data to SQLite
+
+### Files added
+| File | Purpose |
+|---|---|
+| `bot/regime_detector.py` | Cached multi-TF regime detection (4H primary + 1H confirmation) |
+| `bot/regime_logger.py` | SQLite regime data collection + daily Telegram digest |
+| `tests/test_regime_detector.py` | 12 tests |
+| `tests/test_regime_logger.py` | 10 tests |
+| `tests/test_scanner_regime.py` | 4 tests |
+| `tests/test_backtester_regime.py` | 3 tests |
+| `tests/test_passport_runner_regime.py` | 4 tests |
+| `tests/test_regime_integration.py` | 2 tests |
+
+### Files modified
+| File | Change |
+|---|---|
+| `bot/config.py` | `BTC_TREND_WEIGHTS` migrated from 3 to 4 keys |
+| `bot/scanner.py` | Delegates to `RegimeDetector` instead of `fetch_btc_trend()` |
+| `bot/backtester.py` | `determine_btc_trend_at()` uses `classify_regime()` for parity |
+| `bot/passport_runner.py` | Old-key warning, 4-regime guardrails, `active_regimes` Phase 1, `RegimeLogger` wiring |
+| `bot/data_fetcher.py` | `fetch_btc_trend()` deprecated with warning |
+| `bot/research/regime.py` | `map_to_live_regime()` returns native 4-regime keys |
+| 5 passport JSONs | `BTC_TREND_WEIGHTS` migrated to 4-regime format |
+
+### Passport migration
+- 5 passports with explicit `BTC_TREND_WEIGHTS` overrides migrated from 3→4 keys (all mean-reversion, all set to 1.0 for all regimes)
+- 17 passports use config defaults (auto-migrated via config change)
+
+### Backtester parity
+`determine_btc_trend_at()` now uses same `classify_regime()` as live `RegimeDetector`. This ensures backtest results reflect the same regime classification as live trading.
+
+### Implementation approach
+- 10-task TDD plan with dependency graph
+- Executed via subagent-driven development (4 parallel waves)
+- Wave 1: RegimeDetector + Config + Passports + RegimeLogger (parallel)
+- Wave 2: Scanner + Backtester + PassportRunner (parallel)
+- Wave 3: Integration wiring + Deprecation (parallel)
+- Wave 4: Docs + verification

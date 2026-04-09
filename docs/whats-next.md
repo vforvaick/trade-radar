@@ -159,7 +159,7 @@ Current architecture: scanner fetches 1H klines only. Multi-TF would require:
 | Issue | File | Severity | Notes |
 |---|---|---|---|
 | `USE_TRAILING_STOP` formula broken | `bot/position_manager.py` | HIGH | ATR-based fix designed, not implemented |
-| 3-regime detector simplistic | `bot/data_fetcher.py` | HIGH | 4-regime upgrade designed, plan pending |
+| ~~3-regime detector simplistic~~ | `bot/regime_detector.py` | ✅ DONE | 4-regime upgrade implemented (Session 10, §18) |
 | No Sharpe ratio in backtester | `bot/backtester.py` | MEDIUM | Research pipeline has it; backtester needs it |
 | No portfolio-level risk cap | `bot/risk/` | MEDIUM | 22 passports can all fire same symbol simultaneously |
 | ReversalV2 negative returns | `passports/cryptopass-research/reversal_v2.json` | MEDIUM | Needs hard EMA pre-filter in signal logic |
