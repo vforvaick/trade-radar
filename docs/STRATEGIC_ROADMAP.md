@@ -1,23 +1,50 @@
 # Cryptopass — Strategic Roadmap
 
 > Created: 2026-04-09 (Session 10)
+> Updated: 2026-04-09 (Session 10b — Staged North Star, Focus 3 watch list, CTP deployed)
 > Status: Active — living document, update after each major milestone
 
 ---
 
-## North Star (Revised)
+## North Star (Staged)
 
-**Old North Star (Sessions 1–9):**
+**Original North Star (Sessions 1–9):**
 > "3+ passports with >+15% return over 180d, validated across multiple market regimes"
 
-**New North Star:**
+**Endgame North Star:**
 > **"Portfolio Sharpe ≥ 1.0 across all 4 market regimes, with ≥1 profitable specialist per regime"**
 
-### Why the change
+**Current Operational Target (Stage 1):**
+> **"1 passport profitable in live paper trading within 30 days (Apr 7 → May 7)"**
 
-Raw return is misleading. A strategy with +30% return and -40% drawdown is **worse** than +12% with -5% drawdown. Sharpe Ratio measures return per unit of risk — it tells you if your edge is *reliable*, not just *big*.
+### Staged Approach
 
-The old North Star also didn't enforce regime coverage. HiddenGem (+25.9%) is great in uptrends but unproven in downtrends. We need specialists for every weather.
+| Stage | Target | Timeframe | Success Criteria |
+|-------|--------|-----------|------------------|
+| 🥉 **Stage 1 (NOW)** | 1 profitable passport in live paper | 30 days (→ May 7) | Return > 0%, PF > 1.0, ≥ 30 trades |
+| 🥈 Stage 2 | 3 passports pass 7-gate promotion | +60 days | Full promotion criteria |
+| 🥇 Stage 3 | Portfolio Sharpe ≥ 1.0 across 4 regimes | +90 days | Endgame North Star |
+
+### Focus 3 — Stage 1 Watch List (decided Session 10b)
+
+| # | Passport | Closed PnL (Day 2) | WR | PF | CTP Impact | Role |
+|---|----------|---------------------|----|----|-----------|------|
+| 🥇 | **MACDDivergence** | -$15 | 32.3% | 0.96 | None (CTP=1.0) | Mean-rev baseline |
+| 🥈 | **PressureReader** | -$23 | 41.2% | 0.91 | Moderate | Unique thesis control |
+| 🥉 | **BreakoutVol** | -$34 | 36.4% | 0.83 | **High** | CTP beneficiary test |
+
+### Evaluation Checkpoints
+
+| Date | Day | Action |
+|------|-----|--------|
+| Apr 14 | Day 7 | First: any green closed PnL? |
+| Apr 21 | Day 14 | Mid: PF/WR trend, DD check |
+| Apr 28 | Day 21 | Decision: continue or pivot? |
+| May 7 | Day 30 | Final: promotion gate eval |
+
+### Why the staged change
+
+We have excellent infrastructure but zero validated alpha. Trying to cover 4 regimes when we haven't proven a single strategy works live is premature optimization. Prove the edge first, then expand.
 
 ### Gate Metrics (per specialist passport)
 
