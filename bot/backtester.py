@@ -9,28 +9,28 @@ import numpy as np
 from datetime import datetime, timedelta
 from bot import config
 from bot.data_fetcher import fetch_klines_range, fetch_klines, get_all_futures_symbols
-from bot.indicators import calc_ema
 from bot.scorer import score_confluence
+from bot.research.regime import classify_regime
 from bot.signals import generate_signal
 from bot.position_manager import PositionManager
 
 
 def determine_btc_trend_at(btc_df: pd.DataFrame, timestamp: pd.Timestamp) -> str:
-    """Determine BTC trend at a specific point in time."""
+    """Determine BTC regime at a specific point in time using 4-regime classifier.
+
+    Uses the same classify_regime() as live RegimeDetector for backtest/live parity.
+    Returns: 'TREND_UP', 'TREND_DOWN', 'HIGH_VOL_CHOP', or 'LOW_VOL_COMPRESSION'
+    """
     mask = btc_df["timestamp"] <= timestamp
-    subset = btc_df[mask].tail(30)
-    if len(subset) < 25:
-        return "Sideways"
+    subset = btc_df[mask]
+    if len(subset) < 45:  # classify_regime needs minimum 45 bars
+        return "HIGH_VOL_CHOP"
 
-    ema9 = calc_ema(subset["close"], 9)
-    ema21 = calc_ema(subset["close"], 21)
-    diff_pct = (ema9.iloc[-1] - ema21.iloc[-1]) / ema21.iloc[-1] * 100
-
-    if diff_pct > 0.5:
-        return "Uptrend"
-    elif diff_pct < -0.5:
-        return "Downtrend"
-    return "Sideways"
+    try:
+        regime = classify_regime(subset)
+        return regime.value
+    except Exception:
+        return "HIGH_VOL_CHOP"
 
 
 def backtest_pair(symbol: str, klines: pd.DataFrame, btc_df: pd.DataFrame,
