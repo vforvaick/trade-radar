@@ -91,7 +91,7 @@ class RegimeDetector:
         close_4h = btc_4h["close"]
         lookback = min(180, len(close_4h) - 1)
         ret_30d = float((close_4h.iloc[-1] / close_4h.iloc[-lookback - 1] - 1) * 100)
-        rvol_series = _calc_realized_vol(close_4h)
+        rvol_series = _calc_realized_vol(close_4h, candles_per_year=6 * 365)
         rvol_val = float(rvol_series.iloc[-1]) if len(rvol_series) > 0 else 0.0
 
         # Confirmation: 1H EMA 9/21

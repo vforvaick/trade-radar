@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from bot import config
 from bot.data_fetcher import fetch_klines_range, fetch_klines, get_all_futures_symbols
 from bot.scorer import score_confluence
-from bot.research.regime import classify_regime
+from bot.research.regime import classify_regime, classify_regime_series
 from bot.signals import generate_signal
 from bot.position_manager import PositionManager
 
@@ -33,8 +33,24 @@ def determine_btc_trend_at(btc_df: pd.DataFrame, timestamp: pd.Timestamp) -> str
         return "HIGH_VOL_CHOP"
 
 
+def _precompute_btc_regimes(btc_df: pd.DataFrame) -> dict:
+    """Pre-compute BTC regime for every timestamp in btc_df.
+
+    Returns dict mapping timestamp → regime string. O(N) total instead of
+    O(N²) from calling classify_regime() per candle in the backtest loop.
+    """
+    if len(btc_df) < 45:
+        return {ts: "HIGH_VOL_CHOP" for ts in btc_df["timestamp"]}
+
+    try:
+        regime_series = classify_regime_series(btc_df)
+        return dict(zip(btc_df["timestamp"], regime_series))
+    except Exception:
+        return {ts: "HIGH_VOL_CHOP" for ts in btc_df["timestamp"]}
+
+
 def backtest_pair(symbol: str, klines: pd.DataFrame, btc_df: pd.DataFrame,
-                  cfg_override: dict = None) -> list[dict]:
+                  cfg_override: dict = None, btc_regime_map: dict = None) -> list[dict]:
     """
     Run backtest on a single pair.
 
@@ -89,7 +105,10 @@ def backtest_pair(symbol: str, klines: pd.DataFrame, btc_df: pd.DataFrame,
 
         # Score confluence at candle close
         if pm.can_open():
-            btc_trend = determine_btc_trend_at(btc_df, ts)
+            if btc_regime_map is not None:
+                btc_trend = btc_regime_map.get(ts, "HIGH_VOL_CHOP")
+            else:
+                btc_trend = determine_btc_trend_at(btc_df, ts)
             result = score_confluence(window, btc_trend)
 
             if result["go"]:
@@ -163,6 +182,9 @@ def run_backtest(symbols: list[str], interval: str = "1h",
     print(f"[Backtest] Fetching BTC data...", flush=True)
     btc_df = fetch_klines_range("BTCUSDT", interval, start_ms, end_ms)
 
+    print(f"[Backtest] Pre-computing BTC regime series...", flush=True)
+    btc_regime_map = _precompute_btc_regimes(btc_df)
+
     all_trades = []
     sym_summaries = []
     for i, sym in enumerate(symbols):
@@ -172,7 +194,8 @@ def run_backtest(symbols: list[str], interval: str = "1h",
             if len(klines) < 100:
                 print(f"  Skipping {sym}: only {len(klines)} candles", flush=True)
                 continue
-            trades = backtest_pair(sym, klines, btc_df, cfg_override)
+            trades = backtest_pair(sym, klines, btc_df, cfg_override,
+                                   btc_regime_map=btc_regime_map)
             all_trades.extend(trades)
             sym_summaries.append(_summarize(trades))
             print(f"  → {len(trades)} trades", flush=True)

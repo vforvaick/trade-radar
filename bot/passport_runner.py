@@ -57,6 +57,7 @@ class PassportRunner:
         self.scan_cycle_error_count = 0
         self.price_fetch_error_count = 0
         self._last_prices: dict[str, tuple] = {}
+        self._notifier = None
         self.state_store = StateStore()
         self.regime_logger = RegimeLogger(self.state_store)
         self._last_digest_date = None
@@ -80,6 +81,10 @@ class PassportRunner:
                 f"(Equity: ${p.equity:,.0f}, Open Pos: {p.position_manager.open_count})",
                 flush=True,
             )
+
+    def set_notifier(self, notifier):
+        """Wire a TelegramNotifier for daily regime digests."""
+        self._notifier = notifier
 
     def _load_passports(self, passport_dir: str) -> List[Passport]:
         """Load all *.json passport configs from passport_dir and its immediate subdirectories."""
@@ -535,7 +540,7 @@ class PassportRunner:
         if datetime.utcnow().hour != 0:
             return
         try:
-            self.regime_logger.send_daily_digest(None)
+            self.regime_logger.send_daily_digest(self._notifier)
             self._last_digest_date = today
         except Exception:
             logger.exception("Failed to send daily digest")

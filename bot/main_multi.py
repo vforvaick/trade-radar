@@ -92,6 +92,7 @@ def run_multi_passport(tg_token: str = None, tg_chat: str = None,
                                 group_id=tg_group, trade_topic_id=tg_topic,
                                 log_topic_id=tg_log_topic)
     notifier.restore_message_ids(runner.state_store)
+    runner.set_notifier(notifier)
 
     # Start telegram polling thread
     poller = TelegramCommandPoller(notifier, runner)
