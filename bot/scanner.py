@@ -8,7 +8,8 @@ import pandas as pd
 from typing import List, Dict, Optional
 
 from bot import config
-from bot.data_fetcher import get_all_futures_symbols, fetch_klines, fetch_btc_trend
+from bot.data_fetcher import get_all_futures_symbols, fetch_klines
+from bot.regime_detector import RegimeDetector
 from bot.scorer import score_confluence
 from bot.signals import generate_signal, Signal
 
@@ -21,10 +22,12 @@ class Scanner:
         self.interval = interval
         self.limit = limit
         self.symbols = []
-        self.btc_trend = "Sideways"
+        self.btc_trend = "HIGH_VOL_CHOP"
         self.symbol_refresh_error_count = 0
         self.btc_trend_error_count = 0
         self.scan_error_count = 0
+        self.regime_detector = RegimeDetector()
+        self.regime_metadata = {}
 
     def refresh_symbols(self):
         """Update list of tradable symbols based on volume filters."""
@@ -38,15 +41,18 @@ class Scanner:
             print(f"[Scanner] Error fetching symbols: {e}")
 
     def update_btc_trend(self):
-        """Update BTC trend filter."""
+        """Update BTC regime via RegimeDetector (4-regime system)."""
         try:
-            self.btc_trend = fetch_btc_trend()
-            print(f"[Scanner] BTC Trend: {self.btc_trend}")
+            self.btc_trend = self.regime_detector.get_current_regime()
+            self.regime_metadata = self.regime_detector.get_regime_metadata()
+            adx = self.regime_metadata.get('adx', '?')
+            print(f"[Scanner] BTC Regime: {self.btc_trend} (ADX: {adx})")
         except Exception as e:
             self.btc_trend_error_count += 1
-            logger.exception("Failed to update BTC trend filter")
-            print(f"[Scanner] Error fetching BTC trend: {e}")
-            self.btc_trend = "Sideways"
+            logger.exception("Failed to update BTC regime")
+            print(f"[Scanner] Error fetching BTC regime: {e}")
+            self.btc_trend = "HIGH_VOL_CHOP"
+            self.regime_metadata = {}
 
     def scan_all(self) -> List[Signal]:
         """Scan all pairs and return generated signals."""
