@@ -131,22 +131,22 @@ def classify_regime_series(df: pd.DataFrame, window: int = 180) -> pd.Series:
 
 
 def map_to_live_regime(regime: "RegimeType") -> str:
-    """Map research 4-regime to live 3-regime naming."""
+    """Map research RegimeType enum to live regime key (now 4-regime native)."""
     mapping = {
-        RegimeType.TREND_UP: "Uptrend",
-        RegimeType.TREND_DOWN: "Downtrend",
-        RegimeType.HIGH_VOL_CHOP: "Sideways",
-        RegimeType.LOW_VOL_COMPRESSION: "Sideways",
+        RegimeType.TREND_UP: "TREND_UP",
+        RegimeType.TREND_DOWN: "TREND_DOWN",
+        RegimeType.HIGH_VOL_CHOP: "HIGH_VOL_CHOP",
+        RegimeType.LOW_VOL_COMPRESSION: "LOW_VOL_COMPRESSION",
     }
-    return mapping.get(regime, "Sideways")
+    return mapping.get(regime, "HIGH_VOL_CHOP")
 
 
 def map_regime_value_to_live(regime_value: str) -> str:
-    """Map RegimeType.value string to live regime name."""
+    """Map RegimeType.value string to live regime key (now 4-regime native)."""
     mapping = {
-        "TREND_UP": "Uptrend",
-        "TREND_DOWN": "Downtrend",
-        "HIGH_VOL_CHOP": "Sideways",
-        "LOW_VOL_COMPRESSION": "Sideways",
+        "TREND_UP": "TREND_UP",
+        "TREND_DOWN": "TREND_DOWN",
+        "HIGH_VOL_CHOP": "HIGH_VOL_CHOP",
+        "LOW_VOL_COMPRESSION": "LOW_VOL_COMPRESSION",
     }
-    return mapping.get(regime_value, "Sideways")
+    return mapping.get(regime_value, "HIGH_VOL_CHOP")

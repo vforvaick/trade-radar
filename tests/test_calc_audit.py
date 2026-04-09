@@ -45,30 +45,29 @@ def _all_long_registry():
 
 
 def test_h1_uptrend_uses_config_weight_not_hardcoded():
-    """Uptrend multiplier must come from config (0.8), not old hardcoded 1.15."""
+    """TREND_UP multiplier must come from config (0.8), not old hardcoded 1.15."""
     df = _make_fake_df()
     weights = {"ema_trend": 1.0}
 
     with patch.dict(extended_scorer.INDICATOR_REGISTRY, _all_long_registry(), clear=True):
-        result = extended_scorer.score_extended(df, weights, btc_trend="Uptrend", confidence_threshold=0.0)
+        result = extended_scorer.score_extended(df, weights, btc_trend="TREND_UP", confidence_threshold=0.0)
 
     # raw_confidence = 100.0 when all votes LONG on a single-indicator weight
-    # with config.BTC_TREND_WEIGHTS["Uptrend"] = 0.8 → confidence = 80.0
-    # old hardcoded value 1.15 would give 115.0
+    # with config.BTC_TREND_WEIGHTS["TREND_UP"] = 0.8 → confidence = 80.0
     assert result["go"] is True
-    assert abs(result["confidence"] - 100.0 * config.BTC_TREND_WEIGHTS["Uptrend"]) < 0.1
+    assert abs(result["confidence"] - 100.0 * config.BTC_TREND_WEIGHTS["TREND_UP"]) < 0.1
     assert result["confidence"] != pytest.approx(115.0, abs=0.1), "H1 bug: old hardcoded 1.15 weight still in use"
 
 
 def test_h1_downtrend_uses_config_weight():
-    """Downtrend multiplier must come from config (1.0), not old hardcoded 0.85."""
+    """TREND_DOWN multiplier must come from config (1.0), not old hardcoded 0.85."""
     df = _make_fake_df()
     weights = {"ema_trend": 1.0}
 
     with patch.dict(extended_scorer.INDICATOR_REGISTRY, _all_long_registry(), clear=True):
-        result = extended_scorer.score_extended(df, weights, btc_trend="Downtrend", confidence_threshold=0.0)
+        result = extended_scorer.score_extended(df, weights, btc_trend="TREND_DOWN", confidence_threshold=0.0)
 
-    expected = min(100.0, 100.0 * config.BTC_TREND_WEIGHTS["Downtrend"])
+    expected = min(100.0, 100.0 * config.BTC_TREND_WEIGHTS["TREND_DOWN"])
     assert abs(result["confidence"] - expected) < 0.1
 
 
@@ -82,11 +81,11 @@ def test_h2_confidence_clamped_to_100():
     with patch.dict(extended_scorer.INDICATOR_REGISTRY, _all_long_registry(), clear=True):
         # Temporarily set a weight >1 to provoke the overflow
         original_weights = config.BTC_TREND_WEIGHTS.copy()
-        config.BTC_TREND_WEIGHTS["Uptrend"] = 1.5
+        config.BTC_TREND_WEIGHTS["TREND_UP"] = 1.5
         try:
-            result = extended_scorer.score_extended(df, weights, btc_trend="Uptrend", confidence_threshold=0.0)
+            result = extended_scorer.score_extended(df, weights, btc_trend="TREND_UP", confidence_threshold=0.0)
         finally:
-            config.BTC_TREND_WEIGHTS["Uptrend"] = original_weights["Uptrend"]
+            config.BTC_TREND_WEIGHTS["TREND_UP"] = original_weights["TREND_UP"]
 
     assert result["confidence"] <= 100.0, f"H2 bug: confidence={result['confidence']} exceeds 100"
 
@@ -98,11 +97,11 @@ def test_h2_confidence_not_negative():
 
     with patch.dict(extended_scorer.INDICATOR_REGISTRY, _all_long_registry(), clear=True):
         original_weights = config.BTC_TREND_WEIGHTS.copy()
-        config.BTC_TREND_WEIGHTS["Uptrend"] = -0.5
+        config.BTC_TREND_WEIGHTS["TREND_UP"] = -0.5
         try:
-            result = extended_scorer.score_extended(df, weights, btc_trend="Uptrend", confidence_threshold=0.0)
+            result = extended_scorer.score_extended(df, weights, btc_trend="TREND_UP", confidence_threshold=0.0)
         finally:
-            config.BTC_TREND_WEIGHTS["Uptrend"] = original_weights["Uptrend"]
+            config.BTC_TREND_WEIGHTS["TREND_UP"] = original_weights["TREND_UP"]
 
     assert result["confidence"] >= 0.0, f"H2 bug: confidence={result['confidence']} is negative"
 
@@ -114,31 +113,31 @@ from bot.research.types import RegimeType
 
 
 def test_regime_map_to_live_trend_up():
-    assert map_to_live_regime(RegimeType.TREND_UP) == "Uptrend"
+    assert map_to_live_regime(RegimeType.TREND_UP) == "TREND_UP"
 
 
 def test_regime_map_to_live_trend_down():
-    assert map_to_live_regime(RegimeType.TREND_DOWN) == "Downtrend"
+    assert map_to_live_regime(RegimeType.TREND_DOWN) == "TREND_DOWN"
 
 
 def test_regime_map_to_live_high_vol_chop():
-    assert map_to_live_regime(RegimeType.HIGH_VOL_CHOP) == "Sideways"
+    assert map_to_live_regime(RegimeType.HIGH_VOL_CHOP) == "HIGH_VOL_CHOP"
 
 
 def test_regime_map_to_live_low_vol_compression():
-    assert map_to_live_regime(RegimeType.LOW_VOL_COMPRESSION) == "Sideways"
+    assert map_to_live_regime(RegimeType.LOW_VOL_COMPRESSION) == "LOW_VOL_COMPRESSION"
 
 
 def test_regime_map_value_to_live_downtrend():
-    assert map_regime_value_to_live("TREND_DOWN") == "Downtrend"
+    assert map_regime_value_to_live("TREND_DOWN") == "TREND_DOWN"
 
 
 def test_regime_map_value_to_live_uptrend():
-    assert map_regime_value_to_live("TREND_UP") == "Uptrend"
+    assert map_regime_value_to_live("TREND_UP") == "TREND_UP"
 
 
-def test_regime_map_value_to_live_unknown_defaults_sideways():
-    assert map_regime_value_to_live("UNKNOWN") == "Sideways"
+def test_regime_map_value_to_live_unknown_defaults_high_vol_chop():
+    assert map_regime_value_to_live("UNKNOWN") == "HIGH_VOL_CHOP"
 
 
 # --- M4: _calc_realized_vol candles_per_year param ---
