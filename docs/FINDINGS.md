@@ -2,7 +2,7 @@
 
 > Living document. Updated after every iteration cycle.
 > Purpose: avoid repeating mistakes, build on proven insights, explore new lineages with context.
-> Last updated: 2026-04-09 (Session 10 — §17 deep analysis of v0.1→v0.2 passport failures)
+> Last updated: 2026-04-09 (Session 10b — §19 counter-trend penalty, portfolio triage, Phase 4 results)
 
 ---
 
@@ -1222,3 +1222,60 @@ Replaced 3-regime EMA-based BTC trend detector with 4-regime ADX+volatility clas
 - Wave 2: Scanner + Backtester + PassportRunner (parallel)
 - Wave 3: Integration wiring + Deprecation (parallel)
 - Wave 4: Docs + verification
+
+---
+
+## §19 — Counter-Trend Penalty & Portfolio Triage (Session 10b, 2026-04-09)
+
+### Critical discovery: directional gap in scorer
+
+**Root cause of -59% portfolio loss identified:**
+- `BTC_TREND_WEIGHTS` applies same confidence multiplier regardless of signal direction
+- During TREND_UP (0.8×), SHORT signals pass just as easily as LONG
+- Live analysis: 77-92% of HiddenGem/Sniper/BBMeanRev trades were SHORT during BTC uptrend
+- Only PressureReader profitable (+$12, 100% LONG, PF 1.06)
+
+### Fix: COUNTER_TREND_PENALTY
+
+New config multiplier applied **after** `BTC_TREND_WEIGHTS`, only for counter-trend signals:
+```
+final = raw_confidence × BTC_TREND_WEIGHT × COUNTER_TREND_PENALTY (if counter-trend)
+```
+
+| Config | TREND_UP | TREND_DOWN | CHOP | COMPRESSION |
+|--------|----------|-----------|------|-------------|
+| Default (trend-follow) | 0.5 | 0.5 | 1.0 | 1.0 |
+| Mean-reversion override | 1.0 | 1.0 | 1.0 | 1.0 |
+
+- Trend-following: SHORT during TREND_UP → 0.8 × 0.5 = 0.4 effective → requires 135% raw conf → **blocked**
+- Mean-reversion: SHORT during TREND_UP → 0.8 × 1.0 = 0.8 → requires 67.5% raw conf → **trades freely**
+
+Applied to both `scorer.py` and `extended_scorer.py` (research parity).
+
+### Portfolio triage: 9 passports disabled
+
+All passports with PF < 0.30 disabled (they still manage existing open positions until they close):
+- HiddenGem (PF 0.09), Sniper (PF 0.15), VolumeKing (PF 0.42)
+- DualMA (PF 0.24), MinimalEdge (PF 0.25), TrendMomentum (PF 0.27)
+- Donchian (PF 0.19), OBV Trend (PF 0.18), PureTrend (PF 0.20)
+
+12 active passports remain.
+
+### Phase 4 research results (Apr 9 run)
+
+**107 generated → 24 Stage 1 → 0 Stage 2** (Binance API timeout killed all Stage 2 evaluations)
+
+Stage 1 standouts (before network death):
+| Strategy | Return | Max DD | Sharpe |
+|----------|--------|--------|--------|
+| rsi_bb_reversal (BB=15, STD=1.5, conf=65) | **+7.1%** | 14.9% | 1.51 |
+| vwap_deviation (conf=65) | +3.6% | 11.4% | 0.86 |
+| stochastic_reversal (conf=65) | +3.5% | 11.4% | 0.85 |
+
+All trend-following candidates (obv, donchian, keltner, ichimoku) showed -15% to -18% returns.
+
+**Insight:** Mean-reversion continues to outperform in recent market conditions. The counter-trend penalty will help trend-followers avoid bleeding against the trend, while mean-reversion strategies trade freely.
+
+### Key anti-pattern documented
+
+**Never apply a uniform confidence multiplier regardless of signal direction.** The BTC_TREND_WEIGHTS multiplier was introduced to be "selective during bull markets" but it was selective for ALL signals, not just counter-trend ones. A directional filter must be directional.
