@@ -127,6 +127,8 @@ def _make_runner_with_signals(signals, config_overrides):
     runner.scanner.scan_all.return_value = signals
     runner.state_store = MagicMock()
     runner.state_store.save_position.return_value = 1
+    runner.regime_logger = MagicMock()
+    runner._last_digest_date = None
     return runner, passport
 
 

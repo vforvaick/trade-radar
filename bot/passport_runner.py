@@ -16,6 +16,7 @@ from bot.signals import generate_signal, Signal
 from bot.position_manager import PositionManager, Position
 from bot.data_fetcher import fetch_klines
 from bot.state_store import StateStore
+from bot.regime_logger import RegimeLogger
 
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,8 @@ class PassportRunner:
         self.price_fetch_error_count = 0
         self._last_prices: dict[str, tuple] = {}
         self.state_store = StateStore()
+        self.regime_logger = RegimeLogger(self.state_store)
+        self._last_digest_date = None
         self.passports = self._load_passports(passport_dir)
         self.scanner = Scanner(interval=interval, limit=100)
         self.interval = interval
@@ -219,6 +222,7 @@ class PassportRunner:
         Returns list of (signal, passport) tuples for signals found.
         """
         all_results = []
+        cycle_signal_count = 0
 
         # Refresh BTC trend once (shared across passports)
         self.scanner.update_btc_trend()
@@ -252,6 +256,7 @@ class PassportRunner:
 
             try:
                 signals = self.scanner.scan_all()
+                cycle_signal_count += len(signals)
 
                 for sig in signals:
                     if sig.confidence < config.CONFIDENCE_THRESHOLD:
@@ -294,6 +299,20 @@ class PassportRunner:
             finally:
                 # ALWAYS restore config to not pollute next passport
                 self._restore_config(original_config)
+
+        # Log regime snapshot for this scan cycle
+        try:
+            self.regime_logger.log_scan(
+                regime=self.scanner.btc_trend,
+                metadata=getattr(self.scanner, 'regime_metadata', {}),
+                total_signals=cycle_signal_count,
+                total_opened=len(all_results),
+            )
+        except Exception:
+            logger.exception("Failed to log regime snapshot")
+
+        # Check daily digest
+        self._check_daily_digest()
 
         return all_results
 
@@ -507,3 +526,16 @@ class PassportRunner:
                 setattr(config, k, v)
             elif hasattr(config, k):
                 delattr(config, k)
+
+    def _check_daily_digest(self):
+        """Send daily regime digest at UTC midnight."""
+        today = datetime.utcnow().date()
+        if self._last_digest_date == today:
+            return
+        if datetime.utcnow().hour != 0:
+            return
+        try:
+            self.regime_logger.send_daily_digest(None)
+            self._last_digest_date = today
+        except Exception:
+            logger.exception("Failed to send daily digest")

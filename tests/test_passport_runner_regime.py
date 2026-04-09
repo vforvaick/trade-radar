@@ -6,10 +6,15 @@ from unittest.mock import patch
 from bot import config
 
 
-def _make_mock_state_store(MockStateStore):
+def _make_mock_state_store(MockStateStore, tmpdir=None):
     mock_ss = MockStateStore.return_value
     mock_ss.get_last_equity.return_value = None
     mock_ss.load_open_positions.return_value = []
+    if tmpdir:
+        import os
+        mock_ss.db_path = os.path.join(tmpdir, "test_state.db")
+    else:
+        mock_ss.db_path = ":memory:"
     return mock_ss
 
 
