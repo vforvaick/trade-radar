@@ -49,7 +49,10 @@ def test_h1_uptrend_uses_config_weight_not_hardcoded():
     df = _make_fake_df()
     weights = {"ema_trend": 1.0}
 
-    with patch.dict(extended_scorer.INDICATOR_REGISTRY, _all_long_registry(), clear=True):
+    # Disable CTP to isolate BTC_TREND_WEIGHTS test
+    no_penalty = {"TREND_UP": 1.0, "TREND_DOWN": 1.0, "HIGH_VOL_CHOP": 1.0, "LOW_VOL_COMPRESSION": 1.0}
+    with patch.dict(extended_scorer.INDICATOR_REGISTRY, _all_long_registry(), clear=True), \
+         patch.object(config, "COUNTER_TREND_PENALTY", no_penalty):
         result = extended_scorer.score_extended(df, weights, btc_trend="TREND_UP", confidence_threshold=0.0)
 
     # raw_confidence = 100.0 when all votes LONG on a single-indicator weight
@@ -64,7 +67,10 @@ def test_h1_downtrend_uses_config_weight():
     df = _make_fake_df()
     weights = {"ema_trend": 1.0}
 
-    with patch.dict(extended_scorer.INDICATOR_REGISTRY, _all_long_registry(), clear=True):
+    # Disable CTP to isolate BTC_TREND_WEIGHTS test
+    no_penalty = {"TREND_UP": 1.0, "TREND_DOWN": 1.0, "HIGH_VOL_CHOP": 1.0, "LOW_VOL_COMPRESSION": 1.0}
+    with patch.dict(extended_scorer.INDICATOR_REGISTRY, _all_long_registry(), clear=True), \
+         patch.object(config, "COUNTER_TREND_PENALTY", no_penalty):
         result = extended_scorer.score_extended(df, weights, btc_trend="TREND_DOWN", confidence_threshold=0.0)
 
     expected = min(100.0, 100.0 * config.BTC_TREND_WEIGHTS["TREND_DOWN"])

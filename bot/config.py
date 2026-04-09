@@ -130,6 +130,16 @@ ATR_TRAIL_MULTIPLIER = 2.0   # trail distance = 2x ATR at entry
 # Per-passport direction filter: "SHORT_ONLY", "LONG_ONLY", or None (both directions)
 DIRECTION_BIAS = None
 
+# Counter-trend penalty: extra multiplier for signals opposing BTC trend direction.
+# SHORT during TREND_UP → confidence × 0.5; LONG during TREND_DOWN → confidence × 0.5.
+# Mean-reversion passports override to 1.0 (no penalty).
+COUNTER_TREND_PENALTY = {
+    "TREND_UP": 0.5,            # SHORT signals penalized during uptrend
+    "TREND_DOWN": 0.5,          # LONG signals penalized during downtrend
+    "HIGH_VOL_CHOP": 1.0,       # no directional penalty
+    "LOW_VOL_COMPRESSION": 1.0, # no directional penalty
+}
+
 # ============================================================
 # WEEKDAY FILTER
 # ============================================================

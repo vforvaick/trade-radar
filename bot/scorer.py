@@ -126,6 +126,16 @@ def score_confluence(df, btc_trend="Sideways"):
     btc_weight = config.BTC_TREND_WEIGHTS.get(btc_trend, 1.0)
     confidence = raw_confidence * btc_weight
 
+    # Apply counter-trend penalty: penalize signals opposing BTC trend
+    ctp = getattr(config, 'COUNTER_TREND_PENALTY', {})
+    ct_penalty = ctp.get(btc_trend, 1.0)
+    is_counter = (
+        (btc_trend == "TREND_UP" and direction == "SHORT") or
+        (btc_trend == "TREND_DOWN" and direction == "LONG")
+    )
+    if is_counter:
+        confidence *= ct_penalty
+
     # Determine leverage tier
     leverage, rr = _get_leverage_tier(confidence)
 
@@ -140,6 +150,7 @@ def score_confluence(df, btc_trend="Sideways"):
         "go": go,
         "btc_trend": btc_trend,
         "raw_confidence": round(raw_confidence, 1),
+        "counter_trend_penalty": ct_penalty if is_counter else 1.0,
         "atr": df['atr'].iloc[-1] if 'atr' in df.columns else None,
     }
 

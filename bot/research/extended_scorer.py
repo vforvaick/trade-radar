@@ -125,6 +125,16 @@ def score_extended(
     # BTC trend filter — use live config weights, clamp result to [0, 100]
     confidence = min(100.0, max(0.0, raw_confidence * config.BTC_TREND_WEIGHTS.get(btc_trend, 1.0)))
 
+    # Counter-trend penalty
+    ctp = getattr(config, 'COUNTER_TREND_PENALTY', {})
+    ct_penalty = ctp.get(btc_trend, 1.0)
+    is_counter = (
+        (btc_trend == "TREND_UP" and direction == "SHORT") or
+        (btc_trend == "TREND_DOWN" and direction == "LONG")
+    )
+    if is_counter:
+        confidence *= ct_penalty
+
     go = confidence >= confidence_threshold
 
     return {
