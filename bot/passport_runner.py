@@ -33,6 +33,7 @@ class Passport:
         self.enabled = _is_enabled(data)
         self.description = data.get("description", "")
         self.config_overrides = data.get("config_overrides", {})
+        self.active_regimes = data.get("active_regimes", None)
         self.position_manager = PositionManager()
         self.equity = config.INITIAL_EQUITY
         self.trade_count = 0
@@ -110,6 +111,30 @@ class PassportRunner:
                         print(f"[PassportRunner] Skipping disabled passport config: {fname}", flush=True)
                         continue
                 p = Passport(fpath)
+
+                # Warn about old 3-regime BTC_TREND_WEIGHTS format
+                old_keys = {"Uptrend", "Downtrend", "Sideways"}
+                btc_weights = p.config_overrides.get("BTC_TREND_WEIGHTS")
+                if btc_weights and set(btc_weights.keys()) & old_keys:
+                    stale = set(btc_weights.keys()) & old_keys
+                    logger.warning(
+                        "Passport %s has old 3-regime BTC_TREND_WEIGHTS keys %s — "
+                        "migrate to 4-regime keys (TREND_UP/TREND_DOWN/HIGH_VOL_CHOP/LOW_VOL_COMPRESSION)",
+                        p.name, stale,
+                    )
+                    print(
+                        f"[PassportRunner] ⚠️ {p.name}: old 3-regime BTC_TREND_WEIGHTS {stale} — "
+                        f"migrate to TREND_UP/TREND_DOWN/HIGH_VOL_CHOP/LOW_VOL_COMPRESSION",
+                        flush=True,
+                    )
+
+                # Log active_regimes if declared (Phase 1)
+                if p.active_regimes is not None:
+                    logger.info(
+                        "Passport %s declares active_regimes=%s (Phase 1: logged only, not enforced)",
+                        p.name, p.active_regimes,
+                    )
+
                 passports.append(p)
             except Exception as e:
                 self.passport_load_error_count += 1
@@ -454,7 +479,8 @@ class PassportRunner:
 
     def _apply_regime_guardrails(self, passport: Passport):
         """Apply tactical regime clamps for passports that need extra protection."""
-        if self.scanner.btc_trend != "Sideways":
+        choppy_regimes = {"Sideways", "HIGH_VOL_CHOP", "LOW_VOL_COMPRESSION"}
+        if self.scanner.btc_trend not in choppy_regimes:
             return
 
         weights = passport.config_overrides.get("INDICATOR_WEIGHTS", {})
