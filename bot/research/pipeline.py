@@ -7,6 +7,7 @@ from typing import Optional
 import numpy as np
 
 from bot.backtester import run_backtest
+from bot.research.resilience import resilient_call, wait_for_connectivity
 from bot.research.types import (
     PassportCandidate, BacktestMetrics, EvalResult, Stage3Result, Stage4Result,
 )
@@ -64,7 +65,8 @@ class ResearchPipeline:
                 "[Stage 1] %d/%d — %s", i + 1, len(candidates), candidate.slug,
             )
             try:
-                summary = run_backtest(
+                summary = resilient_call(
+                    run_backtest,
                     symbols=self.symbols,
                     interval=self.interval,
                     days=self.days,
@@ -130,14 +132,16 @@ class ResearchPipeline:
             fold_results = []
             for fold_idx, (train_end_offset, test_end_offset) in enumerate(folds):
                 try:
-                    train_summary = run_backtest(
+                    train_summary = resilient_call(
+                    run_backtest,
                         symbols=self.symbols,
                         interval=self.interval,
                         days=train_days,
                         cfg_override=candidate.config_overrides,
                         end_offset_days=train_end_offset,
                     )
-                    test_summary = run_backtest(
+                    test_summary = resilient_call(
+                    run_backtest,
                         symbols=self.symbols,
                         interval=self.interval,
                         days=test_days,
@@ -190,7 +194,8 @@ class ResearchPipeline:
 
             # Run original backtest for baseline return
             try:
-                orig_summary = run_backtest(
+                orig_summary = resilient_call(
+                    run_backtest,
                     symbols=self.symbols,
                     interval=self.interval,
                     days=self.days,
@@ -208,7 +213,8 @@ class ResearchPipeline:
                     candidate.config_overrides, magnitude=0.15, rng=rng,
                 )
                 try:
-                    summary = run_backtest(
+                    summary = resilient_call(
+                    run_backtest,
                         symbols=self.symbols,
                         interval=self.interval,
                         days=self.days,
@@ -247,7 +253,8 @@ class ResearchPipeline:
         cand_dicts = []
         for candidate in candidates:
             try:
-                summary = run_backtest(
+                summary = resilient_call(
+                    run_backtest,
                     symbols=self.symbols,
                     interval=self.interval,
                     days=self.days,
@@ -278,6 +285,10 @@ class ResearchPipeline:
         max_per_family: Optional[int] = None,
     ) -> list[PassportCandidate]:
         """Run the 2-stage pipeline: generate → Stage 1 → Stage 2."""
+        # Pre-flight connectivity check
+        logger.info("Checking Binance API connectivity before starting pipeline...")
+        wait_for_connectivity(check_interval=30.0, max_wait=7200.0)
+
         candidates = self.generate_candidates(families, max_per_family)
         stage1_survivors = self.run_stage1(candidates)
         stage2_survivors = self.run_stage2(stage1_survivors)
@@ -301,6 +312,10 @@ class ResearchPipeline:
         mc_iterations: int = 50,
     ) -> Stage4Result:
         """Run the complete 4-stage pipeline: generate → S1 → S2 → S3 → S4."""
+        # Pre-flight connectivity check
+        logger.info("Checking Binance API connectivity before starting pipeline...")
+        wait_for_connectivity(check_interval=30.0, max_wait=7200.0)
+
         candidates = self.generate_candidates(families, max_per_family)
         stage1_survivors = self.run_stage1(candidates)
         stage2_survivors = self.run_stage2(stage1_survivors)
