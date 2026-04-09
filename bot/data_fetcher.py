@@ -111,10 +111,17 @@ def fetch_klines_range(symbol: str, interval: str,
 
 
 def fetch_btc_trend(interval: str = "4h", lookback: int = 20) -> str:
+    """DEPRECATED: Use RegimeDetector.get_current_regime() instead.
+
+    Kept for backward compatibility with any scripts that import this directly.
+    Returns old 3-regime format: Uptrend/Downtrend/Sideways.
     """
-    Determine BTC trend: Uptrend, Downtrend, or Sideways.
-    Uses EMA 9/21 crossover on 4H chart.
-    """
+    import warnings
+    warnings.warn(
+        "fetch_btc_trend() is deprecated. Use bot.regime_detector.RegimeDetector instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     df = fetch_klines("BTCUSDT", interval, limit=lookback + 30)
     if df.empty:
         return "Sideways"
