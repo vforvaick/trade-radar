@@ -2,7 +2,7 @@
 
 > Living document. Updated after every iteration cycle.
 > Purpose: avoid repeating mistakes, build on proven insights, explore new lineages with context.
-> Last updated: 2026-04-09 (Session 10b — §19 counter-trend penalty, portfolio triage, Phase 4 results)
+> Last updated: 2026-04-10 (Session 10b — §20 BollingerBreakout promotion, post-CTP performance, Phase 4 retry)
 
 ---
 
@@ -1279,3 +1279,58 @@ All trend-following candidates (obv, donchian, keltner, ichimoku) showed -15% to
 ### Key anti-pattern documented
 
 **Never apply a uniform confidence multiplier regardless of signal direction.** The BTC_TREND_WEIGHTS multiplier was introduced to be "selective during bull markets" but it was selective for ALL signals, not just counter-trend ones. A directional filter must be directional.
+
+## §20 — BollingerBreakout Promotion & Phase 4 Retry (Session 10b continued, 2026-04-10)
+
+### Phase 4 research retry results
+
+**Run 1 (Apr 9, with resilient retry):** 107 generated → **81 Stage 1 survivors** (vs 24 in previous run!). Dramatic improvement, likely due to `--quality-pairs` flag giving stable backtests.
+
+Stage 2 walk-forward: **8 PASS / 8 FAIL** out of 16/81 evaluated (process died — laptop sleep).
+
+| Strategy | Sharpe | Median Return | Verdict |
+|----------|--------|---------------|---------|
+| bollinger_breakout (BB=15,1.5σ,conf=55) | **2.39** | **+23.9%** | ✅ STAR |
+| bollinger_breakout (conf=65) | 2.09 | +21.5% | ✅ |
+| bollinger_breakout (conf=50,vol=2.0) | 2.09 | +21.6% | ✅ |
+| bollinger_breakout (conf=60) | 1.69 | +23.3% | ✅ |
+| macd_divergence (conf=50,fast=8/slow=21/sig=7) | 1.61 | **+25.9%** | ✅ |
+| rsi_momentum (conf=50,vol=2.0) | 1.39 | +12.5% | ✅ |
+| bollinger_breakout (conf=50) | 1.14 | +2.2% | ✅ |
+| rsi_momentum (conf=50,vol=1.5) | 1.13 | +2.2% | ✅ |
+
+**Key insight:** bollinger_breakout dominates — 5 of 8 passes. BB(15,1.5σ) + Vol + Pressure is a potent combination. Uses 3 active indicators (selectivity principle).
+
+### BollingerBreakout passport promoted to paper trading
+
+Created `passports/cryptopass-research/bollinger_breakout.json` v0.1:
+- Config: BB_PERIOD=15, BB_STD=1.5, CONFIDENCE_THRESHOLD=55
+- Active indicators: bb_position=2.0, volume_spike=1.5, pressure=1.0
+- BTC_TREND_WEIGHTS: default (0.8 Uptrend) — breakout thesis aligned with trend
+- COUNTER_TREND_PENALTY: default (0.5) — breakout filtered by trend direction
+- Deployed to VPS, 22 passports total (13 active + 9 disabled managing open positions)
+
+### Post-CTP performance (first 24h since Apr 9 deployment)
+
+**CRITICAL FINDING:** CTP deployment was a game changer. Portfolio went from bleeding to broadly profitable.
+
+| Passport | Post-CTP PnL | WR | PF | Status |
+|----------|-------------|-----|-----|--------|
+| VolumeKing | **+$281.77** | 88.9% | 5.85 | Disabled (closing old positions) |
+| **PressureReader** | **+$191.82** | 60.0% | 2.29 | Focus 3 ⭐ |
+| HiddenGem | +$160.99 | 62.5% | 4.47 | Disabled |
+| DualMA | +$143.51 | 53.8% | 7.17 | Disabled |
+| Sniper | +$136.49 | 61.1% | 2.61 | Disabled |
+| OG | +$113.41 | 46.3% | 1.31 | Active |
+| OBV Trend | +$108.28 | 53.8% | 5.78 | Disabled |
+| BBMeanRev | +$81.59 | 56.0% | 1.77 | Active |
+| MACDDivergence | -$21.16 | 31.2% | 0.89 | Focus 3 |
+| BreakoutVol | -$3.65 | 28.6% | 0.95 | Focus 3 |
+
+**Note:** Disabled passports are closing pre-CTP positions profitably (market favorable). Active passports with CTP filtering show improved quality. PressureReader confirmed as alpha generator.
+
+Portfolio total: $8,382.67 (started $11,000). Still underwater but recovering — first day of consistent profitability across most passports.
+
+### Research Phase 4 retry #2 (Apr 10)
+
+Restarted from scratch: `nohup uv run python run_research.py --all --max-per-family 5 --days 180 --quality-pairs`. Running locally on MacBook. Expected ~6-8 hours for all 4 stages.

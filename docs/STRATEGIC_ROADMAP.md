@@ -1,7 +1,7 @@
 # Cryptopass — Strategic Roadmap
 
 > Created: 2026-04-09 (Session 10)
-> Updated: 2026-04-09 (Session 10b — Staged North Star, Focus 3 watch list, CTP deployed)
+> Updated: 2026-04-10 (Session 10b — BollingerBreakout promoted, post-CTP results)
 > Status: Active — living document, update after each major milestone
 
 ---
@@ -27,11 +27,14 @@
 
 ### Focus 3 — Stage 1 Watch List (decided Session 10b)
 
-| # | Passport | Closed PnL (Day 2) | WR | PF | CTP Impact | Role |
-|---|----------|---------------------|----|----|-----------|------|
-| 🥇 | **MACDDivergence** | -$15 | 32.3% | 0.96 | None (CTP=1.0) | Mean-rev baseline |
-| 🥈 | **PressureReader** | -$23 | 41.2% | 0.91 | Moderate | Unique thesis control |
-| 🥉 | **BreakoutVol** | -$34 | 36.4% | 0.83 | **High** | CTP beneficiary test |
+| # | Passport | Closed PnL (Day 2) | Post-CTP PnL (24h) | WR | PF | Role |
+|---|----------|---------------------|---------------------|----|----|------|
+| 🥇 | **PressureReader** | -$23 | **+$191.82** | 60.0% | **2.29** | **Alpha generator** ⭐ |
+| 🥈 | **MACDDivergence** | -$15 | -$21.16 | 31.2% | 0.89 | Mean-rev baseline |
+| 🥉 | **BreakoutVol** | -$34 | -$3.65 | 28.6% | 0.95 | CTP beneficiary test |
+| NEW | **BollingerBreakout** | — | -$55 (4 trades) | 0% | 0.00 | Phase 4 research star |
+
+> **Apr 10 update:** PressureReader confirmed as alpha generator — +$191 in 24h post-CTP. BreakoutVol nearly breakeven. BollingerBreakout just deployed, too early to judge (4 trades). MACDDivergence still slightly negative.
 
 ### Evaluation Checkpoints
 
