@@ -74,6 +74,9 @@ class PositionManager:
         if not self.can_open(signal):
             return None
 
+        if equity <= 0:
+            return None
+
         risk_amount = equity * (config.RISK_PER_TRADE_PCT / 100)
         pos = Position(
             signal=signal,

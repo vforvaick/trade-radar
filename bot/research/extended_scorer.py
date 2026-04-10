@@ -150,12 +150,13 @@ def score_extended(
 
 
 def _leverage_from_confidence(confidence: float) -> int:
-    if confidence >= 80:
-        return 5
+    """Match live LEVERAGE_TIERS from config: 54-60→4×, 61-69→5×, 70+→7×."""
     if confidence >= 70:
-        return 3
-    if confidence >= 60:
-        return 2
+        return 7
+    if confidence >= 61:
+        return 5
+    if confidence >= 54:
+        return 4
     return 1
 
 

@@ -134,8 +134,8 @@ DIRECTION_BIAS = None
 # SHORT during TREND_UP → confidence × 0.5; LONG during TREND_DOWN → confidence × 0.5.
 # Mean-reversion passports override to 1.0 (no penalty).
 COUNTER_TREND_PENALTY = {
-    "TREND_UP": 0.5,            # SHORT signals penalized during uptrend
-    "TREND_DOWN": 0.5,          # LONG signals penalized during downtrend
+    "TREND_UP": 0.75,           # SHORT signals penalized during uptrend (0.8×0.75=0.6 max)
+    "TREND_DOWN": 0.75,         # LONG signals penalized during downtrend
     "HIGH_VOL_CHOP": 1.0,       # no directional penalty
     "LOW_VOL_COMPRESSION": 1.0, # no directional penalty
 }
