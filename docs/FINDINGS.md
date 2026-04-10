@@ -1334,3 +1334,87 @@ Portfolio total: $8,382.67 (started $11,000). Still underwater but recovering �
 ### Research Phase 4 retry #2 (Apr 10)
 
 Restarted from scratch: `nohup uv run python run_research.py --all --max-per-family 5 --days 180 --quality-pairs`. Running locally on MacBook. Expected ~6-8 hours for all 4 stages.
+
+---
+
+## §21: Bugs Found & Fixed — Session 10b Parallel Investigation (Apr 10)
+
+Three parallel investigations dispatched. All findings documented below.
+
+### Bug 20: TP3_HIT Negative PnL — Bankrupt Equity Inversion 🔴
+
+**Severity:** Critical (inverts ALL PnL calculations)
+**Root cause:** `open_position()` had no guard against negative equity. When a passport's equity goes below $0 (e.g., Sniper with 50 simultaneous SL hits: $500 - 50×$17.52 = -$376), `risk_amount = equity × 0.5% = -$1.88`. This makes every PnL formula produce inverted results — TP3_HIT returns *negative* realized_pnl.
+
+**Numerical confirmation (matches VPS data exactly):**
+```
+equity ≈ -$391 → risk_amount = -$11.73
+TP1 profit: -$11.73 × 1.5 × 0.70 = -$12.32
+TP2 profit: -$11.73 × 1.5 × 1.61 × 0.20 = -$5.67
+TP3 profit: -$11.73 × 1.5 × 1.61 × 1.53 × 0.10 = -$4.33
+TOTAL: -$22.32 ≈ observed -$22.36 ✓
+```
+
+**Fix:** Single guard in `bot/position_manager.py:open_position()`:
+```python
+if equity <= 0:
+    return None
+```
+**Commit:** `8329337`
+
+### Bug 21: CTP=0.5 Was a Complete Off-Switch, Not a Penalty 🔴
+
+**Severity:** Critical (no counter-trend signals possible in TREND_UP/DOWN)
+**Root cause:** BTC_TREND_WEIGHTS (0.8) and CTP (0.5) stack multiplicatively:
+```
+SHORT during TREND_UP = raw × 0.8 × 0.5 = raw × 0.40
+Max achievable: 100 × 0.4 = 40 < CONFIDENCE_THRESHOLD(54) → IMPOSSIBLE
+```
+CTP was deployed as a "penalty" but mathematically it's a binary block. No short signal can ever fire during TREND_UP, regardless of conviction.
+
+**Fix:** CTP 0.5 → 0.75. New math:
+```
+Max achievable: 100 × 0.8 × 0.75 = 60 ✓ (passes threshold)
+Min raw needed: 54 / (0.8 × 0.75) = 90% (very selective — only high conviction)
+```
+**Commit:** `8329337`
+
+### Bug 22: Research Extended Scorer Leverage Mismatch 🟡
+
+**Severity:** Medium (research PnL underestimated by 2-3×)
+**Root cause:** `bot/research/extended_scorer.py` had hardcoded leverage tiers (1-5×) that didn't match live `config.LEVERAGE_TIERS` (4-7×):
+
+| Confidence | Live (scorer.py) | Research (extended_scorer.py) |
+|---|---|---|
+| 70%+ | **7×** | ~~5×~~ → **7×** (fixed) |
+| 61-69% | **5×** | ~~2×~~ → **5×** (fixed) |
+| 54-60% | **4×** | ~~1×~~ → **4×** (fixed) |
+
+Research Stage 1-4 results were undervaluing strategy performance. Not a live trading bug, but invalidates historical research PnL estimates.
+
+**Fix:** Aligned `_leverage_from_confidence()` in extended_scorer to match live config.
+**Commit:** `8329337`
+
+### Finding: Backtest-Live Gap Root Cause — SHORT Signal Quality
+
+**Not a bug, but critical insight:**
+```
+LONG:  735 trades, +$1,200, WR=45.4% (PROFITABLE)
+SHORT: 713 trades, -$5,989, WR=16.4% (CATASTROPHIC)
+```
+Risk/reward is actually good (avg TP win $20.12 vs avg SL loss $11.11 = 1.81×). Problem is signal *frequency* — too many low-quality SHORT entries, especially counter-trend. CTP is the correct architectural fix. With CTP=0.75, only very high conviction shorts (raw ≥ 90%) fire during TREND_UP.
+
+### New Tool: Daily PnL Monitor
+
+Created `scripts/daily_monitor.py` — pulls state.db from VPS, displays per-passport dashboard:
+- Focus passports highlight (PressureReader, MACDDivergence, BreakoutVol, BollingerBreakout)
+- LONG vs SHORT direction split
+- Pre-CTP vs Post-CTP performance comparison
+- Colored terminal output with aligned columns
+- 20 tests in `tests/test_daily_monitor.py`
+
+Usage: `uv run python scripts/daily_monitor.py`
+
+### All 9 Disabled Passports Re-enabled
+
+HiddenGem, Sniper, VolumeKing, DualMA, MinimalEdge, TrendMomentum, Donchian, OBV Trend, PureTrend — all re-enabled now that CTP filters counter-trend signals. Only `reversal.json` remains quarantined. Commit: `c708f59`.
