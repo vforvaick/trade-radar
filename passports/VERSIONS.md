@@ -133,6 +133,12 @@
 |---------|------------|-------------|
 | v0.1    | 2026-04-05 | OBV > EMA(20) trend signal + volume. 90d quality-pair: -11.45%, PF=0.771, 149 trades, WR=28.2%. Disabled. |
 
+### 💥 BollingerBreakout (`bollinger_breakout.json`) — NEW
+
+| Version | Date       | Description |
+|---------|------------|-------------|
+| v0.1    | 2026-04-10 | Phase 4 research Stage 2 survivor. BB(15,1.5σ)+Vol(1.5)+Pressure. 180d walk-forward: +23.3% return, Sharpe=1.69, PF=2.77, 415 trades, WR=38.1%. 3 active indicators. |
+
 ## Rollback Instructions
 
 ```bash

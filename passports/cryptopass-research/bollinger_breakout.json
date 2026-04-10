@@ -1,0 +1,57 @@
+{
+  "name": "BollingerBreakout",
+  "enabled": true,
+  "emoji": "💥",
+  "version": "0.1",
+  "changelog": [
+    {
+      "version": "0.1",
+      "date": "2026-04-10",
+      "git_sha": "pending",
+      "description": "Phase 4 research Stage 2 survivor. BB(15,1.5) + Vol(1.5) + Pressure. Thesis: price breakout beyond tighter Bollinger bands (1.5σ) confirmed by volume spike and order-flow pressure. 3 active indicators → selectivity principle.",
+      "backtest_180d": {
+        "return_pct": 23.3,
+        "win_rate": 38.1,
+        "trades": 415,
+        "max_dd_pct": -25.0,
+        "sharpe": 1.69,
+        "calmar": 4.55,
+        "profit_factor": 2.77,
+        "note": "Stage 2 walk-forward: median_ret=23.3%, avg_sharpe=1.69. Best Phase 4 candidate. Quality pairs, 180d."
+      }
+    }
+  ],
+  "description": "Bollinger Band breakout with volume + pressure confirmation. Tighter bands (1.5σ vs default 2.0σ) detect earlier breakouts. Volume spike confirms institutional participation. Pressure (bid/ask imbalance) confirms directional commitment. Research Stage 2 survivor with Sharpe 1.69.",
+  "config_overrides": {
+    "BB_PERIOD": 15,
+    "BB_STD": 1.5,
+    "VOLUME_SPIKE_THRESHOLD": 1.5,
+    "CONFIDENCE_THRESHOLD": 55,
+    "INDICATOR_WEIGHTS": {
+      "ema_trend": 0.0,
+      "macd_signal": 0.0,
+      "rsi_position": 0.0,
+      "rsi_divergence": 0.0,
+      "bb_position": 2.0,
+      "volume_spike": 1.5,
+      "pressure": 1.0,
+      "candle_direction": 0.0
+    },
+    "USE_ATR_EXITS": false,
+    "USE_TRAILING_STOP": false,
+    "MAX_OPEN_POSITIONS_PER_PASSPORT": 25,
+    "MAX_OPEN_POSITIONS_PER_SYMBOL": 1,
+    "BTC_TREND_WEIGHTS": {
+      "TREND_UP": 0.8,
+      "TREND_DOWN": 1.0,
+      "HIGH_VOL_CHOP": 1.0,
+      "LOW_VOL_COMPRESSION": 1.0
+    },
+    "COUNTER_TREND_PENALTY": {
+      "TREND_UP": 0.5,
+      "TREND_DOWN": 0.5,
+      "HIGH_VOL_CHOP": 1.0,
+      "LOW_VOL_COMPRESSION": 1.0
+    }
+  }
+}
