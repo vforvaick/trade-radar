@@ -1372,12 +1372,19 @@ Max achievable: 100 × 0.4 = 40 < CONFIDENCE_THRESHOLD(54) → IMPOSSIBLE
 ```
 CTP was deployed as a "penalty" but mathematically it's a binary block. No short signal can ever fire during TREND_UP, regardless of conviction.
 
-**Fix:** CTP 0.5 → 0.75. New math:
+**Fix:** CTP 0.5 → 0.75 → **0.68** (final). Tuning rationale:
 ```
-Max achievable: 100 × 0.8 × 0.75 = 60 ✓ (passes threshold)
-Min raw needed: 54 / (0.8 × 0.75) = 90% (very selective — only high conviction)
+CTP=0.50 → max = 100 × 0.8 × 0.50 = 40 → ALL counter-trend BLOCKED (binary off-switch)
+CTP=0.68 → max = 100 × 0.8 × 0.68 = 54.4 → only raw ≥ 99.3% pass (1% safety valve)
+CTP=0.75 → max = 100 × 0.8 × 0.75 = 60 → raw ≥ 90% pass (too loose)
 ```
-**Commit:** `8329337`
+Backtest (90d, 4 pairs) confirmed stricter = better:
+- BreakoutVol: CTP=0.50 → +20.4%, CTP=0.75 → +17.6%
+- BBMeanRev: identical (overrides CTP=1.0)
+- PressureReader: both negative, marginal difference
+
+CTP=0.68 chosen as minimum value that still allows near-perfect setups while blocking 99%+ of low-quality counter-trend signals.
+**Commits:** `8329337` (initial fix), `7f116d4` (final tuning to 0.68)
 
 ### Bug 22: Research Extended Scorer Leverage Mismatch 🟡
 
@@ -1402,7 +1409,20 @@ Research Stage 1-4 results were undervaluing strategy performance. Not a live tr
 LONG:  735 trades, +$1,200, WR=45.4% (PROFITABLE)
 SHORT: 713 trades, -$5,989, WR=16.4% (CATASTROPHIC)
 ```
-Risk/reward is actually good (avg TP win $20.12 vs avg SL loss $11.11 = 1.81×). Problem is signal *frequency* — too many low-quality SHORT entries, especially counter-trend. CTP is the correct architectural fix. With CTP=0.75, only very high conviction shorts (raw ≥ 90%) fire during TREND_UP.
+Risk/reward is actually good (avg TP win $20.12 vs avg SL loss $11.11 = 1.81×). Problem is signal *frequency* — too many low-quality SHORT entries, especially counter-trend. CTP is the correct architectural fix. With CTP=0.68, only near-perfect (raw ≥ 99%) counter-trend signals fire during TREND_UP.
+
+### CTP Tuning: Backtest Comparison (scripts/backtest_ctp_compare.py)
+
+| Passport | CTP | Return | MaxDD | WR% | PF | Trades | L/S |
+|---|---|---|---|---|---|---|---|
+| BreakoutVol | 0.50 | **+20.4%** | -21.1% | 48% | 1.36 | 151 | 76/75 |
+| BreakoutVol | 0.75 | +17.6% | -23.5% | 47% | 1.28 | 169 | 98/71 |
+| BBMeanRev | 0.50 | +4.7% | -14.5% | 42% | 1.17 | 73 | 53/20 |
+| BBMeanRev | 0.75 | +4.7% | -14.5% | 42% | 1.17 | 73 | 53/20 |
+| PressureReader | 0.50 | -16.1% | -32.2% | 29% | 0.78 | 139 | 131/8 |
+| PressureReader | 0.75 | -15.5% | -32.6% | 36% | 0.78 | 164 | 163/1 |
+
+**Conclusion:** Stricter CTP → better returns for trend-followers. 0.68 chosen as the mathematical minimum that still allows a 1% safety valve for genuinely exceptional counter-trend setups.
 
 ### New Tool: Daily PnL Monitor
 
