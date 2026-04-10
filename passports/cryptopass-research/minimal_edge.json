@@ -1,7 +1,7 @@
 {
   "name": "MinimalEdge",
   "emoji": "\ud83c\udfaf",
-  "enabled": false,
+  "enabled": true,
   "version": "0.1",
   "changelog": [
     {

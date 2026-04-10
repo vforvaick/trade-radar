@@ -1,7 +1,7 @@
 {
   "name": "PureTrend",
   "emoji": "\ud83d\udcc8",
-  "enabled": false,
+  "enabled": true,
   "version": "0.1",
   "changelog": [
     {

@@ -1,7 +1,7 @@
 {
   "name": "Pumpradar VolumeKing",
   "emoji": "\ud83d\udce2",
-  "enabled": false,
+  "enabled": true,
   "version": "0.3",
   "changelog": [
     {
