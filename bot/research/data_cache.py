@@ -105,46 +105,49 @@ class KlineCache:
         result: dict[str, int] = {}
 
         for symbol in all_symbols:
-            existing = self._load_parquet(symbol, interval)
+            try:
+                existing = self._load_parquet(symbol, interval)
 
-            if existing is None:
-                # Full fetch
-                df = fetch_klines_range(symbol, interval, start_ms, end_ms)
-                if not df.empty:
-                    self._save_parquet(symbol, interval, df)
-                result[symbol] = len(df)
-                continue
+                if existing is None:
+                    # Full fetch
+                    df = fetch_klines_range(symbol, interval, start_ms, end_ms)
+                    if not df.empty:
+                        self._save_parquet(symbol, interval, df)
+                    result[symbol] = len(df)
+                    continue
 
-            ex_min_ms, ex_max_ms = self._df_to_ms(existing)
-            parts = [existing]
+                ex_min_ms, ex_max_ms = self._df_to_ms(existing)
+                parts = [existing]
 
-            # Gap before existing data
-            if start_ms < ex_min_ms:
-                early = fetch_klines_range(symbol, interval, start_ms, ex_min_ms)
-                if not early.empty:
-                    parts.insert(0, early)
+                # Gap before existing data
+                if start_ms < ex_min_ms:
+                    early = fetch_klines_range(symbol, interval, start_ms, ex_min_ms)
+                    if not early.empty:
+                        parts.insert(0, early)
 
-            # Gap after existing data (or stale today candles)
-            today_ms = _today_start_ms()
-            need_tail = ex_max_ms < end_ms - _MS_PER_HOUR  # more than 1h gap
-            if need_tail and (ex_max_ms < today_ms or self._today_candles_stale(symbol, interval)):
-                tail = fetch_klines_range(symbol, interval, ex_max_ms, end_ms)
-                if not tail.empty:
-                    parts.append(tail)
+                # Gap after existing data (or stale today candles)
+                today_ms = _today_start_ms()
+                need_tail = ex_max_ms < end_ms - _MS_PER_HOUR  # more than 1h gap
+                if need_tail and (ex_max_ms < today_ms or self._today_candles_stale(symbol, interval)):
+                    tail = fetch_klines_range(symbol, interval, ex_max_ms, end_ms)
+                    if not tail.empty:
+                        parts.append(tail)
 
-            if len(parts) > 1:
-                combined = (
-                    pd.concat(parts, ignore_index=True)
-                    .drop_duplicates(subset=["timestamp"])
-                    .sort_values("timestamp")
-                    .reset_index(drop=True)
-                )
-                self._save_parquet(symbol, interval, combined)
-                # Invalidate memory cache so next get() reloads
-                self._memory.pop((symbol, interval), None)
-                result[symbol] = len(combined)
-            else:
-                result[symbol] = len(existing)
+                if len(parts) > 1:
+                    combined = (
+                        pd.concat(parts, ignore_index=True)
+                        .drop_duplicates(subset=["timestamp"])
+                        .sort_values("timestamp")
+                        .reset_index(drop=True)
+                    )
+                    self._save_parquet(symbol, interval, combined)
+                    self._memory.pop((symbol, interval), None)
+                    result[symbol] = len(combined)
+                else:
+                    result[symbol] = len(existing)
+            except Exception as e:
+                logger.warning("Prefetch failed for %s: %s — will fall back to API", symbol, e)
+                result[symbol] = 0
 
         return result
 

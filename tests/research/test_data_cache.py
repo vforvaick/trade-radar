@@ -144,6 +144,25 @@ class TestPrefetch:
         eth_calls = [c for c in mock_fetch.call_args_list if c.args[0] == "ETHUSDT"]
         assert len(eth_calls) == 1  # full re-fetch
 
+    @patch("bot.research.data_cache.fetch_klines_range")
+    def test_prefetch_continues_on_api_failure(self, mock_fetch, cache, cache_dir):
+        """If one symbol fails during prefetch, others still succeed."""
+        def _side_effect(symbol, interval, s, e, **kw):
+            if symbol == "FAILUSDT":
+                raise ConnectionError("Binance API timeout")
+            return _make_klines(s, 48)
+
+        mock_fetch.side_effect = _side_effect
+
+        result = cache.prefetch(["FAILUSDT", "ETHUSDT"], "1h", days=2)
+
+        # FAILUSDT should report 0, but ETHUSDT and BTCUSDT should succeed
+        assert result["FAILUSDT"] == 0
+        assert result["ETHUSDT"] == 48
+        assert result["BTCUSDT"] == 48
+        assert (cache_dir / "ETHUSDT_1h.parquet").exists()
+        assert (cache_dir / "BTCUSDT_1h.parquet").exists()
+
     @patch("bot.research.data_cache._today_start_ms")
     @patch("bot.research.data_cache.fetch_klines_range")
     def test_today_candles_refresh(self, mock_fetch, mock_today, cache, cache_dir):
