@@ -166,7 +166,8 @@ def backtest_pair(symbol: str, klines: pd.DataFrame, btc_df: pd.DataFrame,
 
 def run_backtest(symbols: list[str], interval: str = "1h",
                  days: int = 90, cfg_override: dict = None,
-                 end_offset_days: int = 0) -> dict:
+                 end_offset_days: int = 0,
+                 kline_provider=None) -> dict:
     """
     Run backtest across multiple pairs.
 
@@ -174,13 +175,20 @@ def run_backtest(symbols: list[str], interval: str = "1h",
     that return_pct and max_dd are meaningful — each symbol contributes one
     independent equity curve starting at INITIAL_EQUITY.
 
+    kline_provider: callable(symbol, interval, start_ms, end_ms) -> pd.DataFrame.
+    Defaults to fetch_klines_range (Binance API). Inject KlineCache.get to avoid
+    repeated API calls during research pipeline runs.
+
     Returns summary stats + per-trade details.
     """
+    if kline_provider is None:
+        kline_provider = fetch_klines_range
+
     end_ms = int(time.time() * 1000) - (end_offset_days * 24 * 3600 * 1000)
     start_ms = end_ms - (days * 24 * 3600 * 1000)
 
     print(f"[Backtest] Fetching BTC data...", flush=True)
-    btc_df = fetch_klines_range("BTCUSDT", interval, start_ms, end_ms)
+    btc_df = kline_provider("BTCUSDT", interval, start_ms, end_ms)
 
     print(f"[Backtest] Pre-computing BTC regime series...", flush=True)
     btc_regime_map = _precompute_btc_regimes(btc_df)
@@ -190,7 +198,7 @@ def run_backtest(symbols: list[str], interval: str = "1h",
     for i, sym in enumerate(symbols):
         print(f"[Backtest] ({i+1}/{len(symbols)}) {sym}...", flush=True)
         try:
-            klines = fetch_klines_range(sym, interval, start_ms, end_ms)
+            klines = kline_provider(sym, interval, start_ms, end_ms)
             if len(klines) < 100:
                 print(f"  Skipping {sym}: only {len(klines)} candles", flush=True)
                 continue
