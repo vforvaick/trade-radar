@@ -39,8 +39,8 @@ class KlineCache:
     def __init__(self, cache_dir: str = "data/research_cache"):
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        # symbol -> DataFrame loaded from parquet
-        self._memory: dict[str, pd.DataFrame] = {}
+        # (symbol, interval) -> DataFrame loaded from parquet
+        self._memory: dict[tuple[str, str], pd.DataFrame] = {}
 
     # ------------------------------------------------------------------
     # Helpers
@@ -141,7 +141,7 @@ class KlineCache:
                 )
                 self._save_parquet(symbol, interval, combined)
                 # Invalidate memory cache so next get() reloads
-                self._memory.pop(symbol, None)
+                self._memory.pop((symbol, interval), None)
                 result[symbol] = len(combined)
             else:
                 result[symbol] = len(existing)
@@ -169,14 +169,15 @@ class KlineCache:
             return fetch_klines_range(symbol, interval, start_ms, end_ms, use_cache=False)
 
         # Load into memory on first access
-        if symbol not in self._memory:
+        key = (symbol, interval)
+        if key not in self._memory:
             df_disk = self._load_parquet(symbol, interval)
             if df_disk is None:
-                # Corrupt or missing → API fallback
+                logger.warning("Cache miss for %s %s — falling back to API", symbol, interval)
                 return fetch_klines_range(symbol, interval, start_ms, end_ms)
-            self._memory[symbol] = df_disk
+            self._memory[key] = df_disk
 
-        df = self._memory[symbol]
+        df = self._memory[key]
         start_ts = pd.Timestamp(start_ms, unit="ms")
         end_ts = pd.Timestamp(end_ms, unit="ms")
         sliced = df[(df["timestamp"] >= start_ts) & (df["timestamp"] < end_ts)].copy()
@@ -188,25 +189,36 @@ class KlineCache:
         return sliced.reset_index(drop=True)
 
     def stats(self) -> dict:
-        """Return cache statistics."""
+        """Return cache statistics: symbols, rows, disk size, staleness."""
         parquet_files = list(self.cache_dir.glob("*.parquet"))
         total_rows = 0
+        total_bytes = 0
         symbols_cached = []
+        oldest_mtime = float("inf")
+        newest_mtime = 0.0
 
+        now = time.time()
         for f in parquet_files:
             try:
                 df = pd.read_parquet(f)
                 total_rows += len(df)
-                # Strip interval suffix: ETHUSDT_1h.parquet → ETHUSDT
+                total_bytes += f.stat().st_size
+                mtime = f.stat().st_mtime
+                oldest_mtime = min(oldest_mtime, mtime)
+                newest_mtime = max(newest_mtime, mtime)
                 name = f.stem  # e.g. ETHUSDT_1h
                 symbols_cached.append(name)
             except Exception:
                 pass
+
+        staleness_seconds = (now - newest_mtime) if newest_mtime > 0 else None
 
         return {
             "cache_dir": str(self.cache_dir),
             "files": len(parquet_files),
             "symbols_cached": symbols_cached,
             "total_rows": total_rows,
-            "memory_loaded": list(self._memory.keys()),
+            "disk_size_bytes": total_bytes,
+            "staleness_seconds": staleness_seconds,
+            "memory_loaded": [f"{s}_{i}" for s, i in self._memory.keys()],
         }

@@ -144,6 +144,37 @@ class TestPrefetch:
         eth_calls = [c for c in mock_fetch.call_args_list if c.args[0] == "ETHUSDT"]
         assert len(eth_calls) == 1  # full re-fetch
 
+    @patch("bot.research.data_cache._today_start_ms")
+    @patch("bot.research.data_cache.fetch_klines_range")
+    def test_today_candles_refresh(self, mock_fetch, mock_today, cache, cache_dir):
+        """When parquet exists but is >1h old and contains today's candles, tail is re-fetched."""
+        # Fix "today" to a known value
+        today_ms = int(pd.Timestamp("2024-03-01").timestamp() * 1000)
+        mock_today.return_value = today_ms
+
+        # Write parquet that covers up to "yesterday" — mtime will be now
+        start_ms = int(pd.Timestamp("2024-01-01").timestamp() * 1000)
+        yesterday_ms = today_ms - _MS_PER_HOUR * 24
+        hours = int((yesterday_ms - start_ms) / _MS_PER_HOUR)
+        existing = _make_klines(start_ms, hours)
+        path = cache_dir / "ETHUSDT_1h.parquet"
+        existing.to_parquet(path, index=False)
+
+        # Backdate mtime to >1h ago so _today_candles_stale returns True
+        old_time = time.time() - 7200  # 2 hours ago
+        os.utime(path, (old_time, old_time))
+
+        mock_fetch.return_value = _make_klines(yesterday_ms, 48)
+
+        cache.prefetch(["ETHUSDT"], "1h", days=60)
+
+        # Should have fetched tail gap (stale today candles)
+        eth_calls = [c for c in mock_fetch.call_args_list if c.args[0] == "ETHUSDT"]
+        assert len(eth_calls) >= 1
+        # The tail fetch should start from near the end of existing data
+        tail_call = eth_calls[-1]
+        assert tail_call.args[2] >= yesterday_ms - _MS_PER_HOUR
+
 
 # ---------------------------------------------------------------------------
 # Get tests
@@ -188,7 +219,7 @@ class TestGet:
         end_ms   = base_ms + 10 * _MS_PER_HOUR
 
         cache.get("ETHUSDT", "1h", start_ms, end_ms)
-        assert "ETHUSDT" in cache._memory
+        assert ("ETHUSDT", "1h") in cache._memory
 
         # Second call should not touch disk or API
         cache.get("ETHUSDT", "1h", start_ms, end_ms)
@@ -223,6 +254,36 @@ class TestGet:
         mock_fetch.assert_called_once()
         assert len(result) == 24
 
+    @patch("bot.research.data_cache.fetch_klines_range")
+    def test_get_multi_interval_isolation(self, mock_fetch, cache, cache_dir):
+        """Different intervals for the same symbol don't cross-contaminate."""
+        base_ms = int(pd.Timestamp("2024-01-01").timestamp() * 1000)
+
+        df_1h = _make_klines(base_ms, 100)
+        df_1h.to_parquet(cache_dir / "ETHUSDT_1h.parquet", index=False)
+
+        # 4h candles: 4x the spacing, fewer rows
+        ts_4h = [pd.Timestamp(base_ms + i * 4 * _MS_PER_HOUR, unit="ms") for i in range(25)]
+        df_4h = pd.DataFrame({
+            "timestamp": ts_4h,
+            "open": [200.0] * 25, "high": [201.0] * 25,
+            "low": [199.0] * 25, "close": [200.5] * 25,
+            "volume": [5000.0] * 25,
+        })
+        df_4h.to_parquet(cache_dir / "ETHUSDT_4h.parquet", index=False)
+
+        start_ms = base_ms
+        end_ms = base_ms + 20 * _MS_PER_HOUR
+
+        r1h = cache.get("ETHUSDT", "1h", start_ms, end_ms)
+        r4h = cache.get("ETHUSDT", "4h", start_ms, end_ms)
+
+        mock_fetch.assert_not_called()
+        assert len(r1h) == 20  # 20 hourly candles
+        assert len(r4h) == 5   # 5 four-hour candles
+        assert ("ETHUSDT", "1h") in cache._memory
+        assert ("ETHUSDT", "4h") in cache._memory
+
 
 # ---------------------------------------------------------------------------
 # Stats tests
@@ -231,7 +292,7 @@ class TestGet:
 class TestStats:
     @patch("bot.research.data_cache.fetch_klines_range")
     def test_stats(self, mock_fetch, cache, cache_dir):
-        """stats() returns correct file count and total rows."""
+        """stats() returns correct file count, total rows, disk size, and staleness."""
         mock_fetch.return_value = _make_klines(0, 30)
 
         cache.prefetch(["ETHUSDT"], "1h", days=1)
@@ -242,3 +303,6 @@ class TestStats:
         assert s["total_rows"] >= 60  # at least 30 rows × 2 symbols
         assert isinstance(s["symbols_cached"], list)
         assert isinstance(s["memory_loaded"], list)
+        assert s["disk_size_bytes"] > 0
+        assert s["staleness_seconds"] is not None
+        assert s["staleness_seconds"] >= 0
