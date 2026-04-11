@@ -1438,3 +1438,92 @@ Usage: `uv run python scripts/daily_monitor.py`
 ### All 9 Disabled Passports Re-enabled
 
 HiddenGem, Sniper, VolumeKing, DualMA, MinimalEdge, TrendMomentum, Donchian, OBV Trend, PureTrend — all re-enabled now that CTP filters counter-trend signals. Only `reversal.json` remains quarantined. Commit: `c708f59`.
+
+---
+
+## Session 11 — KlineCache + Live Performance Analysis (2026-04-11)
+
+### KlineCache Implemented — Research Infrastructure Fix
+
+**Problem:** Research pipeline made ~5,350 Binance API calls per run, taking 10-22 hours and crashing 5/9 times from API timeouts.
+
+**Solution:** Parquet-based kline data cache (`bot/research/data_cache.py`):
+- Downloads all symbol data once during `prefetch()` (41 seconds for 16 symbols × 180 days)
+- Serves all backtesting from memory — zero API calls during Stage 1-4
+- Gap detection: only fetches missing date ranges on subsequent runs
+- Per-symbol error isolation: one API failure doesn't abort entire pipeline
+- Cache stats: 16 files, 118,874 rows, 4.4 MB disk
+
+**Performance improvement:**
+| Metric | Before | After |
+|--------|--------|-------|
+| API calls per run | ~5,350 | ~100 (prefetch only) |
+| Run time | 10-22 hours | ~4 hours |
+| Crash rate | 56% (5/9 runs) | 0% expected |
+| Disk usage | N/A | 4.4 MB |
+
+Files: `bot/research/data_cache.py`, `bot/backtester.py` (kline_provider param), `bot/research/pipeline.py` (wiring).
+Tests: 383/383 passing. Commits: `92dfbc3` → `9ae706c`.
+
+### Live Paper Trading Performance (Apr 11, 2026)
+
+**Portfolio:** $5,683 / $11,000 start = **-48.3%** across 22 passports. 1,792 closed trades.
+
+| Passport | Equity | Trades | WR | Status |
+|----------|--------|--------|----|--------|
+| 🟢 PressureReader | $626 | 55 | 47% | **ONLY PROFITABLE** |
+| RSIContrarian | $493 | 28 | 25% | Near breakeven |
+| BBMeanRev | $473 | 63 | 40% | Near breakeven |
+| BollingerBreakout | $465 | 20 | 30% | Slightly down |
+| Pumpradar OG | $456 | 191 | 41% | Moderate loss |
+| MACDDivergence | $452 | 41 | 32% | Moderate loss |
+| BreakoutVol | $441 | 35 | 37% | Moderate loss |
+| BalancedSelective | $390 | 87 | 38% | -22% |
+| OG Seasonal | $378 | 145 | 40% | -24% |
+| Momentum | $272 | 96 | 31% | -46% |
+| Dynamic | $257 | 71 | 24% | -49% |
+| OBV Trend | $208 | 72 | 26% | -58% |
+| TrendConfirm | $190 | 80 | 26% | -62% |
+| DualMA | $167 | 92 | 21% | -67% |
+| Donchian | $167 | 65 | 20% | -67% |
+| TrendMomentum | $111 | 96 | 25% | -78% |
+| MinimalEdge | $102 | 99 | 20% | -80% |
+| PureTrend | $82 | 101 | 16% | -84% |
+| VolumeKing | $76 | 158 | 41% | -85% |
+| HiddenGem | -$38 | 97 | 29% | **NEGATIVE EQUITY** |
+| Sniper | -$85 | 98 | 27% | **NEGATIVE EQUITY** |
+
+### Key Insights from Live Trading
+
+**1. Backtest ≠ Live — The Old Champions Failed**
+HiddenGem (+25.9% backtest) → -107% live. Sniper (+26.0% backtest) → -117% live. VolumeKing (+9.1% backtest) → -85% live. These were the "proven profitable" passports from Session 7. The 180d backtests were likely overfit to specific market conditions and pair selection (meme coin volatility as noted in Session 9).
+
+**2. PressureReader is the Real Winner**
+Only passport in green ($626, +25%). Uses `pressure` indicator (buy/sell volume ratio) with `candle_direction` confirmation — a unique thesis not shared by any other passport. 47% WR with +2.3% avg per trade suggests genuine edge.
+
+**3. Mean-Reversion > Trend-Following in Current Market**
+Top 4 passports (PressureReader, RSIContrarian, BBMeanRev, BollingerBreakout) all have mean-reversion or pressure-based thesis. Bottom 7 (PureTrend, MinimalEdge, TrendMomentum, DualMA, Donchian, OBV, TrendConfirm) are all trend-following → confirms current market is choppy/ranging.
+
+**4. Win Rate Correlates Strongly with Profitability**
+PressureReader 47% WR → profitable. PureTrend 16% WR → -84%. Any passport with WR < 30% is hemorrhaging money.
+
+**5. High Trade Count + Low WR = Fast Death**
+VolumeKing: 158 trades × 41% WR still loses 85% — too many mediocre entries. PureTrend: 101 trades × 16% WR = rapid destruction.
+
+### EMA Crossover Drawdown Analysis (Research Pipeline)
+
+All 4 EMA crossover candidates tested so far fail Stage 1 with >50% drawdown (51.6-51.8%). Root cause:
+- EMA crossover uses only 2 indicators (ema_trend=2.0, volume_spike=1.0)
+- Easy to reach high confidence (max 100%) → takes many positions
+- No regime filter → fires during ranging/choppy markets too
+- 100+ trades per symbol × 15 symbols × many losers = catastrophic drawdown
+- **Not a bug** — the drawdown gate is correctly filtering a bad strategy
+- Fix option: add regime gating (only trade during TREND_UP/TREND_DOWN regime) in research pipeline
+
+### Recommendation: Urgent Passport Triage
+
+Based on live performance, immediate actions needed:
+1. **Disable passports with equity <$150** (PureTrend, MinimalEdge, TrendMomentum, VolumeKing, HiddenGem, Sniper) — they're hemorrhaging the portfolio
+2. **Study PressureReader** — understand why it works, generate more pressure-based variants in research
+3. **Tune BBMeanRev + RSIContrarian** — near breakeven, may become profitable with tighter entries
+4. **Add regime gating to research** — EMA crossover fails because it doesn't respect market regime
