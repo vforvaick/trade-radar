@@ -7,6 +7,7 @@ from typing import Optional
 import numpy as np
 
 from bot.backtester import run_backtest
+from bot.research.data_cache import KlineCache
 from bot.research.resilience import resilient_call, wait_for_connectivity
 from bot.research.types import (
     PassportCandidate, BacktestMetrics, EvalResult, Stage3Result, Stage4Result,
@@ -57,6 +58,7 @@ class ResearchPipeline:
     def run_stage1(
         self,
         candidates: list[PassportCandidate],
+        kline_provider=None,
     ) -> list[PassportCandidate]:
         """Run Stage 1 viability on all candidates via backtesting."""
         survivors = []
@@ -71,6 +73,7 @@ class ResearchPipeline:
                     interval=self.interval,
                     days=self.days,
                     cfg_override=candidate.config_overrides,
+                    kline_provider=kline_provider,
                 )
                 metrics = BacktestMetrics.from_summary(summary)
             except Exception as e:
@@ -106,6 +109,7 @@ class ResearchPipeline:
         candidates: list[PassportCandidate],
         train_days: int = 120,
         test_days: int = 60,
+        kline_provider=None,
     ) -> list[PassportCandidate]:
         """Run Stage 2 walk-forward validation on Stage 1 survivors."""
         survivors = []
@@ -139,6 +143,7 @@ class ResearchPipeline:
                         days=train_days,
                         cfg_override=candidate.config_overrides,
                         end_offset_days=train_end_offset,
+                        kline_provider=kline_provider,
                     )
                     test_summary = resilient_call(
                     run_backtest,
@@ -147,6 +152,7 @@ class ResearchPipeline:
                         days=test_days,
                         cfg_override=candidate.config_overrides,
                         end_offset_days=test_end_offset,
+                        kline_provider=kline_provider,
                     )
                     train_ret = train_summary.get("return_pct", 0)
                     test_ret = test_summary.get("return_pct", 0)
@@ -181,6 +187,7 @@ class ResearchPipeline:
         self,
         candidates: list[PassportCandidate],
         mc_iterations: int = 50,
+        kline_provider=None,
     ) -> list[PassportCandidate]:
         """Run Stage 3 Monte Carlo perturbation on Stage 2 survivors."""
         survivors = []
@@ -200,6 +207,7 @@ class ResearchPipeline:
                     interval=self.interval,
                     days=self.days,
                     cfg_override=candidate.config_overrides,
+                    kline_provider=kline_provider,
                 )
                 original_return = orig_summary.get("return_pct", 0.0)
             except Exception as e:
@@ -219,6 +227,7 @@ class ResearchPipeline:
                         interval=self.interval,
                         days=self.days,
                         cfg_override=perturbed_config,
+                        kline_provider=kline_provider,
                     )
                     perturbed_summaries.append(summary)
                 except Exception:
@@ -245,6 +254,7 @@ class ResearchPipeline:
     def run_stage4(
         self,
         candidates: list[PassportCandidate],
+        kline_provider=None,
     ) -> Stage4Result:
         """Run Stage 4 portfolio selection on Stage 3 survivors."""
         logger.info("[Stage 4] Building portfolio from %d candidates", len(candidates))
@@ -259,6 +269,7 @@ class ResearchPipeline:
                     interval=self.interval,
                     days=self.days,
                     cfg_override=candidate.config_overrides,
+                    kline_provider=kline_provider,
                 )
                 cand_dicts.append({
                     "passport_id": candidate.passport_id,
@@ -289,9 +300,23 @@ class ResearchPipeline:
         logger.info("Checking Binance API connectivity before starting pipeline...")
         wait_for_connectivity(check_interval=30.0, max_wait=7200.0)
 
+        # Create cache and prefetch all data upfront
+        cache = KlineCache()
+        logger.info(
+            "Pre-fetching kline data for %d symbols, %d days...",
+            len(self.symbols), self.days,
+        )
+        max_offset = self._calc_max_walk_forward_offset()
+        cache.prefetch(self.symbols, self.interval, self.days, max_offset_days=max_offset)
+        stats = cache.stats()
+        logger.info(
+            "Cache ready: %d files, %d rows, %.1f MB",
+            stats["files"], stats["total_rows"], stats["disk_size_bytes"] / 1_048_576,
+        )
+
         candidates = self.generate_candidates(families, max_per_family)
-        stage1_survivors = self.run_stage1(candidates)
-        stage2_survivors = self.run_stage2(stage1_survivors)
+        stage1_survivors = self.run_stage1(candidates, kline_provider=cache.get)
+        stage2_survivors = self.run_stage2(stage1_survivors, kline_provider=cache.get)
 
         self.tracker.finish_experiment(
             self.run_id,
@@ -316,11 +341,25 @@ class ResearchPipeline:
         logger.info("Checking Binance API connectivity before starting pipeline...")
         wait_for_connectivity(check_interval=30.0, max_wait=7200.0)
 
+        # Create cache and prefetch all data upfront
+        cache = KlineCache()
+        logger.info(
+            "Pre-fetching kline data for %d symbols, %d days...",
+            len(self.symbols), self.days,
+        )
+        max_offset = self._calc_max_walk_forward_offset()
+        cache.prefetch(self.symbols, self.interval, self.days, max_offset_days=max_offset)
+        stats = cache.stats()
+        logger.info(
+            "Cache ready: %d files, %d rows, %.1f MB",
+            stats["files"], stats["total_rows"], stats["disk_size_bytes"] / 1_048_576,
+        )
+
         candidates = self.generate_candidates(families, max_per_family)
-        stage1_survivors = self.run_stage1(candidates)
-        stage2_survivors = self.run_stage2(stage1_survivors)
-        stage3_survivors = self.run_stage3(stage2_survivors, mc_iterations)
-        result = self.run_stage4(stage3_survivors)
+        stage1_survivors = self.run_stage1(candidates, kline_provider=cache.get)
+        stage2_survivors = self.run_stage2(stage1_survivors, kline_provider=cache.get)
+        stage3_survivors = self.run_stage3(stage2_survivors, mc_iterations, kline_provider=cache.get)
+        result = self.run_stage4(stage3_survivors, kline_provider=cache.get)
 
         self.tracker.finish_experiment(
             self.run_id,
@@ -334,6 +373,14 @@ class ResearchPipeline:
             len(stage3_survivors), len(result.selected_passport_ids),
         )
         return result
+
+    def _calc_max_walk_forward_offset(self) -> int:
+        """Calculate maximum walk-forward offset for prefetch coverage.
+
+        Stage 2 uses train=120d, test=60d, slide=30d. Conservatively, double
+        the window ensures the oldest train fold is covered in the cache.
+        """
+        return self.days
 
 
 def _calc_folds(
