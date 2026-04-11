@@ -19,3 +19,4 @@ research_experiments.db
 .worktrees/
 1000
 bt3_cached.py
+data/research_cache/
