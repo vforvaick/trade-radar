@@ -1,0 +1,52 @@
+{
+  "name": "BollingerBreakoutV3",
+  "enabled": true,
+  "emoji": "💥",
+  "version": "0.1",
+  "changelog": [
+    {
+      "version": "0.1",
+      "date": "2026-04-12",
+      "git_sha": "pending",
+      "description": "Phase 4 research Stage 2 survivor. BB(15,1.5) + Vol(1.5) + Pressure. Higher confidence (55) than v2 for more selective entries.",
+      "backtest_180d": {
+        "return_pct": 1.2,
+        "sharpe": 1.22,
+        "note": "Stage 2 walk-forward: median_ret=+1.2%, avg_sharpe=1.22."
+      }
+    }
+  ],
+  "description": "Bollinger Band breakout variant 3: same tight bands (1.5σ) as v2, but higher confidence threshold (55) filters for only the strongest setups. Phase 4 Stage 2 survivor.",
+  "config_overrides": {
+    "BB_PERIOD": 15,
+    "BB_STD": 1.5,
+    "VOLUME_SPIKE_THRESHOLD": 1.5,
+    "CONFIDENCE_THRESHOLD": 55,
+    "INDICATOR_WEIGHTS": {
+      "ema_trend": 0.0,
+      "macd_signal": 0.0,
+      "rsi_position": 0.0,
+      "rsi_divergence": 0.0,
+      "bb_position": 2.0,
+      "volume_spike": 1.5,
+      "pressure": 1.0,
+      "candle_direction": 0.0
+    },
+    "USE_ATR_EXITS": false,
+    "USE_TRAILING_STOP": false,
+    "MAX_OPEN_POSITIONS_PER_PASSPORT": 25,
+    "MAX_OPEN_POSITIONS_PER_SYMBOL": 1,
+    "BTC_TREND_WEIGHTS": {
+      "TREND_UP": 1.0,
+      "TREND_DOWN": 1.0,
+      "HIGH_VOL_CHOP": 1.0,
+      "LOW_VOL_COMPRESSION": 1.0
+    },
+    "COUNTER_TREND_PENALTY": {
+      "TREND_UP": 0.5,
+      "TREND_DOWN": 0.5,
+      "HIGH_VOL_CHOP": 1.0,
+      "LOW_VOL_COMPRESSION": 1.0
+    }
+  }
+}
