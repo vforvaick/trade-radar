@@ -50,6 +50,15 @@ NON_DIRECTIONAL_HYBRIDS = {"MACDDivergence"}
 NO_DIRECTION_BIAS = MEAN_REVERSION | BREAKOUT | NON_DIRECTIONAL_HYBRIDS
 DIRECTIONAL = TREND_FOLLOWING | DIRECTIONAL_HYBRIDS
 
+DANGEROUS_REGIMES = {"TREND_DOWN", "HIGH_VOL_CHOP"}
+
+# Passports exempt from dangerous-regime RISK enforcement because their baselines
+# are already tighter than the caps (guardrails handle CONF/MAX_POS for these).
+# ReversalV2: conf=70 → guardrail bumps to 80, max_pos=3 (already ≤5)
+# Reversal: conf=85 (above 80 floor), max_pos=5 (at guardrail cap)
+# Both still get RISK_PER_TRADE_PCT=0.3 — only CONF/MAX_POS are exempt.
+CONF_MAXPOS_EXEMPT = {"Pumpradar ReversalV2", "Pumpradar Reversal"}
+
 
 def _load_all_passports():
     passports = []
@@ -290,3 +299,47 @@ class TestNonDirectionalHybridNoDirectionBias:
             f"MACDDivergence should not have DIRECTION_BIAS, "
             f"but found it in: {violations}"
         )
+
+
+# --- Rule 9: Dangerous regimes MUST have safety params ---
+
+class TestDangerousRegimeParamsMustExist:
+    """Passports active in TREND_DOWN or HIGH_VOL_CHOP must define safety params.
+
+    Every passport active in a dangerous regime must have RISK_PER_TRADE_PCT=0.3
+    in its regime_params for that regime. CONFIDENCE_THRESHOLD and MAX_POS are
+    also required unless the passport is in CONF_MAXPOS_EXEMPT (reversal passports
+    whose baselines already exceed the guardrail floors).
+
+    Note on Sniper (conf=74 in TREND_DOWN): the +4 rule produces a threshold
+    below Sniper's min achievable confidence (75%), making it a no-op. This is
+    accepted for consistency — the other TREND_DOWN params (SHORT_ONLY, 0.3%
+    risk, 15 max_pos) provide the real protection.
+    """
+
+    def test_dangerous_regime_has_risk_param(self, passport):
+        """All passports active in dangerous regimes must set RISK_PER_TRADE_PCT."""
+        active = _active_regimes(passport)
+        rp = _regime_params(passport)
+        for regime in DANGEROUS_REGIMES & active:
+            assert regime in rp, (
+                f"{passport['name']}: active in {regime} (dangerous) but "
+                f"missing from regime_params entirely"
+            )
+            assert "RISK_PER_TRADE_PCT" in rp[regime], (
+                f"{passport['name']}: active in {regime} (dangerous) but "
+                f"missing RISK_PER_TRADE_PCT safety param"
+            )
+
+    def test_dangerous_regime_has_confidence_param(self, passport):
+        """Non-exempt passports in dangerous regimes must set CONFIDENCE_THRESHOLD."""
+        name = passport["name"]
+        if name in CONF_MAXPOS_EXEMPT:
+            pytest.skip(f"{name} exempt from CONF/MAX_POS enforcement (guardrails handle it)")
+        active = _active_regimes(passport)
+        rp = _regime_params(passport)
+        for regime in DANGEROUS_REGIMES & active:
+            assert "CONFIDENCE_THRESHOLD" in rp.get(regime, {}), (
+                f"{name}: active in {regime} (dangerous) but "
+                f"missing CONFIDENCE_THRESHOLD safety param"
+            )
