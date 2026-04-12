@@ -252,11 +252,24 @@ class PassportRunner:
 
             print(f"\n[{passport.emoji} {passport.name}] Scanning...", flush=True)
 
-            # Save original config
-            original_config = self._save_config(passport.config_overrides.keys())
+            # Save original config (include regime_params keys for full restoration)
+            regime_overrides = {}
+            if passport.regime_params:
+                regime_overrides = passport.regime_params.get(current_regime, {})
+            all_override_keys = set(passport.config_overrides.keys()) | set(regime_overrides.keys())
+            original_config = self._save_config(all_override_keys)
 
-            # Apply passport overrides
+            # Apply passport overrides (layer 2: passport baseline)
             self._apply_overrides(passport.config_overrides)
+
+            # Apply regime-specific overrides (layer 3: regime tuning)
+            if regime_overrides:
+                logger.info(
+                    "Passport %s applying regime_params for %s: %s",
+                    passport.name, current_regime, regime_overrides,
+                )
+                self._apply_overrides(regime_overrides)
+
             self._apply_regime_guardrails(passport)
 
             skip_days = getattr(config, 'SKIP_WEEKDAYS', [])
