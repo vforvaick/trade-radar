@@ -157,6 +157,30 @@
 |---------|------------|-------------|
 | v0.1    | 2026-04-12 | Phase 4 Stage 2 survivor. BB(15,1.5) conf=55. Sharpe=1.22, median_ret=+1.2%. |
 
+## Session 11e: Per-Passport Regime Optimization (2026-04-12)
+
+All 26 passports updated with `active_regimes` and `regime_params` fields.
+Phase 1: hard gate only (regime_params={} for all). Per-regime tuning deferred to Phase 2.
+
+### Regime Assignments
+
+| Category | Passports | Active Regimes |
+|----------|-----------|----------------|
+| Trend-Following (11) | HiddenGem, Sniper, VolumeKing, Momentum, DualMA, PureTrend, TrendMomentum, TrendConfirm, MinimalEdge, OBV Trend, Dynamic | TREND_UP, TREND_DOWN |
+| Mean-Reversion (3) | BBMeanRev, RSIContrarian, ReversalV2 | HIGH_VOL_CHOP, LOW_VOL_COMPRESSION |
+| Breakout (5) | BollingerBreakout, BollingerBreakoutV2, BollingerBreakoutV3, BreakoutVol, Donchian | LOW_VOL_COMPRESSION, TREND_UP, TREND_DOWN |
+| Hybrid (6) | PressureReader, MACDDivergence, RSIMomentumV2, OG, OG Seasonal, BalancedSelective | varies per passport |
+| Disabled (1) | Reversal | HIGH_VOL_CHOP, LOW_VOL_COMPRESSION |
+
+### Version Bumps (batch)
+- Pumpradar passports: v0.2→v0.3 or v0.3→v0.4
+- Cryptopass-research passports: v0.1→v0.2 or v0.2→v0.3
+
+### Config Default Change
+- `ATR_TRAIL_MULTIPLIER`: 2.0 → 2.5 (wider trailing stop, still disabled globally)
+
+---
+
 ## Rollback Instructions
 
 ```bash

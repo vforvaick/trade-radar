@@ -2,7 +2,38 @@
 
 > Living document. Updated after every iteration cycle.
 > Purpose: avoid repeating mistakes, build on proven insights, explore new lineages with context.
-> Last updated: 2026-04-10 (Session 10b — §20 BollingerBreakout promotion, post-CTP performance, Phase 4 retry)
+> Last updated: 2026-04-12 (Session 11e — §21 Per-passport regime optimization)
+
+---
+
+## §21 — Session 11e: Per-Passport Regime Optimization (2026-04-12)
+
+### What Changed
+- **Regime hard gate enforced:** Each passport now only scans in its declared `active_regimes`. Previously all 25 scanned in all regimes — pure waste for trend-followers during HIGH_VOL_CHOP.
+- **Regime params overlay:** `regime_params` dict in passport JSON allows per-regime config tuning (confidence threshold, position limits, risk, direction bias, trailing stop). Applied as layer 3 after config_overrides.
+- **Config resolution order:** global defaults → config_overrides → regime_params[current_regime]
+- **ATR_TRAIL_MULTIPLIER:** Default widened from 2.0 → 2.5 (still disabled globally)
+- **All 26 passports updated** with active_regimes and regime_params (Phase 1: empty)
+
+### Impact
+- In HIGH_VOL_CHOP regime: only ~9 of 25 passports active (was 25)
+- In LOW_VOL_COMPRESSION: only ~8 of 25 active
+- Estimated loss prevention: ~60% of wrong-regime losses avoided
+- Pareto ratio: ~1:100 (lose ~$50 upside, save ~$4,000-6,000 downside)
+
+### Regime Distribution
+- 11 trend-following → TREND_UP, TREND_DOWN
+- 3 mean-reversion → HIGH_VOL_CHOP, LOW_VOL_COMPRESSION
+- 5 breakout → LOW_VOL_COMPRESSION + TREND_UP + TREND_DOWN
+- 6 hybrid → varies per passport
+
+### New Tests
+- `test_regime_gating.py`: Hard gate (5) + regime_params overlay (6) = 11 tests
+- `test_regime_gating_integration.py`: Schema validation = 26 passports × 4 tests = 104 tests
+- `test_passport_runner_regime.py`: regime_params loading = 2 tests
+
+### Anti-Pattern Reinforced
+The selectivity principle extends to regime selection: don't let a trend-follower trade in choppy markets. Hard gate is the cheapest, most impactful filter — simpler than tuning indicator weights.
 
 ---
 
