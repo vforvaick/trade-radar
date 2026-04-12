@@ -137,12 +137,7 @@ class PassportRunner:
                         flush=True,
                     )
 
-                # Log active_regimes if declared (Phase 1)
-                if p.active_regimes is not None:
-                    logger.info(
-                        "Passport %s declares active_regimes=%s (Phase 1: logged only, not enforced)",
-                        p.name, p.active_regimes,
-                    )
+                # active_regimes is enforced in run_scan_cycle()
 
                 passports.append(p)
             except Exception as e:
@@ -237,6 +232,20 @@ class PassportRunner:
             if not passport.enabled:
                 print(
                     f"\n[{passport.emoji} {passport.name}] Scan disabled; monitoring restored positions only.",
+                    flush=True,
+                )
+                continue
+
+            # === HARD GATE: skip passport if current regime not in active_regimes ===
+            current_regime = self.scanner.btc_trend
+            if passport.active_regimes is not None and current_regime not in passport.active_regimes:
+                logger.info(
+                    "Passport %s regime-gated: %s not in %s",
+                    passport.name, current_regime, passport.active_regimes,
+                )
+                print(
+                    f"\n[{passport.emoji} {passport.name}] ⏸️ Regime gate — "
+                    f"{current_regime} not in {passport.active_regimes}. Skipped.",
                     flush=True,
                 )
                 continue
