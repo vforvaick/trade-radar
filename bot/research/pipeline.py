@@ -107,8 +107,8 @@ class ResearchPipeline:
     def run_stage2(
         self,
         candidates: list[PassportCandidate],
-        train_days: int = 120,
-        test_days: int = 60,
+        train_days: int = 90,
+        test_days: int = 45,
         kline_provider=None,
     ) -> list[PassportCandidate]:
         """Run Stage 2 walk-forward validation on Stage 1 survivors."""
@@ -126,7 +126,7 @@ class ResearchPipeline:
                 total_days, train_days, test_days,
             )
 
-        folds = _calc_folds(total_days, train_days, test_days, slide=30)
+        folds = _calc_folds(total_days, train_days, test_days, slide=45)
 
         for i, candidate in enumerate(candidates):
             logger.info(
@@ -377,14 +377,14 @@ class ResearchPipeline:
     def _calc_max_walk_forward_offset(self) -> int:
         """Calculate maximum walk-forward offset for prefetch coverage.
 
-        Stage 2 uses train=120d, test=60d, slide=30d. Conservatively, double
+        Stage 2 uses train=90d, test=45d, slide=45d. Conservatively, double
         the window ensures the oldest train fold is covered in the cache.
         """
         return self.days
 
 
 def _calc_folds(
-    total_days: int, train_days: int, test_days: int, slide: int = 30,
+    total_days: int, train_days: int, test_days: int, slide: int = 45,
 ) -> list[tuple[int, int]]:
     """Calculate walk-forward fold offsets.
 
