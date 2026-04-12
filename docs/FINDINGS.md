@@ -1619,3 +1619,21 @@ PressureReader is the ONLY passport consistently profitable live. Profile:
 3. **TP cascade is working as designed** — 40% of PressureReader's TP1 hits cascade to TP3. The 70/20/10 split is effective.
 4. **RSI momentum + Bollinger breakout** passed Stage 2 — these should be promoted to paper trading.
 5. **All trend-following passports failed Day 1** — they need regime gating to avoid firing counter-trend.
+
+---
+
+## Session 11c: Research Upgrade Deployed
+
+### Changes Made
+1. **Promoted 3 Stage 2 survivors** to paper trading: RSIMomentumV2, BollingerBreakoutV2, BollingerBreakoutV3
+2. **Added 2 pressure LONG_ONLY families**: pressure_flow_long, pressure_momentum_long (inspired by PressureReader)
+3. **Fixed Stage 2 fold strategy**: train=90d, test=45d, slide=45d (was 120/60/30)
+   - 270d data → 4 folds (was 1 fold for 180d)
+   - Now requires 3 of 4 folds positive → much more robust validation
+4. **CLI default changed**: `--days 270` (was 180)
+
+### Expected Impact
+- Research pipeline should produce more robust survivors (multi-fold validation)
+- Pressure LONG_ONLY families should discover PressureReader-like strategies
+- 3 new passports add diversity to the live portfolio (RSI momentum + BB breakout thesis)
+- Total passports: 25 (was 22)

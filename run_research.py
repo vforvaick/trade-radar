@@ -51,8 +51,8 @@ def main():
                         help="Use hardcoded tier-1 pairs instead of top-volume Binance scan")
     parser.add_argument("--interval", type=str, default="1h",
                         help="Timeframe (default: 1h)")
-    parser.add_argument("--days", type=int, default=180,
-                        help="History days (default: 180)")
+    parser.add_argument("--days", type=int, default=270,
+                        help="History days (default: 270)")
     parser.add_argument("--db-path", type=str, default="research_experiments.db",
                         help="Experiment database path")
     args = parser.parse_args()

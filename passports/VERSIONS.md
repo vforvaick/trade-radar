@@ -139,6 +139,24 @@
 |---------|------------|-------------|
 | v0.1    | 2026-04-10 | Phase 4 research Stage 2 survivor. BB(15,1.5σ)+Vol(1.5)+Pressure. 180d walk-forward: +23.3% return, Sharpe=1.69, PF=2.77, 415 trades, WR=38.1%. 3 active indicators. |
 
+### 📈 RSIMomentumV2 (`rsi_momentum_v2.json`) — NEW
+
+| Version | Date       | Description |
+|---------|------------|-------------|
+| v0.1    | 2026-04-12 | Phase 4 Stage 2 survivor. RSI(10) + divergence + light EMA. Sharpe=1.96, median_ret=+7.3%. |
+
+### 💥 BollingerBreakoutV2 (`bollinger_breakout_v2.json`) — NEW
+
+| Version | Date       | Description |
+|---------|------------|-------------|
+| v0.1    | 2026-04-12 | Phase 4 Stage 2 survivor. BB(15,1.5) conf=50. Sharpe=2.70, median_ret=+2.1%. |
+
+### 💥 BollingerBreakoutV3 (`bollinger_breakout_v3.json`) — NEW
+
+| Version | Date       | Description |
+|---------|------------|-------------|
+| v0.1    | 2026-04-12 | Phase 4 Stage 2 survivor. BB(15,1.5) conf=55. Sharpe=1.22, median_ret=+1.2%. |
+
 ## Rollback Instructions
 
 ```bash
