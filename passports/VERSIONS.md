@@ -181,6 +181,27 @@ Phase 1: hard gate only (regime_params={} for all). Per-regime tuning deferred t
 
 ---
 
+## Session 11f — Phase 2: Per-Regime Parameter Tuning (2026-04-13)
+
+All 26 passports now have thesis-driven `regime_params` for per-regime behavior tuning.
+
+### Design Rules Applied
+- **TREND_DOWN:** +4 confidence, 0.3% risk, max 15 positions, SHORT_ONLY for directional strategies
+- **HIGH_VOL_CHOP:** +4 confidence, 0.3% risk, max 10 positions
+- **TREND_UP:** LONG_ONLY for directional strategies, standard params otherwise
+- **LOW_VOL_COMPRESSION:** Standard params (clean signals, no adjustment needed)
+
+### Category Assignments
+| Category | Passports | DIRECTION_BIAS? |
+|----------|-----------|-----------------|
+| Trend-Following (11) | DualMA, MinimalEdge, OBV Trend, PureTrend, TrendConfirm, TrendMomentum, Dynamic, HiddenGem, Momentum, Sniper, VolumeKing | ✅ LONG_ONLY / SHORT_ONLY |
+| Mean-Reversion (4) | BBMeanRev, RSIContrarian, ReversalV2, Reversal | ❌ Always BOTH |
+| Breakout (5) | BollingerBreakout (v1/v2/v3), BreakoutVol, Donchian | ❌ Always BOTH |
+| Hybrid-Directional (5) | BalancedSelective, PressureReader, RSIMomentumV2, OG Seasonal, OG | ✅ LONG_ONLY / SHORT_ONLY |
+| Hybrid-Neutral (1) | MACDDivergence | ❌ Always BOTH |
+
+---
+
 ## Rollback Instructions
 
 ```bash

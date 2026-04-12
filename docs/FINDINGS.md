@@ -1715,3 +1715,27 @@ PressureReader is the ONLY passport consistently profitable live. Profile:
 - 270d data, 28 families, ~42+ candidates expected
 - Fold strategy: train=90d, test=45d, slide=45d → 4 folds
 - Key improvement: multi-fold validation should filter out overfitters
+
+---
+
+### §22 Phase 2: Per-Regime Parameter Tuning (Session 11f)
+
+**What:** Populated `regime_params` for all 26 passports with thesis-driven values.
+
+**Core thesis:** Dangerous regimes (TREND_DOWN, HIGH_VOL_CHOP) get tightened parameters. Home regimes get minimal changes. Direction-following strategies enforce DIRECTION_BIAS.
+
+**Key parameters per dangerous regime:**
+- CONFIDENCE_THRESHOLD: baseline + 4 (higher conviction required)
+- RISK_PER_TRADE_PCT: 0.3% (down from 0.5%, 40% risk reduction)
+- MAX_OPEN_POSITIONS_PER_PASSPORT: capped at 15 (TREND_DOWN) or 10 (HIGH_VOL_CHOP)
+- DIRECTION_BIAS: LONG_ONLY in TREND_UP, SHORT_ONLY in TREND_DOWN (directional strategies only)
+
+**What this means for live trading:**
+1. In bull markets: trend-followers only go LONG (no counter-trend shorts)
+2. In bear markets: 40% less risk per trade, fewer positions, higher confidence bar
+3. In choppy markets: mean-reversion fires only on high-conviction setups
+4. In compression: standard behavior (signals are clean)
+
+**Expected impact:** Fewer losing trades in adverse regimes, same profitable trades in favorable regimes. Net positive Sharpe ratio improvement.
+
+**Validation:** 118 parametrized tests ensure design rules are enforced (test_regime_params_values.py). 104 schema tests validate JSON structure (test_regime_gating_integration.py).
