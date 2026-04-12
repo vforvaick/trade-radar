@@ -525,7 +525,13 @@ class PassportRunner:
             setattr(config, k, v)
 
     def _apply_regime_guardrails(self, passport: Passport):
-        """Apply tactical regime clamps for passports that need extra protection."""
+        """Apply tactical regime clamps for passports that need extra protection.
+        
+        Note: Guardrails run AFTER regime_params overlay and act as a non-overridable
+        floor/ceiling. If regime_params sets a value below the guardrail minimum,
+        the guardrail wins. This is intentional — reversal strategies in choppy
+        markets need higher confidence regardless of regime_params tuning.
+        """
         choppy_regimes = {"Sideways", "HIGH_VOL_CHOP", "LOW_VOL_COMPRESSION"}
         if self.scanner.btc_trend not in choppy_regimes:
             return
@@ -538,14 +544,22 @@ class PassportRunner:
         if not is_reversal:
             return
 
-        config.CONFIDENCE_THRESHOLD = max(
+        new_threshold = max(
             config.CONFIDENCE_THRESHOLD,
             config.REVERSAL_SIDEWAYS_CONFIDENCE_THRESHOLD,
         )
-        config.MAX_OPEN_POSITIONS_PER_PASSPORT = min(
+        new_max_pos = min(
             config.MAX_OPEN_POSITIONS_PER_PASSPORT,
             config.REVERSAL_SIDEWAYS_MAX_OPEN_POSITIONS_PER_PASSPORT,
         )
+        if new_threshold != config.CONFIDENCE_THRESHOLD or new_max_pos != config.MAX_OPEN_POSITIONS_PER_PASSPORT:
+            logger.info(
+                "Passport %s guardrail override: CONFIDENCE_THRESHOLD %s→%s, MAX_POS %s→%s",
+                passport.name, config.CONFIDENCE_THRESHOLD, new_threshold,
+                config.MAX_OPEN_POSITIONS_PER_PASSPORT, new_max_pos,
+            )
+        config.CONFIDENCE_THRESHOLD = new_threshold
+        config.MAX_OPEN_POSITIONS_PER_PASSPORT = new_max_pos
 
     def _restore_config(self, original: Dict):
         """Restore original config values."""

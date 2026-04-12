@@ -1,6 +1,7 @@
 """Integration tests: verify all production passport JSONs have valid regime config."""
 import json
 import os
+from pathlib import Path
 import pytest
 
 VALID_REGIMES = {"TREND_UP", "TREND_DOWN", "HIGH_VOL_CHOP", "LOW_VOL_COMPRESSION"}
@@ -9,17 +10,19 @@ VALID_REGIME_PARAM_KEYS = {
     "RISK_PER_TRADE_PCT", "DIRECTION_BIAS",
     "USE_TRAILING_STOP", "ATR_TRAIL_MULTIPLIER",
 }
-PASSPORT_DIRS = ["passports/pumpradar", "passports/cryptopass-research"]
+PROJECT_ROOT = Path(__file__).parent.parent
+PASSPORT_DIRS = [PROJECT_ROOT / "passports" / "pumpradar", PROJECT_ROOT / "passports" / "cryptopass-research"]
 
 
 def _all_passport_paths():
     paths = []
     for d in PASSPORT_DIRS:
-        if not os.path.isdir(d):
+        if not d.is_dir():
             continue
         for fname in sorted(os.listdir(d)):
             if fname.endswith(".json"):
-                paths.append(os.path.join(d, fname))
+                paths.append(str(d / fname))
+    assert paths, "No passport JSON files found — check PASSPORT_DIRS paths"
     return paths
 
 
