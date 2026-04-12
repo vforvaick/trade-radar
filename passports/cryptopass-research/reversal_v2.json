@@ -1,6 +1,6 @@
 {
   "name": "Pumpradar ReversalV2",
-  "emoji": "🔃",
+  "emoji": "\ud83d\udd03",
   "version": "0.4",
   "enabled": true,
   "changelog": [
@@ -34,7 +34,7 @@
       "version": "0.2",
       "date": "2026-04-06",
       "git_sha": "pending",
-      "description": "EMA gate experiment: added ema_trend=0.5, rsi_position=1.5, bb_position=1.5, CONFIDENCE_THRESHOLD=65. REVERTED — results were dramatically worse. Lower threshold opened more bad trades (186→227 trades, -11.78%→-16.44%). Root cause: lowered threshold negated EMA gate filtering. Config restored to v0.1 weights.",
+      "description": "EMA gate experiment: added ema_trend=0.5, rsi_position=1.5, bb_position=1.5, CONFIDENCE_THRESHOLD=65. REVERTED \u2014 results were dramatically worse. Lower threshold opened more bad trades (186\u2192227 trades, -11.78%\u2192-16.44%). Root cause: lowered threshold negated EMA gate filtering. Config restored to v0.1 weights.",
       "backtest_90d": {
         "return_pct": -16.44,
         "win_rate": 32.6,
@@ -60,10 +60,10 @@
       "version": "0.3",
       "date": "2026-04-07",
       "git_sha": "pending",
-      "description": "Add BTC_TREND_WEIGHTS: Uptrend 1.0 — mean-reversion strategies don't depend on BTC direction, remove the 0.8 penalty during bull markets"
+      "description": "Add BTC_TREND_WEIGHTS: Uptrend 1.0 \u2014 mean-reversion strategies don't depend on BTC direction, remove the 0.8 penalty during bull markets"
     }
   ],
-  "description": "True mean-reversion: buy RSI<30 oversold, sell RSI>70 overbought. BB confirms. DISABLED — both v0.1 and v0.2 (EMA gate experiment) showed negative returns. Needs hard EMA filter in signal logic, not just weight adjustment.",
+  "description": "True mean-reversion: buy RSI<30 oversold, sell RSI>70 overbought. BB confirms. DISABLED \u2014 both v0.1 and v0.2 (EMA gate experiment) showed negative returns. Needs hard EMA filter in signal logic, not just weight adjustment.",
   "config_overrides": {
     "RSI_LONG_THRESHOLD": 30,
     "RSI_SHORT_THRESHOLD": 70,
@@ -99,5 +99,9 @@
     "HIGH_VOL_CHOP",
     "LOW_VOL_COMPRESSION"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "HIGH_VOL_CHOP": {
+      "RISK_PER_TRADE_PCT": 0.3
+    }
+  }
 }

@@ -1,7 +1,7 @@
 {
   "name": "RSIMomentumV2",
   "enabled": true,
-  "emoji": "📈",
+  "emoji": "\ud83d\udcc8",
   "version": "0.2",
   "changelog": [
     {
@@ -53,5 +53,20 @@
     "TREND_DOWN",
     "HIGH_VOL_CHOP"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "TREND_DOWN": {
+      "DIRECTION_BIAS": "SHORT_ONLY",
+      "CONFIDENCE_THRESHOLD": 69,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 15
+    },
+    "HIGH_VOL_CHOP": {
+      "CONFIDENCE_THRESHOLD": 69,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 10
+    }
+  }
 }

@@ -1,7 +1,7 @@
 {
   "name": "BollingerBreakoutV3",
   "enabled": true,
-  "emoji": "💥",
+  "emoji": "\ud83d\udca5",
   "version": "0.2",
   "changelog": [
     {
@@ -16,7 +16,7 @@
       }
     }
   ],
-  "description": "Bollinger Band breakout variant 3: same tight bands (1.5σ) as v2, but higher confidence threshold (55) filters for only the strongest setups. Phase 4 Stage 2 survivor.",
+  "description": "Bollinger Band breakout variant 3: same tight bands (1.5\u03c3) as v2, but higher confidence threshold (55) filters for only the strongest setups. Phase 4 Stage 2 survivor.",
   "config_overrides": {
     "BB_PERIOD": 15,
     "BB_STD": 1.5,
@@ -54,5 +54,11 @@
     "TREND_UP",
     "TREND_DOWN"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_DOWN": {
+      "CONFIDENCE_THRESHOLD": 59,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 15
+    }
+  }
 }

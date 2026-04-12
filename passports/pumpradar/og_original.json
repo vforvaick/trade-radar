@@ -1,6 +1,6 @@
 {
   "name": "Pumpradar OG",
-  "emoji": "🏆",
+  "emoji": "\ud83c\udfc6",
   "enabled": true,
   "version": "0.4",
   "changelog": [
@@ -8,7 +8,7 @@
       "version": "0.1",
       "date": "2026-03-31",
       "git_sha": "950e0ec",
-      "description": "Initial production deployment — exact v0.1 baseline",
+      "description": "Initial production deployment \u2014 exact v0.1 baseline",
       "backtest_180d": {
         "return_pct": -13.1,
         "win_rate": 38.8,
@@ -21,30 +21,30 @@
       "version": "0.2",
       "date": "2026-04-04",
       "git_sha": "ff9f3f9",
-      "description": "Raised VOLUME_SPIKE_THRESHOLD 1.5→2.0 per grid search optimization (+49% vs +11%)",
+      "description": "Raised VOLUME_SPIKE_THRESHOLD 1.5\u21922.0 per grid search optimization (+49% vs +11%)",
       "backtest_180d": {
         "return_pct": -28.8,
         "win_rate": 38.4,
         "trades": 1148,
         "max_dd_pct": 75.5,
-        "note": "higher vol threshold reduced trades 1267→1148 but worsened 180d return -13.1%→-28.8%"
+        "note": "higher vol threshold reduced trades 1267\u21921148 but worsened 180d return -13.1%\u2192-28.8%"
       }
     },
     {
       "version": "0.3",
       "date": "2026-04-04",
       "git_sha": "fba799b",
-      "description": "ROLLBACK — reverted VOLUME_SPIKE_THRESHOLD 2.0→1.5. v0.2 regressed 15.7pp vs v0.1 over 180d. Higher threshold filtered quality entries in bear/choppy regime.",
+      "description": "ROLLBACK \u2014 reverted VOLUME_SPIKE_THRESHOLD 2.0\u21921.5. v0.2 regressed 15.7pp vs v0.1 over 180d. Higher threshold filtered quality entries in bear/choppy regime.",
       "backtest_180d": {
         "return_pct": null,
         "win_rate": null,
         "trades": null,
         "max_dd_pct": null,
-        "note": "same as v0.1 params — pending validation"
+        "note": "same as v0.1 params \u2014 pending validation"
       }
     }
   ],
-  "description": "Original reverse-engineered config — exact Pumpradar clone, Vol 1.5x, all equal weights",
+  "description": "Original reverse-engineered config \u2014 exact Pumpradar clone, Vol 1.5x, all equal weights",
   "config_overrides": {
     "EMA_FAST": 9,
     "EMA_MID": 21,
@@ -69,5 +69,14 @@
     "TREND_UP",
     "HIGH_VOL_CHOP"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "HIGH_VOL_CHOP": {
+      "CONFIDENCE_THRESHOLD": 58,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 10
+    }
+  }
 }

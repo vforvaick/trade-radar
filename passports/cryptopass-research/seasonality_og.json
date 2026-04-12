@@ -1,6 +1,6 @@
 {
   "name": "Pumpradar OG Seasonal",
-  "emoji": "📅",
+  "emoji": "\ud83d\udcc5",
   "version": "0.2",
   "enabled": true,
   "changelog": [
@@ -43,5 +43,14 @@
     "TREND_UP",
     "HIGH_VOL_CHOP"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "HIGH_VOL_CHOP": {
+      "CONFIDENCE_THRESHOLD": 58,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 10
+    }
+  }
 }

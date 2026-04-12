@@ -1,6 +1,6 @@
 {
   "name": "BalancedSelective",
-  "emoji": "⚖️",
+  "emoji": "\u2696\ufe0f",
   "enabled": true,
   "version": "0.2",
   "changelog": [
@@ -8,7 +8,7 @@
       "version": "0.1",
       "date": "2026-04-04",
       "git_sha": "91e1e37",
-      "description": "Balanced 3-indicator strategy — EMA+BB+RSI. Like HiddenGem but swaps Volume for RSI. Tests whether RSI provides better confirmation than volume spike for the selective approach.",
+      "description": "Balanced 3-indicator strategy \u2014 EMA+BB+RSI. Like HiddenGem but swaps Volume for RSI. Tests whether RSI provides better confirmation than volume spike for the selective approach.",
       "backtest_90d": {
         "return_pct": -2.2,
         "win_rate": 40.3,
@@ -45,5 +45,14 @@
     "TREND_UP",
     "HIGH_VOL_CHOP"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "HIGH_VOL_CHOP": {
+      "CONFIDENCE_THRESHOLD": 62,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 10
+    }
+  }
 }

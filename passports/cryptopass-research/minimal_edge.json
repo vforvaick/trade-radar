@@ -1,6 +1,6 @@
 {
   "name": "MinimalEdge",
-  "emoji": "🎯",
+  "emoji": "\ud83c\udfaf",
   "enabled": true,
   "version": "0.2",
   "changelog": [
@@ -8,7 +8,7 @@
       "version": "0.1",
       "date": "2026-04-04",
       "git_sha": "91e1e37",
-      "description": "Ultra-selective EMA+Volume — inspired by the proven profitable pattern (HiddenGem/Sniper/VolumeKing all use 3 indicators and are profitable). This variant uses just EMA + Vol.",
+      "description": "Ultra-selective EMA+Volume \u2014 inspired by the proven profitable pattern (HiddenGem/Sniper/VolumeKing all use 3 indicators and are profitable). This variant uses just EMA + Vol.",
       "backtest_90d": {
         "return_pct": 0.3,
         "win_rate": 33.2,
@@ -44,5 +44,15 @@
     "TREND_UP",
     "TREND_DOWN"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "TREND_DOWN": {
+      "DIRECTION_BIAS": "SHORT_ONLY",
+      "CONFIDENCE_THRESHOLD": 58,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 15
+    }
+  }
 }

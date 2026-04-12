@@ -1,7 +1,7 @@
 {
   "name": "DualMA Crossover",
   "enabled": true,
-  "emoji": "📈",
+  "emoji": "\ud83d\udcc8",
   "version": "0.2",
   "changelog": [
     {
@@ -22,11 +22,11 @@
         "trades": 137,
         "win_rate": 29.9,
         "max_dd": 24.93,
-        "verdict": "DISABLED — unprofitable in choppy Jan-Apr 2026. Pure EMA crossover generates too many whipsaw entries without additional filters."
+        "verdict": "DISABLED \u2014 unprofitable in choppy Jan-Apr 2026. Pure EMA crossover generates too many whipsaw entries without additional filters."
       }
     }
   ],
-  "description": "Pure EMA(10/20) dual MA crossover + volume confirmation. Fast/Mid EMA alignment drives signal; slow EMA (50) provides trend context. All other indicators zeroed — selectivity is the edge.",
+  "description": "Pure EMA(10/20) dual MA crossover + volume confirmation. Fast/Mid EMA alignment drives signal; slow EMA (50) provides trend context. All other indicators zeroed \u2014 selectivity is the edge.",
   "config_overrides": {
     "EMA_FAST": 10,
     "EMA_MID": 20,
@@ -54,5 +54,15 @@
     "TREND_UP",
     "TREND_DOWN"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "TREND_DOWN": {
+      "DIRECTION_BIAS": "SHORT_ONLY",
+      "CONFIDENCE_THRESHOLD": 62,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 15
+    }
+  }
 }

@@ -1,6 +1,6 @@
 {
   "name": "Pumpradar HiddenGem",
-  "emoji": "💎",
+  "emoji": "\ud83d\udc8e",
   "enabled": true,
   "version": "0.4",
   "changelog": [
@@ -8,7 +8,7 @@
       "version": "0.1",
       "date": "2026-03-31",
       "git_sha": "950e0ec",
-      "description": "Initial production deployment — exact v0.1 baseline",
+      "description": "Initial production deployment \u2014 exact v0.1 baseline",
       "backtest_180d": {
         "return_pct": 25.9,
         "win_rate": 33.8,
@@ -21,30 +21,30 @@
       "version": "0.2",
       "date": "2026-04-04",
       "git_sha": "ff9f3f9",
-      "description": "Added pressure=0.5 tiebreaker, raised ema_trend 1.0→1.5, added CONFIDENCE_THRESHOLD 58",
+      "description": "Added pressure=0.5 tiebreaker, raised ema_trend 1.0\u21921.5, added CONFIDENCE_THRESHOLD 58",
       "backtest_180d": {
         "return_pct": -26.8,
         "win_rate": 33.9,
         "trades": 771,
         "max_dd_pct": 68.2,
-        "note": "adding pressure=0.5 increased trade count 450→771 (+72%) diluting per-trade quality, turning +25.9% to -26.8%"
+        "note": "adding pressure=0.5 increased trade count 450\u2192771 (+72%) diluting per-trade quality, turning +25.9% to -26.8%"
       }
     },
     {
       "version": "0.3",
       "date": "2026-04-04",
       "git_sha": "fba799b",
-      "description": "ROLLBACK — reverted to v0.1 params (ema=1.0, pressure=0.0, no threshold override). v0.2 regression -52.7pp confirmed selectivity IS the edge for this strategy. Fewer indicators = fewer diluting NEUTRAL votes = higher effective confidence per trade.",
+      "description": "ROLLBACK \u2014 reverted to v0.1 params (ema=1.0, pressure=0.0, no threshold override). v0.2 regression -52.7pp confirmed selectivity IS the edge for this strategy. Fewer indicators = fewer diluting NEUTRAL votes = higher effective confidence per trade.",
       "backtest_180d": {
         "return_pct": null,
         "win_rate": null,
         "trades": null,
         "max_dd_pct": null,
-        "note": "identical to v0.1 params — expect similar to v0.1 +25.9%"
+        "note": "identical to v0.1 params \u2014 expect similar to v0.1 +25.9%"
       }
     }
   ],
-  "description": "180-day winner: Ultra-selective EMA+BB+Volume only — +17% return, 48% WR",
+  "description": "180-day winner: Ultra-selective EMA+BB+Volume only \u2014 +17% return, 48% WR",
   "config_overrides": {
     "EMA_FAST": 9,
     "EMA_MID": 21,
@@ -69,5 +69,15 @@
     "TREND_UP",
     "TREND_DOWN"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "TREND_DOWN": {
+      "DIRECTION_BIAS": "SHORT_ONLY",
+      "CONFIDENCE_THRESHOLD": 58,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 15
+    }
+  }
 }

@@ -1,7 +1,7 @@
 {
   "name": "Donchian Breakout",
   "enabled": true,
-  "emoji": "🔔",
+  "emoji": "\ud83d\udd14",
   "version": "0.2",
   "changelog": [
     {
@@ -22,7 +22,7 @@
         "trades": 111,
         "win_rate": 34.2,
         "max_dd": 17.71,
-        "verdict": "DISABLED — marginal PF=1.016 insufficient to enable. Lowest MaxDD of the 3 (17.71%) is promising. Re-test in trending market regime before enabling."
+        "verdict": "DISABLED \u2014 marginal PF=1.016 insufficient to enable. Lowest MaxDD of the 3 (17.71%) is promising. Re-test in trending market regime before enabling."
       }
     }
   ],
@@ -55,5 +55,11 @@
     "TREND_UP",
     "TREND_DOWN"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_DOWN": {
+      "CONFIDENCE_THRESHOLD": 62,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 15
+    }
+  }
 }

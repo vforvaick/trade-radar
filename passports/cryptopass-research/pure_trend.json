@@ -1,6 +1,6 @@
 {
   "name": "PureTrend",
-  "emoji": "📈",
+  "emoji": "\ud83d\udcc8",
   "enabled": true,
   "version": "0.2",
   "changelog": [
@@ -8,7 +8,7 @@
       "version": "0.1",
       "date": "2026-04-04",
       "git_sha": "91e1e37",
-      "description": "Pure EMA trend-following — single indicator strategy inspired by reference S1 (Single MA). Uses only EMA trend with heavy weight. Simplest possible mechanical strategy.",
+      "description": "Pure EMA trend-following \u2014 single indicator strategy inspired by reference S1 (Single MA). Uses only EMA trend with heavy weight. Simplest possible mechanical strategy.",
       "backtest_90d": {
         "return_pct": 0.2,
         "win_rate": 33.2,
@@ -19,7 +19,7 @@
       }
     }
   ],
-  "description": "Pure trend-following using only EMA alignment. Reference: 151 Strategies S1 — Single Moving Average. Thesis: simplicity reduces noise, trend is the strongest signal.",
+  "description": "Pure trend-following using only EMA alignment. Reference: 151 Strategies S1 \u2014 Single Moving Average. Thesis: simplicity reduces noise, trend is the strongest signal.",
   "config_overrides": {
     "EMA_FAST": 9,
     "EMA_MID": 21,
@@ -44,5 +44,15 @@
     "TREND_UP",
     "TREND_DOWN"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "TREND_DOWN": {
+      "DIRECTION_BIAS": "SHORT_ONLY",
+      "CONFIDENCE_THRESHOLD": 58,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 15
+    }
+  }
 }

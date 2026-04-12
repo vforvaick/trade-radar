@@ -1,6 +1,6 @@
 {
   "name": "Pumpradar Momentum",
-  "emoji": "🚀",
+  "emoji": "\ud83d\ude80",
   "enabled": true,
   "version": "0.3",
   "changelog": [
@@ -8,7 +8,7 @@
       "version": "0.1",
       "date": "2026-03-31",
       "git_sha": "950e0ec",
-      "description": "Initial production deployment — exact v0.1 baseline",
+      "description": "Initial production deployment \u2014 exact v0.1 baseline",
       "backtest_180d": {
         "return_pct": -39.5,
         "win_rate": 39.4,
@@ -21,13 +21,13 @@
       "version": "0.2",
       "date": "2026-04-04",
       "git_sha": "ff9f3f9",
-      "description": "EMA emphasis (ema=2.0), reduced noise indicators, raised threshold 54→60, capped positions 50→30",
+      "description": "EMA emphasis (ema=2.0), reduced noise indicators, raised threshold 54\u219260, capped positions 50\u219230",
       "backtest_180d": {
         "return_pct": -20.0,
         "win_rate": 37.6,
         "trades": 1095,
         "max_dd_pct": 73.6,
-        "note": "IMPROVED +19.5pp: ema weight boost + threshold 60 reduced overtrading. MaxDD worsened 66→74% — watch in live"
+        "note": "IMPROVED +19.5pp: ema weight boost + threshold 60 reduced overtrading. MaxDD worsened 66\u219274% \u2014 watch in live"
       }
     }
   ],
@@ -57,5 +57,15 @@
     "TREND_UP",
     "TREND_DOWN"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "TREND_DOWN": {
+      "DIRECTION_BIAS": "SHORT_ONLY",
+      "CONFIDENCE_THRESHOLD": 64,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 15
+    }
+  }
 }

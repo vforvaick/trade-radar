@@ -1,6 +1,6 @@
 {
   "name": "PressureReader",
-  "emoji": "🌊",
+  "emoji": "\ud83c\udf0a",
   "enabled": true,
   "version": "0.2",
   "changelog": [
@@ -15,7 +15,7 @@
         "trades": 338,
         "max_dd_pct": 0.0,
         "profit_factor": 0.78,
-        "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Negative 90d. Worst PF — Pressure+Candle+EMA noisy."
+        "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Negative 90d. Worst PF \u2014 Pressure+Candle+EMA noisy."
       }
     }
   ],
@@ -44,5 +44,14 @@
     "TREND_UP",
     "HIGH_VOL_CHOP"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "HIGH_VOL_CHOP": {
+      "CONFIDENCE_THRESHOLD": 58,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 10
+    }
+  }
 }

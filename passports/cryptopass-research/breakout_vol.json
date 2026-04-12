@@ -1,6 +1,6 @@
 {
   "name": "BreakoutVol",
-  "emoji": "💥",
+  "emoji": "\ud83d\udca5",
   "enabled": true,
   "version": "0.2",
   "changelog": [
@@ -8,7 +8,7 @@
       "version": "0.1",
       "date": "2026-04-04",
       "git_sha": "91e1e37",
-      "description": "Volume-confirmed breakout — BB+Volume+Candle. Reference S5 (Channel Breakout). Uses BB as channel proxy with volume spike confirmation and candle direction.",
+      "description": "Volume-confirmed breakout \u2014 BB+Volume+Candle. Reference S5 (Channel Breakout). Uses BB as channel proxy with volume spike confirmation and candle direction.",
       "backtest_90d": {
         "return_pct": -10.8,
         "win_rate": 36.0,
@@ -45,5 +45,11 @@
     "TREND_DOWN",
     "LOW_VOL_COMPRESSION"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_DOWN": {
+      "CONFIDENCE_THRESHOLD": 58,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 15
+    }
+  }
 }

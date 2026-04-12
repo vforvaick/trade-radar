@@ -1,6 +1,6 @@
 {
   "name": "TrendConfirm",
-  "emoji": "✅",
+  "emoji": "\u2705",
   "enabled": true,
   "version": "0.2",
   "changelog": [
@@ -8,7 +8,7 @@
       "version": "0.1",
       "date": "2026-04-04",
       "git_sha": "91e1e37",
-      "description": "EMA+MACD+Volume triple confirmation — trades only when trend (EMA), momentum (MACD), and volume all agree. More selective than TrendMomentum, uses volume instead of RSI.",
+      "description": "EMA+MACD+Volume triple confirmation \u2014 trades only when trend (EMA), momentum (MACD), and volume all agree. More selective than TrendMomentum, uses volume instead of RSI.",
       "backtest_90d": {
         "return_pct": -3.7,
         "win_rate": 32.3,
@@ -45,5 +45,15 @@
     "TREND_UP",
     "TREND_DOWN"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "TREND_DOWN": {
+      "DIRECTION_BIAS": "SHORT_ONLY",
+      "CONFIDENCE_THRESHOLD": 64,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 15
+    }
+  }
 }

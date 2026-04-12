@@ -1,7 +1,7 @@
 {
   "name": "BollingerBreakoutV2",
   "enabled": true,
-  "emoji": "💥",
+  "emoji": "\ud83d\udca5",
   "version": "0.2",
   "changelog": [
     {
@@ -16,7 +16,7 @@
       }
     }
   ],
-  "description": "Bollinger Band breakout variant 2: tight bands (1.5σ) + volume spike + pressure confirmation. Lower confidence threshold (50) allows more entries than v1 (55). Phase 4 Stage 2 survivor — highest Sharpe (2.70).",
+  "description": "Bollinger Band breakout variant 2: tight bands (1.5\u03c3) + volume spike + pressure confirmation. Lower confidence threshold (50) allows more entries than v1 (55). Phase 4 Stage 2 survivor \u2014 highest Sharpe (2.70).",
   "config_overrides": {
     "BB_PERIOD": 15,
     "BB_STD": 1.5,
@@ -54,5 +54,11 @@
     "TREND_UP",
     "TREND_DOWN"
   ],
-  "regime_params": {}
+  "regime_params": {
+    "TREND_DOWN": {
+      "CONFIDENCE_THRESHOLD": 54,
+      "RISK_PER_TRADE_PCT": 0.3,
+      "MAX_OPEN_POSITIONS_PER_PASSPORT": 15
+    }
+  }
 }
