@@ -147,3 +147,69 @@ def test_active_regimes_null_means_all(capsys):
     passport = runner.passports[0]
     assert passport.active_regimes is None
 
+
+def test_regime_params_loaded_from_json():
+    """Passport loads regime_params from JSON config."""
+    from bot.passport_runner import PassportRunner
+
+    passport_data = {
+        "name": "TestRegimeParams",
+        "emoji": "🧪",
+        "active_regimes": ["TREND_UP", "TREND_DOWN"],
+        "regime_params": {
+            "TREND_UP": {"CONFIDENCE_THRESHOLD": 54},
+            "TREND_DOWN": {"CONFIDENCE_THRESHOLD": 60}
+        },
+        "config_overrides": {
+            "INDICATOR_WEIGHTS": {
+                "ema_trend": 1.0, "macd_signal": 0.0, "rsi_position": 0.0,
+                "rsi_divergence": 0.0, "bb_position": 1.0, "volume_spike": 2.0,
+                "pressure": 0.0, "candle_direction": 0.0,
+            }
+        }
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        fpath = os.path.join(tmpdir, "test_rp.json")
+        with open(fpath, "w") as f:
+            json.dump(passport_data, f)
+
+        with patch("bot.passport_runner.StateStore") as MockStateStore:
+            _make_mock_state_store(MockStateStore)
+            runner = PassportRunner(tmpdir)
+
+    passport = runner.passports[0]
+    assert passport.regime_params == {
+        "TREND_UP": {"CONFIDENCE_THRESHOLD": 54},
+        "TREND_DOWN": {"CONFIDENCE_THRESHOLD": 60}
+    }
+
+
+def test_regime_params_defaults_to_empty_dict():
+    """Passport without regime_params defaults to empty dict."""
+    from bot.passport_runner import PassportRunner
+
+    passport_data = {
+        "name": "TestNoRegimeParams",
+        "emoji": "🧪",
+        "config_overrides": {
+            "INDICATOR_WEIGHTS": {
+                "ema_trend": 1.0, "macd_signal": 0.0, "rsi_position": 0.0,
+                "rsi_divergence": 0.0, "bb_position": 1.0, "volume_spike": 2.0,
+                "pressure": 0.0, "candle_direction": 0.0,
+            }
+        }
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        fpath = os.path.join(tmpdir, "test_no_rp.json")
+        with open(fpath, "w") as f:
+            json.dump(passport_data, f)
+
+        with patch("bot.passport_runner.StateStore") as MockStateStore:
+            _make_mock_state_store(MockStateStore)
+            runner = PassportRunner(tmpdir)
+
+    passport = runner.passports[0]
+    assert passport.regime_params == {}
+

@@ -35,6 +35,7 @@ class Passport:
         self.description = data.get("description", "")
         self.config_overrides = data.get("config_overrides", {})
         self.active_regimes = data.get("active_regimes", None)
+        self.regime_params = data.get("regime_params", {})
         self.position_manager = PositionManager()
         self.equity = config.INITIAL_EQUITY
         self.trade_count = 0
