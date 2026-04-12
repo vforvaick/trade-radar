@@ -1637,3 +1637,50 @@ PressureReader is the ONLY passport consistently profitable live. Profile:
 - Pressure LONG_ONLY families should discover PressureReader-like strategies
 - 3 new passports add diversity to the live portfolio (RSI momentum + BB breakout thesis)
 - Total passports: 25 (was 22)
+
+---
+
+## Session 11d: Deploy + System Status Snapshot (Apr 12)
+
+### Deployment
+- **VPS deployed**: `fcf0c82` — all 6 commits (promote 3 passports, pressure families, fold fix, docs)
+- **25 passports loaded** including 3 new: RSIMomentumV2, BollingerBreakoutV2, BollingerBreakoutV3
+- New passports start at $500 each, 0 trades
+
+### Portfolio Status (Day 6, Apr 7–12)
+| Metric | Value |
+|--------|-------|
+| Total Equity | $6,012 |
+| Started | $11,000 (22 × $500) |
+| Net PnL | -$4,988 (-45%) |
+| Closed Trades | 2,448 |
+| Win Rate | 19.0% |
+| Open Positions | 481 |
+| Profitable Passports | 3/22 |
+| Current Regime | HIGH_VOL_CHOP (since Apr 9) |
+
+### Passport Performance Tiers
+**Profitable (3):**
+- 🌊 PressureReader: $654 (+$154, 93 trades) — BEST performer, LONG_ONLY
+- 🔃 ReversalV2: $546 (+$46, few trades)
+- 💥 BreakoutVol: $503 (+$3, 50 trades)
+
+**Near breakeven (3):**
+- BBMeanRev: $497, OG: $449, MACDDivergence: $438
+
+**Heavy losses (bottom 5):**
+- PureTrend: $64 (-$436), TrendMomentum: $71 (-$429), VolumeKing: $84 (-$416)
+- HiddenGem: -$10 (-$510), Sniper: -$38 (-$538)
+
+### Key Insights
+1. **Day 1 disaster dominates**: Apr 7 wiped -$6,496. Recovery since = +$2,263 (+65% from bottom). Without Day 1, most passports would be near breakeven or profitable.
+2. **Counter-trend penalty (CTP) is working**: Since Session 10b deployment, massive SHORT-during-Uptrend trades stopped.
+3. **PressureReader is the proven template**: LONG_ONLY + pressure indicator + minimal indicators = only consistently profitable strategy.
+4. **Regime detector shows 100% HIGH_VOL_CHOP** since deployment (Apr 9) — BTC at $71K in volatile sideways.
+5. **3 new passports deployed**: Need 7-30 days to collect meaningful data.
+
+### Research Phase 5 Launched
+- Running locally (MacBook, screen session)
+- 270d data, 28 families, ~42+ candidates expected
+- Fold strategy: train=90d, test=45d, slide=45d → 4 folds
+- Key improvement: multi-fold validation should filter out overfitters
