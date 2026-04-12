@@ -6,11 +6,19 @@ Each passport scans independently and sends tagged Telegram signals.
 import os
 import sys
 import time
+import logging
 import argparse
 from datetime import datetime
 
 # Ensure project root is in path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Configure root logger so library logger.info() calls reach stdout/journalctl
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(name)s %(levelname)s %(message)s",
+    stream=sys.stdout,
+)
 
 from bot import config
 from bot.notifier import TelegramNotifier, TelegramCommandPoller
