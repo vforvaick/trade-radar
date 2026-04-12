@@ -1527,3 +1527,95 @@ Based on live performance, immediate actions needed:
 2. **Study PressureReader** — understand why it works, generate more pressure-based variants in research
 3. **Tune BBMeanRev + RSIContrarian** — near breakeven, may become profitable with tighter entries
 4. **Add regime gating to research** — EMA crossover fails because it doesn't respect market regime
+
+---
+
+## Session 11b: Research Phase 4 Complete + Day 1 Root Cause Analysis
+
+### Phase 4 Research Results (First Successful Full Pipeline Run!)
+
+**Pipeline:** 107 generated → 49 Stage 1 → **3 Stage 2 survivors** (first time EVER!)
+
+KlineCache made this possible: 41s prefetch, 0 API crashes, ~2h total runtime vs previous 10-22h with 56% crash rate.
+
+**Stage 2 Survivors:**
+
+| Candidate | Sharpe | Median Return | Key Parameters |
+|-----------|--------|---------------|----------------|
+| rsi_momentum (conf=65, RSI=10, vol=1.5) | 1.96 | +7.3% | RSI period 10, high selectivity |
+| bollinger_breakout (BB=15, std=1.5, conf=50, vol=1.5) | 2.70 | +2.1% | Tight BB, low threshold |
+| bollinger_breakout (BB=15, std=1.5, conf=55, vol=1.5) | 1.22 | +1.2% | Same BB, slightly higher conf |
+
+**Key Patterns:**
+- RSI momentum (conf=65) is the BEST performer: +7.3% median return with Sharpe 1.96
+- Bollinger breakout works with tight bands (1.5 std vs default 2.0) — captures smaller mean-reversion moves
+- Higher confidence → fewer trades → better quality (conf=65 > conf=50)
+- All survivors use 2-3 focused indicators — selectivity principle holds
+- 46/49 Stage 2 failures = "Single fold is not positive" → most strategies don't survive walk-forward
+
+**Stage 2 Filter Issue:** Only 1 regime fold available (180d is treated as single window). Need longer history or different fold strategy to properly test regime robustness.
+
+### Day 1 Disaster: Complete Root Cause Analysis
+
+**Date:** Apr 7, 2026 | **Damage:** -$6,496 (59% of $11,000) | **570 trades, 549 SL / 21 TP, WR=9%**
+
+**Root Cause: Massive SHORT bias during BTC Uptrend**
+
+| Passport | SL | TP | WR | LONG | SHORT | PnL |
+|----------|----|----|-----|------|-------|-----|
+| VolumeKing | 58 | 1 | 2% | 9 | 50 | -$803 |
+| Sniper | 54 | 0 | 0% | 4 | 50 | -$714 |
+| HiddenGem | 51 | 0 | 0% | 5 | 46 | -$639 |
+| PureTrend | 32 | 0 | 0% | 8 | 24 | -$483 |
+| TrendMomentum | 33 | 0 | 0% | 6 | 27 | -$482 |
+| MinimalEdge | 30 | 0 | 0% | 7 | 23 | -$462 |
+| DualMA | 30 | 0 | 0% | 6 | 24 | -$460 |
+| Donchian | 25 | 0 | 0% | 2 | 23 | -$434 |
+| TrendConfirm | 23 | 0 | 0% | 1 | 22 | -$355 |
+| OBV Trend | 22 | 0 | 0% | 1 | 21 | -$331 |
+
+**Three compounding failures:**
+1. **BTC_TREND_WEIGHTS Uptrend:0.5 bug** — max confidence = 50 < threshold 54 → NO signals during uptrend. But this was the WRONG direction for the fix: it meant trend-following passports had their LONG signals suppressed while SHORT signals (from other indicators) still fired at full weight.
+2. **No Counter-Trend Penalty** — CTP wasn't deployed until Apr 10. Without it, a SHORT signal during BTC Uptrend gets full confidence credit.
+3. **No regime-aware gating** — 4-regime detector wasn't deployed until Apr 9. All passports fired in all conditions.
+
+**Timing analysis:** 21:00-22:00 UTC saw 265 trades (mostly SL hits) — cascading liquidation wave as crypto market pumped.
+
+**What changed since Day 1:**
+- Apr 8: ATR fix + direction_bias → WR jumped to 42%
+- Apr 9: 4-regime detector → PnL=$+1,360 (best day)
+- Apr 10: CTP deployed → gradual improvement
+- **Total recovery since Day 1: +$2,263 (+65% from bottom)**
+
+### PressureReader Deep Dive — Why It Works
+
+PressureReader is the ONLY passport consistently profitable live. Profile:
+
+- **78 trades, ALL LONG** (direction_bias = LONG_ONLY)
+- **WR=44%**, PnL=+$59 (was higher before Day 1 loss of -$96)
+- **Avg confidence: 70%** → highly selective
+- **TP cascade working:** 34 TP1 → 21 TP2 → 14 TP3 (40% cascade rate!)
+- **20 breakeven SLs** — TP1 hit → SL moved to entry → protected from reversal
+- **Top symbols:** AERO (+$45), AIA (+$25), BR (+$18), AIOT (+$18) — meme/altcoins
+
+**Why PressureReader works and others don't:**
+1. **LONG_ONLY bias** — avoided the Day 1 SHORT massacre entirely
+2. **Pressure indicator** — buy/sell volume ratio is a direct measure of demand vs supply (fundamental)
+3. **Candle direction confirmation** — ensures price action confirms the pressure signal
+4. **Only 2 indicators** → clean confidence signal, no dilution from NEUTRAL votes
+5. **No BTC trend dependency** — pressure indicator doesn't care about BTC direction
+
+**Comparison:**
+| Metric | PressureReader | PureTrend | Sniper |
+|--------|---------------|-----------|--------|
+| Trades | 78 | 131 | 107 |
+| WR | 44% | 18% | 30% |
+| PnL | +$59 | -$434 | -$538 |
+
+### Implications for Strategy Development
+
+1. **Direction bias matters enormously** — LONG_ONLY avoided catastrophic loss. Future passports should consider directional constraints per regime.
+2. **Pressure (buy/sell volume ratio) is underexplored** — no research family generates pressure-based variants yet. This is our most profitable indicator.
+3. **TP cascade is working as designed** — 40% of PressureReader's TP1 hits cascade to TP3. The 70/20/10 split is effective.
+4. **RSI momentum + Bollinger breakout** passed Stage 2 — these should be promoted to paper trading.
+5. **All trend-following passports failed Day 1** — they need regime gating to avoid firing counter-trend.
