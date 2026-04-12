@@ -118,6 +118,8 @@ def _make_runner_with_signals(signals, config_overrides):
     passport.position_manager.open_count = 0
     passport.equity = 500.0
     passport.signal_count = 0
+    passport.active_regimes = None
+    passport.regime_params = {}
 
     # Build runner with mocked scanner and state_store
     runner = PassportRunner.__new__(PassportRunner)
