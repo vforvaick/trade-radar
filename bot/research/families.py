@@ -329,6 +329,30 @@ SCORING_FAMILIES: dict[str, dict] = {
         "compatible_regimes": ["TREND_DOWN", "HIGH_VOL_CHOP"],
         "min_trades": 20,
     },
+    "pressure_flow_long": {
+        "name": "Pressure Flow (LONG-biased)",
+        "description": "PressureReader-inspired: pressure + candle LONG_ONLY for uptrend/ranging",
+        "weights": _w(pressure=2.0, candle_direction=1.5, volume_spike=1.0),
+        "param_ranges": {
+            "VOLUME_SPIKE_THRESHOLD": [1.5, 2.0, 2.5],
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+            "DIRECTION_BIAS": ["LONG_ONLY"],
+        },
+        "compatible_regimes": ["TREND_UP", "HIGH_VOL_CHOP", "LOW_VOL_COMPRESSION"],
+        "min_trades": 20,
+    },
+    "pressure_momentum_long": {
+        "name": "Pressure Momentum (LONG-biased)",
+        "description": "Pressure + RSI momentum for long entries with demand confirmation",
+        "weights": _w(pressure=2.0, rsi_position=1.5, candle_direction=1.0, volume_spike=1.0),
+        "param_ranges": {
+            "VOLUME_SPIKE_THRESHOLD": [1.5, 2.0],
+            "CONFIDENCE_THRESHOLD": [55, 60, 65],
+            "DIRECTION_BIAS": ["LONG_ONLY"],
+        },
+        "compatible_regimes": ["TREND_UP", "HIGH_VOL_CHOP"],
+        "min_trades": 20,
+    },
 }
 
 
