@@ -1,44 +1,49 @@
 {
-    "name": "BalancedSelective",
-    "emoji": "\u2696\ufe0f",
-    "enabled": true,
-    "version": "0.1",
-    "changelog": [
-        {
-            "version": "0.1",
-            "date": "2026-04-04",
-            "git_sha": "91e1e37",
-            "description": "Balanced 3-indicator strategy \u2014 EMA+BB+RSI. Like HiddenGem but swaps Volume for RSI. Tests whether RSI provides better confirmation than volume spike for the selective approach.",
-            "backtest_90d": {
-                "return_pct": -2.2,
-                "win_rate": 40.3,
-                "trades": 385,
-                "max_dd_pct": 0.0,
-                "profit_factor": 0.97,
-                "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Negative 90d. EMA+BB+RSI all weights dilute signal."
-            }
-        }
-    ],
-    "description": "Balanced selective: EMA trend + BB position + RSI momentum. 3-indicator approach following the proven selective pattern. Thesis: combining trend, range, and momentum covers more market conditions.",
-    "config_overrides": {
-        "EMA_FAST": 9,
-        "EMA_MID": 21,
-        "EMA_SLOW": 50,
-        "VOLUME_SPIKE_THRESHOLD": 2.0,
-        "INDICATOR_WEIGHTS": {
-            "ema_trend": 1.5,
-            "macd_signal": 0.0,
-            "rsi_position": 1.0,
-            "rsi_divergence": 0.0,
-            "bb_position": 1.5,
-            "volume_spike": 0.0,
-            "pressure": 0.0,
-            "candle_direction": 0.0
-        },
-        "CONFIDENCE_THRESHOLD": 58,
-        "USE_ATR_EXITS": false,
-        "USE_TRAILING_STOP": false,
-        "MAX_OPEN_POSITIONS_PER_PASSPORT": 30,
-        "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  "name": "BalancedSelective",
+  "emoji": "⚖️",
+  "enabled": true,
+  "version": "0.2",
+  "changelog": [
+    {
+      "version": "0.1",
+      "date": "2026-04-04",
+      "git_sha": "91e1e37",
+      "description": "Balanced 3-indicator strategy — EMA+BB+RSI. Like HiddenGem but swaps Volume for RSI. Tests whether RSI provides better confirmation than volume spike for the selective approach.",
+      "backtest_90d": {
+        "return_pct": -2.2,
+        "win_rate": 40.3,
+        "trades": 385,
+        "max_dd_pct": 0.0,
+        "profit_factor": 0.97,
+        "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Negative 90d. EMA+BB+RSI all weights dilute signal."
+      }
     }
+  ],
+  "description": "Balanced selective: EMA trend + BB position + RSI momentum. 3-indicator approach following the proven selective pattern. Thesis: combining trend, range, and momentum covers more market conditions.",
+  "config_overrides": {
+    "EMA_FAST": 9,
+    "EMA_MID": 21,
+    "EMA_SLOW": 50,
+    "VOLUME_SPIKE_THRESHOLD": 2.0,
+    "INDICATOR_WEIGHTS": {
+      "ema_trend": 1.5,
+      "macd_signal": 0.0,
+      "rsi_position": 1.0,
+      "rsi_divergence": 0.0,
+      "bb_position": 1.5,
+      "volume_spike": 0.0,
+      "pressure": 0.0,
+      "candle_direction": 0.0
+    },
+    "CONFIDENCE_THRESHOLD": 58,
+    "USE_ATR_EXITS": false,
+    "USE_TRAILING_STOP": false,
+    "MAX_OPEN_POSITIONS_PER_PASSPORT": 30,
+    "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  },
+  "active_regimes": [
+    "TREND_UP",
+    "HIGH_VOL_CHOP"
+  ],
+  "regime_params": {}
 }

@@ -1,20 +1,20 @@
 {
   "name": "MACDDivergence",
   "enabled": true,
-  "emoji": "\ud83d\udcca",
-  "version": "0.2",
+  "emoji": "📊",
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.2",
       "date": "2026-04-07",
       "git_sha": "pending",
-      "description": "Add BTC_TREND_WEIGHTS: Uptrend 1.0 \u2014 MACD divergence with RSI is sideways-regime focused, remove the 0.8 uptrend penalty"
+      "description": "Add BTC_TREND_WEIGHTS: Uptrend 1.0 — MACD divergence with RSI is sideways-regime focused, remove the 0.8 uptrend penalty"
     },
     {
       "version": "0.1",
       "date": "2026-04-04",
       "git_sha": "91e1e37",
-      "description": "MACD-primary with RSI divergence \u2014 uses MACD for trend/momentum and RSI divergence for reversal timing. Novel combination testing MACD as primary signal.",
+      "description": "MACD-primary with RSI divergence — uses MACD for trend/momentum and RSI divergence for reversal timing. Novel combination testing MACD as primary signal.",
       "backtest_90d": {
         "return_pct": -1.3,
         "win_rate": 32.9,
@@ -27,7 +27,7 @@
     {
       "version": "0.1",
       "date": "2026-04-05",
-      "description": "Enabled for paper trading \u2014 90d quality-pair backtest: +9.1% PF=1.39 (MACDDiv) / +7.7% PF=1.32 (BBMeanRev). Deploy with quality pairs only.",
+      "description": "Enabled for paper trading — 90d quality-pair backtest: +9.1% PF=1.39 (MACDDiv) / +7.7% PF=1.32 (BBMeanRev). Deploy with quality pairs only.",
       "backtest_90d": {
         "return_pct": 9.1,
         "win_rate": 41.5,
@@ -69,5 +69,11 @@
       "HIGH_VOL_CHOP": 1.0,
       "LOW_VOL_COMPRESSION": 1.0
     }
-  }
+  },
+  "active_regimes": [
+    "TREND_UP",
+    "TREND_DOWN",
+    "HIGH_VOL_CHOP"
+  ],
+  "regime_params": {}
 }

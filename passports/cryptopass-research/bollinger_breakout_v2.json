@@ -2,7 +2,7 @@
   "name": "BollingerBreakoutV2",
   "enabled": true,
   "emoji": "💥",
-  "version": "0.1",
+  "version": "0.2",
   "changelog": [
     {
       "version": "0.1",
@@ -11,7 +11,7 @@
       "description": "Phase 4 research Stage 2 survivor. BB(15,1.5) + Vol(1.5) + Pressure. Lower confidence threshold (50) for more signals. Highest Sharpe of all Phase 4 candidates.",
       "backtest_180d": {
         "return_pct": 2.1,
-        "sharpe": 2.70,
+        "sharpe": 2.7,
         "note": "Stage 2 walk-forward: median_ret=+2.1%, avg_sharpe=2.70. Highest Sharpe in Phase 4."
       }
     }
@@ -48,5 +48,11 @@
       "HIGH_VOL_CHOP": 1.0,
       "LOW_VOL_COMPRESSION": 1.0
     }
-  }
+  },
+  "active_regimes": [
+    "LOW_VOL_COMPRESSION",
+    "TREND_UP",
+    "TREND_DOWN"
+  ],
+  "regime_params": {}
 }

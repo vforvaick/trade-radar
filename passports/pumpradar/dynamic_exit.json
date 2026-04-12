@@ -1,56 +1,61 @@
 {
-    "name": "Pumpradar Dynamic",
-    "emoji": "🎯",
-    "enabled": true,
-    "version": "0.2",
-    "changelog": [
-        {
-            "version": "0.1",
-            "date": "2026-03-31",
-            "git_sha": "950e0ec",
-            "description": "Initial production deployment — exact v0.1 baseline",
-            "backtest_180d": {
-                "return_pct": -16.3,
-                "win_rate": 41.0,
-                "trades": 1799,
-                "max_dd_pct": 85.9,
-                "note": "v0.1 had USE_TRAILING_STOP=true causing massive overtrade 1799 trades + 85.9% MaxDD"
-            }
-        },
-        {
-            "version": "0.2",
-            "date": "2026-04-04",
-            "git_sha": "ff9f3f9",
-            "description": "Disabled trailing stop (proven -63pp impact), aligned entry weights with Momentum v0.2",
-            "backtest_180d": {
-                "return_pct": -20.0,
-                "win_rate": 37.6,
-                "trades": 1095,
-                "max_dd_pct": 73.6,
-                "note": "v0.2 disabled trailing stop: massive trade reduction 1799→1095, MaxDD improved 85.9%→73.6%. Return delta -3.7pp negligible. NOTE: identical metrics to Momentum v0.2 — backtester may not differentiate USE_ATR_EXITS in test window. Pending deeper investigation."
-            }
-        }
-    ],
-    "description": "ATR-based dynamic exits with trailing stops — adapts to market volatility",
-    "config_overrides": {
-        "EMA_FAST": 9,
-        "EMA_MID": 21,
-        "EMA_SLOW": 50,
-        "VOLUME_SPIKE_THRESHOLD": 2.0,
-        "INDICATOR_WEIGHTS": {
-            "ema_trend": 2.0,
-            "macd_signal": 1.0,
-            "rsi_position": 1.0,
-            "rsi_divergence": 0.5,
-            "bb_position": 1.0,
-            "volume_spike": 1.5,
-            "pressure": 0.5,
-            "candle_direction": 0.5
-        },
-        "CONFIDENCE_THRESHOLD": 60,
-        "USE_ATR_EXITS": true,
-        "USE_TRAILING_STOP": false,
-        "MAX_OPEN_POSITIONS_PER_PASSPORT": 30,
-        "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  "name": "Pumpradar Dynamic",
+  "emoji": "🎯",
+  "enabled": true,
+  "version": "0.3",
+  "changelog": [
+    {
+      "version": "0.1",
+      "date": "2026-03-31",
+      "git_sha": "950e0ec",
+      "description": "Initial production deployment — exact v0.1 baseline",
+      "backtest_180d": {
+        "return_pct": -16.3,
+        "win_rate": 41.0,
+        "trades": 1799,
+        "max_dd_pct": 85.9,
+        "note": "v0.1 had USE_TRAILING_STOP=true causing massive overtrade 1799 trades + 85.9% MaxDD"
+      }
+    },
+    {
+      "version": "0.2",
+      "date": "2026-04-04",
+      "git_sha": "ff9f3f9",
+      "description": "Disabled trailing stop (proven -63pp impact), aligned entry weights with Momentum v0.2",
+      "backtest_180d": {
+        "return_pct": -20.0,
+        "win_rate": 37.6,
+        "trades": 1095,
+        "max_dd_pct": 73.6,
+        "note": "v0.2 disabled trailing stop: massive trade reduction 1799→1095, MaxDD improved 85.9%→73.6%. Return delta -3.7pp negligible. NOTE: identical metrics to Momentum v0.2 — backtester may not differentiate USE_ATR_EXITS in test window. Pending deeper investigation."
+      }
     }
+  ],
+  "description": "ATR-based dynamic exits with trailing stops — adapts to market volatility",
+  "config_overrides": {
+    "EMA_FAST": 9,
+    "EMA_MID": 21,
+    "EMA_SLOW": 50,
+    "VOLUME_SPIKE_THRESHOLD": 2.0,
+    "INDICATOR_WEIGHTS": {
+      "ema_trend": 2.0,
+      "macd_signal": 1.0,
+      "rsi_position": 1.0,
+      "rsi_divergence": 0.5,
+      "bb_position": 1.0,
+      "volume_spike": 1.5,
+      "pressure": 0.5,
+      "candle_direction": 0.5
+    },
+    "CONFIDENCE_THRESHOLD": 60,
+    "USE_ATR_EXITS": true,
+    "USE_TRAILING_STOP": false,
+    "MAX_OPEN_POSITIONS_PER_PASSPORT": 30,
+    "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  },
+  "active_regimes": [
+    "TREND_UP",
+    "TREND_DOWN"
+  ],
+  "regime_params": {}
 }

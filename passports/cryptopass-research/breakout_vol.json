@@ -1,43 +1,49 @@
 {
-    "name": "BreakoutVol",
-    "emoji": "\ud83d\udca5",
-    "enabled": true,
-    "version": "0.1",
-    "changelog": [
-        {
-            "version": "0.1",
-            "date": "2026-04-04",
-            "git_sha": "91e1e37",
-            "description": "Volume-confirmed breakout \u2014 BB+Volume+Candle. Reference S5 (Channel Breakout). Uses BB as channel proxy with volume spike confirmation and candle direction.",
-            "backtest_90d": {
-                "return_pct": -10.8,
-                "win_rate": 36.0,
-                "trades": 403,
-                "max_dd_pct": 0.0,
-                "profit_factor": 0.85,
-                "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Negative 90d after aggregation fix. Too many trades."
-            }
-        }
-    ],
-    "description": "Breakout trading with volume confirmation. Reference: 151 Strategies S5. Thesis: genuine breakouts are accompanied by volume spikes; candle direction confirms commitment.",
-    "config_overrides": {
-        "EMA_FAST": 9,
-        "EMA_MID": 21,
-        "EMA_SLOW": 50,
-        "VOLUME_SPIKE_THRESHOLD": 2.5,
-        "INDICATOR_WEIGHTS": {
-            "ema_trend": 0.0,
-            "macd_signal": 0.0,
-            "rsi_position": 0.0,
-            "rsi_divergence": 0.0,
-            "bb_position": 1.5,
-            "volume_spike": 2.5,
-            "pressure": 0.0,
-            "candle_direction": 1.0
-        },
-        "USE_ATR_EXITS": false,
-        "USE_TRAILING_STOP": false,
-        "MAX_OPEN_POSITIONS_PER_PASSPORT": 20,
-        "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  "name": "BreakoutVol",
+  "emoji": "💥",
+  "enabled": true,
+  "version": "0.2",
+  "changelog": [
+    {
+      "version": "0.1",
+      "date": "2026-04-04",
+      "git_sha": "91e1e37",
+      "description": "Volume-confirmed breakout — BB+Volume+Candle. Reference S5 (Channel Breakout). Uses BB as channel proxy with volume spike confirmation and candle direction.",
+      "backtest_90d": {
+        "return_pct": -10.8,
+        "win_rate": 36.0,
+        "trades": 403,
+        "max_dd_pct": 0.0,
+        "profit_factor": 0.85,
+        "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Negative 90d after aggregation fix. Too many trades."
+      }
     }
+  ],
+  "description": "Breakout trading with volume confirmation. Reference: 151 Strategies S5. Thesis: genuine breakouts are accompanied by volume spikes; candle direction confirms commitment.",
+  "config_overrides": {
+    "EMA_FAST": 9,
+    "EMA_MID": 21,
+    "EMA_SLOW": 50,
+    "VOLUME_SPIKE_THRESHOLD": 2.5,
+    "INDICATOR_WEIGHTS": {
+      "ema_trend": 0.0,
+      "macd_signal": 0.0,
+      "rsi_position": 0.0,
+      "rsi_divergence": 0.0,
+      "bb_position": 1.5,
+      "volume_spike": 2.5,
+      "pressure": 0.0,
+      "candle_direction": 1.0
+    },
+    "USE_ATR_EXITS": false,
+    "USE_TRAILING_STOP": false,
+    "MAX_OPEN_POSITIONS_PER_PASSPORT": 20,
+    "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  },
+  "active_regimes": [
+    "TREND_UP",
+    "TREND_DOWN",
+    "LOW_VOL_COMPRESSION"
+  ],
+  "regime_params": {}
 }

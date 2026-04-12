@@ -1,28 +1,28 @@
 {
   "name": "RSIContrarian",
-  "emoji": "\ud83d\udd2e",
+  "emoji": "🔮",
   "enabled": true,
-  "version": "0.2",
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.1",
       "date": "2026-04-04",
       "git_sha": "91e1e37",
-      "description": "RSI extremes contrarian \u2014 RSI+RSI_div+BB. Reference S8 (RSI Extremes). Uses RSI position for oversold/overbought, divergence for reversal confirmation, BB for mean distance.",
+      "description": "RSI extremes contrarian — RSI+RSI_div+BB. Reference S8 (RSI Extremes). Uses RSI position for oversold/overbought, divergence for reversal confirmation, BB for mean distance.",
       "backtest_90d": {
         "return_pct": 4.2,
         "win_rate": 40.9,
         "trades": 88,
         "max_dd_pct": 0.0,
         "profit_factor": 1.24,
-        "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight portfolio. 2nd best. PF>1 with low trade count \u2014 selective edge confirmed."
+        "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight portfolio. 2nd best. PF>1 with low trade count — selective edge confirmed."
       }
     },
     {
       "version": "0.2",
       "date": "2026-04-07",
       "git_sha": "pending",
-      "description": "Add BTC_TREND_WEIGHTS: Uptrend 1.0 \u2014 mean-reversion strategies don't depend on BTC direction, remove the 0.8 penalty during bull markets"
+      "description": "Add BTC_TREND_WEIGHTS: Uptrend 1.0 — mean-reversion strategies don't depend on BTC direction, remove the 0.8 penalty during bull markets"
     }
   ],
   "description": "RSI contrarian with divergence confirmation. Reference: 151 Strategies S8. Thesis: RSI extremes + divergence signal high-probability reversals; BB confirms stretched price.",
@@ -58,5 +58,10 @@
       "HIGH_VOL_CHOP": 1.0,
       "LOW_VOL_COMPRESSION": 1.0
     }
-  }
+  },
+  "active_regimes": [
+    "HIGH_VOL_CHOP",
+    "LOW_VOL_COMPRESSION"
+  ],
+  "regime_params": {}
 }

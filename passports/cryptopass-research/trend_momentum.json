@@ -1,14 +1,14 @@
 {
   "name": "TrendMomentum",
-  "emoji": "\ud83d\ude84",
+  "emoji": "🚄",
   "enabled": true,
-  "version": "0.1",
+  "version": "0.2",
   "changelog": [
     {
       "version": "0.1",
       "date": "2026-04-04",
       "git_sha": "91e1e37",
-      "description": "Trend + momentum confirmation \u2014 EMA+RSI+MACD trifecta. Reference S2 (Trend Following with Momentum). Uses 3 complementary indicators for trend confirmation.",
+      "description": "Trend + momentum confirmation — EMA+RSI+MACD trifecta. Reference S2 (Trend Following with Momentum). Uses 3 complementary indicators for trend confirmation.",
       "backtest_90d": {
         "return_pct": 1.5,
         "win_rate": 34.1,
@@ -40,5 +40,10 @@
     "USE_TRAILING_STOP": false,
     "MAX_OPEN_POSITIONS_PER_PASSPORT": 30,
     "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
-  }
+  },
+  "active_regimes": [
+    "TREND_UP",
+    "TREND_DOWN"
+  ],
+  "regime_params": {}
 }

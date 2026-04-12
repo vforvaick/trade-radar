@@ -1,68 +1,73 @@
 {
-    "name": "Pumpradar OG",
-    "emoji": "🏆",
-    "enabled": true,
-    "version": "0.3",
-    "changelog": [
-        {
-            "version": "0.1",
-            "date": "2026-03-31",
-            "git_sha": "950e0ec",
-            "description": "Initial production deployment — exact v0.1 baseline",
-            "backtest_180d": {
-                "return_pct": -13.1,
-                "win_rate": 38.8,
-                "trades": 1267,
-                "max_dd_pct": 73.5,
-                "note": "pre-revision baseline"
-            }
-        },
-        {
-            "version": "0.2",
-            "date": "2026-04-04",
-            "git_sha": "ff9f3f9",
-            "description": "Raised VOLUME_SPIKE_THRESHOLD 1.5→2.0 per grid search optimization (+49% vs +11%)",
-            "backtest_180d": {
-                "return_pct": -28.8,
-                "win_rate": 38.4,
-                "trades": 1148,
-                "max_dd_pct": 75.5,
-                "note": "higher vol threshold reduced trades 1267→1148 but worsened 180d return -13.1%→-28.8%"
-            }
-        },
-        {
-            "version": "0.3",
-            "date": "2026-04-04",
-            "git_sha": "fba799b",
-            "description": "ROLLBACK — reverted VOLUME_SPIKE_THRESHOLD 2.0→1.5. v0.2 regressed 15.7pp vs v0.1 over 180d. Higher threshold filtered quality entries in bear/choppy regime.",
-            "backtest_180d": {
-                "return_pct": null,
-                "win_rate": null,
-                "trades": null,
-                "max_dd_pct": null,
-                "note": "same as v0.1 params — pending validation"
-            }
-        }
-    ],
-    "description": "Original reverse-engineered config — exact Pumpradar clone, Vol 1.5x, all equal weights",
-    "config_overrides": {
-        "EMA_FAST": 9,
-        "EMA_MID": 21,
-        "EMA_SLOW": 50,
-        "VOLUME_SPIKE_THRESHOLD": 1.5,
-        "INDICATOR_WEIGHTS": {
-            "ema_trend": 1.0,
-            "macd_signal": 1.0,
-            "rsi_position": 1.0,
-            "rsi_divergence": 1.0,
-            "bb_position": 1.0,
-            "volume_spike": 1.0,
-            "pressure": 1.0,
-            "candle_direction": 1.0
-        },
-        "USE_ATR_EXITS": false,
-        "USE_TRAILING_STOP": false,
-        "MAX_OPEN_POSITIONS_PER_PASSPORT": 50,
-        "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  "name": "Pumpradar OG",
+  "emoji": "🏆",
+  "enabled": true,
+  "version": "0.4",
+  "changelog": [
+    {
+      "version": "0.1",
+      "date": "2026-03-31",
+      "git_sha": "950e0ec",
+      "description": "Initial production deployment — exact v0.1 baseline",
+      "backtest_180d": {
+        "return_pct": -13.1,
+        "win_rate": 38.8,
+        "trades": 1267,
+        "max_dd_pct": 73.5,
+        "note": "pre-revision baseline"
+      }
+    },
+    {
+      "version": "0.2",
+      "date": "2026-04-04",
+      "git_sha": "ff9f3f9",
+      "description": "Raised VOLUME_SPIKE_THRESHOLD 1.5→2.0 per grid search optimization (+49% vs +11%)",
+      "backtest_180d": {
+        "return_pct": -28.8,
+        "win_rate": 38.4,
+        "trades": 1148,
+        "max_dd_pct": 75.5,
+        "note": "higher vol threshold reduced trades 1267→1148 but worsened 180d return -13.1%→-28.8%"
+      }
+    },
+    {
+      "version": "0.3",
+      "date": "2026-04-04",
+      "git_sha": "fba799b",
+      "description": "ROLLBACK — reverted VOLUME_SPIKE_THRESHOLD 2.0→1.5. v0.2 regressed 15.7pp vs v0.1 over 180d. Higher threshold filtered quality entries in bear/choppy regime.",
+      "backtest_180d": {
+        "return_pct": null,
+        "win_rate": null,
+        "trades": null,
+        "max_dd_pct": null,
+        "note": "same as v0.1 params — pending validation"
+      }
     }
+  ],
+  "description": "Original reverse-engineered config — exact Pumpradar clone, Vol 1.5x, all equal weights",
+  "config_overrides": {
+    "EMA_FAST": 9,
+    "EMA_MID": 21,
+    "EMA_SLOW": 50,
+    "VOLUME_SPIKE_THRESHOLD": 1.5,
+    "INDICATOR_WEIGHTS": {
+      "ema_trend": 1.0,
+      "macd_signal": 1.0,
+      "rsi_position": 1.0,
+      "rsi_divergence": 1.0,
+      "bb_position": 1.0,
+      "volume_spike": 1.0,
+      "pressure": 1.0,
+      "candle_direction": 1.0
+    },
+    "USE_ATR_EXITS": false,
+    "USE_TRAILING_STOP": false,
+    "MAX_OPEN_POSITIONS_PER_PASSPORT": 50,
+    "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  },
+  "active_regimes": [
+    "TREND_UP",
+    "HIGH_VOL_CHOP"
+  ],
+  "regime_params": {}
 }

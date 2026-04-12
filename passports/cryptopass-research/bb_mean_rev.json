@@ -1,14 +1,14 @@
 {
   "name": "BBMeanRev",
   "enabled": true,
-  "emoji": "\ud83d\udd04",
-  "version": "0.2",
+  "emoji": "🔄",
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.1",
       "date": "2026-04-04",
       "git_sha": "91e1e37",
-      "description": "Bollinger Band mean reversion \u2014 BB+RSI only. Reference S4 (Mean Reversion - Bollinger Bands). Targets range-bound periods where price deviates from mean.",
+      "description": "Bollinger Band mean reversion — BB+RSI only. Reference S4 (Mean Reversion - Bollinger Bands). Targets range-bound periods where price deviates from mean.",
       "backtest_90d": {
         "return_pct": 8.0,
         "win_rate": 45.2,
@@ -21,7 +21,7 @@
     {
       "version": "0.1",
       "date": "2026-04-05",
-      "description": "Enabled for paper trading \u2014 90d quality-pair backtest: +9.1% PF=1.39 (MACDDiv) / +7.7% PF=1.32 (BBMeanRev). Deploy with quality pairs only.",
+      "description": "Enabled for paper trading — 90d quality-pair backtest: +9.1% PF=1.39 (MACDDiv) / +7.7% PF=1.32 (BBMeanRev). Deploy with quality pairs only.",
       "backtest_90d": {
         "return_pct": 7.7,
         "win_rate": 47.3,
@@ -33,7 +33,7 @@
       "version": "0.2",
       "date": "2026-04-07",
       "git_sha": "pending",
-      "description": "Add BTC_TREND_WEIGHTS: Uptrend 1.0 \u2014 mean-reversion strategies don't depend on BTC direction, remove the 0.8 penalty during bull markets"
+      "description": "Add BTC_TREND_WEIGHTS: Uptrend 1.0 — mean-reversion strategies don't depend on BTC direction, remove the 0.8 penalty during bull markets"
     }
   ],
   "description": "BB mean reversion + RSI extremes confirmation. Reference: 151 Strategies S4. Thesis: price tends to revert to mean in ranging markets; RSI confirms oversold/overbought.",
@@ -69,5 +69,10 @@
       "HIGH_VOL_CHOP": 1.0,
       "LOW_VOL_COMPRESSION": 1.0
     }
-  }
+  },
+  "active_regimes": [
+    "HIGH_VOL_CHOP",
+    "LOW_VOL_COMPRESSION"
+  ],
+  "regime_params": {}
 }

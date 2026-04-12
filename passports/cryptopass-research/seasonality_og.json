@@ -1,39 +1,47 @@
 {
-    "name": "Pumpradar OG Seasonal",
-    "emoji": "📅",
-    "version": "0.1",
-    "enabled": true,
-    "changelog": [
-        {
-            "version": "0.1",
-            "date": "2026-04-05",
-            "git_sha": "pending",
-            "description": "OG parameters + skip Wed/Fri. Historical edge: +81.1% vs +29.6% baseline.",
-            "backtest_180d": {
-                "return_pct": null,
-                "win_rate": null,
-                "trades": null,
-                "max_dd_pct": null,
-                "note": "Weekday filter applied: SKIP_WEEKDAYS=[2,4]. Need to backtest."
-            }
-        }
-    ],
-    "description": "OG strategy filtered to Mon/Tue/Thu only. Historical +81.1% vs +29.6% full-week baseline.",
-    "config_overrides": {
-        "SKIP_WEEKDAYS": [2, 4],
-        "INDICATOR_WEIGHTS": {
-            "ema_trend": 1.0,
-            "macd_signal": 1.0,
-            "rsi_position": 1.0,
-            "rsi_divergence": 1.0,
-            "bb_position": 1.0,
-            "volume_spike": 1.0,
-            "pressure": 1.0,
-            "candle_direction": 1.0
-        },
-        "USE_ATR_EXITS": false,
-        "USE_TRAILING_STOP": false,
-        "MAX_OPEN_POSITIONS_PER_PASSPORT": 50,
-        "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  "name": "Pumpradar OG Seasonal",
+  "emoji": "📅",
+  "version": "0.2",
+  "enabled": true,
+  "changelog": [
+    {
+      "version": "0.1",
+      "date": "2026-04-05",
+      "git_sha": "pending",
+      "description": "OG parameters + skip Wed/Fri. Historical edge: +81.1% vs +29.6% baseline.",
+      "backtest_180d": {
+        "return_pct": null,
+        "win_rate": null,
+        "trades": null,
+        "max_dd_pct": null,
+        "note": "Weekday filter applied: SKIP_WEEKDAYS=[2,4]. Need to backtest."
+      }
     }
+  ],
+  "description": "OG strategy filtered to Mon/Tue/Thu only. Historical +81.1% vs +29.6% full-week baseline.",
+  "config_overrides": {
+    "SKIP_WEEKDAYS": [
+      2,
+      4
+    ],
+    "INDICATOR_WEIGHTS": {
+      "ema_trend": 1.0,
+      "macd_signal": 1.0,
+      "rsi_position": 1.0,
+      "rsi_divergence": 1.0,
+      "bb_position": 1.0,
+      "volume_spike": 1.0,
+      "pressure": 1.0,
+      "candle_direction": 1.0
+    },
+    "USE_ATR_EXITS": false,
+    "USE_TRAILING_STOP": false,
+    "MAX_OPEN_POSITIONS_PER_PASSPORT": 50,
+    "MAX_OPEN_POSITIONS_PER_SYMBOL": 1
+  },
+  "active_regimes": [
+    "TREND_UP",
+    "HIGH_VOL_CHOP"
+  ],
+  "regime_params": {}
 }

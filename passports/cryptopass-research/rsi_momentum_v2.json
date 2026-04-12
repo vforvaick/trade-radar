@@ -2,7 +2,7 @@
   "name": "RSIMomentumV2",
   "enabled": true,
   "emoji": "📈",
-  "version": "0.1",
+  "version": "0.2",
   "changelog": [
     {
       "version": "0.1",
@@ -47,5 +47,11 @@
       "HIGH_VOL_CHOP": 1.0,
       "LOW_VOL_COMPRESSION": 1.0
     }
-  }
+  },
+  "active_regimes": [
+    "TREND_UP",
+    "TREND_DOWN",
+    "HIGH_VOL_CHOP"
+  ],
+  "regime_params": {}
 }
