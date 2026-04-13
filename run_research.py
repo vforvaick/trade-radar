@@ -55,6 +55,8 @@ def main():
                         help="History days (default: 270)")
     parser.add_argument("--db-path", type=str, default="research_experiments.db",
                         help="Experiment database path")
+    parser.add_argument("--offline", action="store_true",
+                        help="Skip connectivity check and prefetch; use local cache only")
     args = parser.parse_args()
 
     families = None
@@ -64,7 +66,21 @@ def main():
         logger.error("Specify --families or --all")
         sys.exit(1)
 
-    if args.quality_pairs:
+    if args.offline:
+        from bot.research.data_cache import KlineCache
+        cache = KlineCache()
+        stats = cache.stats()
+        if args.quality_pairs:
+            symbols = QUALITY_PAIRS
+        else:
+            symbols = []
+            for name in stats["symbols_cached"]:
+                sym = name.split("_")[0]
+                if sym != "BTCUSDT" and sym not in symbols:
+                    symbols.append(sym)
+            symbols = symbols[:args.pairs]
+        logger.info("OFFLINE mode — using %d cached symbols", len(symbols))
+    elif args.quality_pairs:
         symbols = QUALITY_PAIRS
         logger.info("Using quality pairs (%d): %s", len(symbols), symbols)
     else:
@@ -83,6 +99,7 @@ def main():
     survivors = pipeline.run_full(
         families=families,
         max_per_family=args.max_per_family,
+        offline=args.offline,
     )
     elapsed = time.time() - start
 

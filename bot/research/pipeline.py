@@ -294,25 +294,48 @@ class ResearchPipeline:
         self,
         families: Optional[list[str]] = None,
         max_per_family: Optional[int] = None,
+        offline: bool = False,
     ) -> list[PassportCandidate]:
-        """Run the 2-stage pipeline: generate → Stage 1 → Stage 2."""
-        # Pre-flight connectivity check
-        logger.info("Checking Binance API connectivity before starting pipeline...")
-        wait_for_connectivity(check_interval=30.0, max_wait=7200.0)
+        """Run the 2-stage pipeline: generate → Stage 1 → Stage 2.
 
-        # Create cache and prefetch all data upfront
+        When ``offline=True``, skip connectivity check and prefetch.
+        Uses existing local parquets only.
+        """
         cache = KlineCache()
-        logger.info(
-            "Pre-fetching kline data for %d symbols, %d days...",
-            len(self.symbols), self.days,
-        )
-        max_offset = self._calc_max_walk_forward_offset()
-        cache.prefetch(self.symbols, self.interval, self.days, max_offset_days=max_offset)
-        stats = cache.stats()
-        logger.info(
-            "Cache ready: %d files, %d rows, %.1f MB",
-            stats["files"], stats["total_rows"], stats["disk_size_bytes"] / 1_048_576,
-        )
+
+        if offline:
+            stats = cache.stats()
+            logger.info(
+                "OFFLINE mode: %d cached files, %d rows, %.1f MB",
+                stats["files"], stats["total_rows"],
+                stats["disk_size_bytes"] / 1_048_576,
+            )
+            cached_symbols = [s.split("_")[0] for s in stats["symbols_cached"]]
+            if "BTCUSDT" not in cached_symbols:
+                raise RuntimeError(
+                    "Offline mode requires BTCUSDT parquet in cache. "
+                    "Run sync_research_data.sh first."
+                )
+            if stats["files"] < 5:
+                raise RuntimeError(
+                    f"Offline mode: too few cached files ({stats['files']}). "
+                    "Need at least 5. Run sync_research_data.sh first."
+                )
+        else:
+            logger.info("Checking Binance API connectivity before starting pipeline...")
+            wait_for_connectivity(check_interval=30.0, max_wait=7200.0)
+
+            logger.info(
+                "Pre-fetching kline data for %d symbols, %d days...",
+                len(self.symbols), self.days,
+            )
+            max_offset = self._calc_max_walk_forward_offset()
+            cache.prefetch(self.symbols, self.interval, self.days, max_offset_days=max_offset)
+            stats = cache.stats()
+            logger.info(
+                "Cache ready: %d files, %d rows, %.1f MB",
+                stats["files"], stats["total_rows"], stats["disk_size_bytes"] / 1_048_576,
+            )
 
         candidates = self.generate_candidates(families, max_per_family)
         stage1_survivors = self.run_stage1(candidates, kline_provider=cache.get)
@@ -335,25 +358,48 @@ class ResearchPipeline:
         families: Optional[list[str]] = None,
         max_per_family: Optional[int] = None,
         mc_iterations: int = 50,
+        offline: bool = False,
     ) -> Stage4Result:
-        """Run the complete 4-stage pipeline: generate → S1 → S2 → S3 → S4."""
-        # Pre-flight connectivity check
-        logger.info("Checking Binance API connectivity before starting pipeline...")
-        wait_for_connectivity(check_interval=30.0, max_wait=7200.0)
+        """Run the complete 4-stage pipeline: generate → S1 → S2 → S3 → S4.
 
-        # Create cache and prefetch all data upfront
+        When ``offline=True``, skip connectivity check and prefetch.
+        Uses existing local parquets only.
+        """
         cache = KlineCache()
-        logger.info(
-            "Pre-fetching kline data for %d symbols, %d days...",
-            len(self.symbols), self.days,
-        )
-        max_offset = self._calc_max_walk_forward_offset()
-        cache.prefetch(self.symbols, self.interval, self.days, max_offset_days=max_offset)
-        stats = cache.stats()
-        logger.info(
-            "Cache ready: %d files, %d rows, %.1f MB",
-            stats["files"], stats["total_rows"], stats["disk_size_bytes"] / 1_048_576,
-        )
+
+        if offline:
+            stats = cache.stats()
+            logger.info(
+                "OFFLINE mode: %d cached files, %d rows, %.1f MB",
+                stats["files"], stats["total_rows"],
+                stats["disk_size_bytes"] / 1_048_576,
+            )
+            cached_symbols = [s.split("_")[0] for s in stats["symbols_cached"]]
+            if "BTCUSDT" not in cached_symbols:
+                raise RuntimeError(
+                    "Offline mode requires BTCUSDT parquet in cache. "
+                    "Run sync_research_data.sh first."
+                )
+            if stats["files"] < 5:
+                raise RuntimeError(
+                    f"Offline mode: too few cached files ({stats['files']}). "
+                    "Need at least 5. Run sync_research_data.sh first."
+                )
+        else:
+            logger.info("Checking Binance API connectivity before starting pipeline...")
+            wait_for_connectivity(check_interval=30.0, max_wait=7200.0)
+
+            logger.info(
+                "Pre-fetching kline data for %d symbols, %d days...",
+                len(self.symbols), self.days,
+            )
+            max_offset = self._calc_max_walk_forward_offset()
+            cache.prefetch(self.symbols, self.interval, self.days, max_offset_days=max_offset)
+            stats = cache.stats()
+            logger.info(
+                "Cache ready: %d files, %d rows, %.1f MB",
+                stats["files"], stats["total_rows"], stats["disk_size_bytes"] / 1_048_576,
+            )
 
         candidates = self.generate_candidates(families, max_per_family)
         stage1_survivors = self.run_stage1(candidates, kline_provider=cache.get)
