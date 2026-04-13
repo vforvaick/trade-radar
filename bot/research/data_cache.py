@@ -225,3 +225,26 @@ class KlineCache:
             "staleness_seconds": staleness_seconds,
             "memory_loaded": [f"{s}_{i}" for s, i in self._memory.keys()],
         }
+
+    def cleanup(self, max_age_days: int = 7) -> list[str]:
+        """Remove parquet files older than max_age_days.
+
+        Also clears memory cache entries for removed files.
+        Returns list of removed file paths.
+        """
+        cutoff = time.time() - max_age_days * 86400
+        removed: list[str] = []
+
+        for path in self.cache_dir.glob("*.parquet"):
+            if path.stat().st_mtime < cutoff:
+                stem = path.stem
+                parts = stem.rsplit("_", 1)
+                if len(parts) == 2:
+                    self._memory.pop((parts[0], parts[1]), None)
+
+                logger.info("Removing stale parquet: %s (age: %.0f days)",
+                            path.name, (time.time() - path.stat().st_mtime) / 86400)
+                path.unlink()
+                removed.append(str(path))
+
+        return removed

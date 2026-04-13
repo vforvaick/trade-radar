@@ -325,3 +325,61 @@ class TestStats:
         assert s["disk_size_bytes"] > 0
         assert s["staleness_seconds"] is not None
         assert s["staleness_seconds"] >= 0
+
+
+# ---------------------------------------------------------------------------
+# Cleanup tests
+# ---------------------------------------------------------------------------
+
+class TestCleanup:
+    def test_cleanup_removes_old_files(self, cache, cache_dir):
+        """Parquets older than max_age_days are deleted."""
+        base_ms = int(pd.Timestamp("2024-01-01").timestamp() * 1000)
+        df = _make_klines(base_ms, 24)
+
+        old_path = cache_dir / "OLDUSDT_1h.parquet"
+        df.to_parquet(old_path, index=False)
+        old_time = time.time() - 8 * 86400  # 8 days ago
+        os.utime(old_path, (old_time, old_time))
+
+        fresh_path = cache_dir / "FRESHUSDT_1h.parquet"
+        df.to_parquet(fresh_path, index=False)
+        # fresh_path mtime is now (just created)
+
+        removed = cache.cleanup(max_age_days=7)
+
+        assert not old_path.exists()
+        assert fresh_path.exists()
+        assert len(removed) == 1
+        assert "OLDUSDT_1h.parquet" in removed[0]
+
+    def test_cleanup_returns_empty_when_nothing_stale(self, cache, cache_dir):
+        """No files removed if all are fresh."""
+        base_ms = int(pd.Timestamp("2024-01-01").timestamp() * 1000)
+        df = _make_klines(base_ms, 24)
+        (cache_dir / "ETHUSDT_1h.parquet").write_bytes(b"")
+        df.to_parquet(cache_dir / "ETHUSDT_1h.parquet", index=False)
+
+        removed = cache.cleanup(max_age_days=7)
+        assert removed == []
+
+    def test_cleanup_handles_empty_cache_dir(self, cache):
+        """No error when cache dir has no parquets."""
+        removed = cache.cleanup(max_age_days=7)
+        assert removed == []
+
+    def test_cleanup_clears_memory_for_removed(self, cache, cache_dir):
+        """Memory cache entries for cleaned-up files are also purged."""
+        base_ms = int(pd.Timestamp("2024-01-01").timestamp() * 1000)
+        df = _make_klines(base_ms, 24)
+        path = cache_dir / "STALEUSDT_1h.parquet"
+        df.to_parquet(path, index=False)
+        # Load into memory
+        cache._memory[("STALEUSDT", "1h")] = df
+
+        old_time = time.time() - 10 * 86400
+        os.utime(path, (old_time, old_time))
+
+        cache.cleanup(max_age_days=7)
+
+        assert ("STALEUSDT", "1h") not in cache._memory
