@@ -1738,4 +1738,45 @@ PressureReader is the ONLY passport consistently profitable live. Profile:
 
 **Expected impact:** Fewer losing trades in adverse regimes, same profitable trades in favorable regimes. Net positive Sharpe ratio improvement.
 
-**Validation:** 118 parametrized tests ensure design rules are enforced (test_regime_params_values.py). 104 schema tests validate JSON structure (test_regime_gating_integration.py).
+**Validation:** 118 parametrized tests ensure design rules are enforced (test_regime_params_values.py). 104 schema tests validate JSON structure (test_regime_gating_integration.py). 50 enforcement tests ensure all dangerous-regime params exist (TestDangerousRegimeParamsMustExist).
+
+### §22b Phase 2 Backtest Validation (Session 11f continued)
+
+**Method:** 90-day backtest, 5 meme coin pairs, applied regime overlay uniformly to measure isolated effect of each regime's parameter changes.
+
+#### TREND_DOWN overlay (SHORT_ONLY + conf+4, risk 0.3%, max_pos 15)
+
+| Passport | Baseline | With Overlay | **Δ Return** | Baseline DD | Overlay DD | **Δ DD** |
+|---|---|---|---|---|---|---|
+| **Momentum** | -11.8% | **+7.4%** | **+19.2pp** 🔥 | 27.9% | 7.0% | **-20.9pp** |
+| **DualMA** | -6.4% | **+8.5%** | **+15.0pp** 🔥 | 32.0% | 14.2% | **-17.8pp** |
+| **HiddenGem** | -9.0% | **+4.6%** | **+13.6pp** 🔥 | 25.6% | 11.6% | **-14.0pp** |
+
+Win rate: Momentum 36→47%, DualMA 34→39%, HiddenGem 30→38%.
+
+**Root cause:** DIRECTION_BIAS = SHORT_ONLY prevents trend-followers from going LONG during BTC downtrend. This eliminates the majority of losing trades (counter-trend LONGs in bearish market). Combined with reduced risk sizing, the result is dramatically better risk-adjusted returns.
+
+#### HIGH_VOL_CHOP overlay (conf+4, risk 0.3%, max_pos 10)
+
+| Passport | Baseline | With Overlay | Δ Return | Baseline DD | Overlay DD | **Δ DD** |
+|---|---|---|---|---|---|---|
+| **BBMeanRev** | -0.4% | -0.1% | +0.3% | 15.4% | 9.5% | **-5.9pp** |
+| **BalancedSelective** | 4.3% | 2.9% | -1.4% | 19.4% | 12.1% | **-7.3pp** |
+
+**Root cause:** Position sizing reduction works — DD cut 38-39%. Slight return reduction is expected tradeoff (less risk = less upside). Trade count and win rate identical — params only reduce exposure, not signal quality.
+
+#### Key Conclusions
+
+1. **DIRECTION_BIAS is the killer feature** — single biggest improvement. Preventing counter-trend trades during bear markets flipped 3 passports from negative to positive returns.
+2. **Risk reduction in choppy markets works as designed** — protects capital without killing signals.
+3. **Phase 2 thesis validated:** thesis-driven params (not curve-fit) produce measurable improvement.
+
+⚠️ **Caveat:** Test applies overlay uniformly across all 90 days. In live trading, overlay only activates during detected regime periods. Real impact is proportional to time spent in each regime.
+
+### §22c Logging Fix (Session 11f)
+
+**Bug:** `logger.info("applying regime_params...")` in `passport_runner.py` was silently dropped — no `logging.basicConfig()` was configured in `main_multi.py`. All Python `logging` module output was invisible in journalctl.
+
+**Fix:** Added `logging.basicConfig(level=logging.INFO, format=..., stream=sys.stdout)` at top of `bot/main_multi.py`. Commit `d3f65bb`.
+
+**Impact:** regime_params application, warnings, and errors now visible in VPS logs via `journalctl -u cryptopass.service`.
