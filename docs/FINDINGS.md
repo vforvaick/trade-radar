@@ -1833,3 +1833,45 @@ Win rate: Momentum 36→47%, DualMA 34→39%, HiddenGem 30→38%.
 - Run Stage 3+4 on the 17 survivors to filter for robustness and portfolio orthogonality
 - Top candidates for promotion: rsi_bb_reversal (consistency), hidden_gem_variant conf=70 (highest PF in family), pressure_flow_short conf=65 (SHORT_ONLY niche)
 - Consider running a fresh pipeline now that regime_params and all 12 bug fixes are deployed
+
+---
+
+### §22e — VPS Prefetch + Local Research Infrastructure (Session 12, Apr 14)
+
+**Problem:** Research pipeline requires Binance API access. MacBook needs VPN for Binance — unreliable, often disconnects mid-run. VPS always has Binance access but CPU/RAM limited for 10+ hour research runs.
+
+**Solution:** Split data fetch (VPS) from compute (MacBook):
+1. `scripts/prefetch_klines_vps.py` — standalone VPS script, prefetches parquets with retry logic
+2. `scripts/sync_research_data.sh` — SSH prefetch on VPS → SCP parquets to local
+3. `scripts/research_local.sh` — one-command sync + offline research with nohup
+4. `run_research.py --offline` — skip connectivity check, use local cache only
+
+**Implementation (6 tasks, 5 commits):**
+
+| Component | What | Tests |
+|---|---|---|
+| `KlineCache.cleanup()` | Remove parquets >7d old, purge memory cache | 4 tests |
+| `fetch_klines()` retry | Exponential backoff for 429/418/connection errors, 1s-60s cap, 5 retries | 5 tests |
+| `--offline` pipeline flag | Skip prefetch, validate BTCUSDT + min 5 files | 5 tests |
+| VPS prefetch script | Standalone prefetcher with cleanup + summary | E2E verified |
+| Sync + convenience scripts | SSH + SCP + nohup orchestration | E2E verified |
+
+**E2E Test Results:**
+- VPS prefetch: 10 quality pairs × 360d, 86,350 rows, 3.2 MB, 1.2 min
+- SCP sync: all 10 parquets transferred successfully
+- Offline research: pipeline starts with zero API calls, uses cached data
+
+**Workflow:**
+```bash
+# Full workflow (prefetch + sync + research)
+./scripts/research_local.sh
+
+# Just sync existing VPS data + research
+./scripts/sync_research_data.sh --sync-only
+uv run python run_research.py --offline --all --max-per-family 5 --days 180
+
+# Just research (data already synced)
+./scripts/research_local.sh --skip-sync
+```
+
+**Test suite:** 687 passed, 30 skipped (14 new tests added)
