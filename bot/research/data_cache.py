@@ -158,6 +158,7 @@ class KlineCache:
         start_ms: int,
         end_ms: int,
         use_cache: bool = True,
+        offline: bool = False,
     ) -> pd.DataFrame:
         """
         Return klines for the requested range from the in-memory cache.
@@ -167,8 +168,13 @@ class KlineCache:
         - the symbol is not cached
         - the resulting slice is empty
         - the parquet file is corrupt
+
+        When ``offline=True``, raises ``RuntimeError`` instead of falling back
+        to the live API.
         """
         if not use_cache:
+            if offline:
+                raise RuntimeError(f"Offline mode: cache disabled for {symbol} {interval} but API fallback not allowed")
             return fetch_klines_range(symbol, interval, start_ms, end_ms, use_cache=False)
 
         # Load into memory on first access
@@ -176,6 +182,8 @@ class KlineCache:
         if key not in self._memory:
             df_disk = self._load_parquet(symbol, interval)
             if df_disk is None:
+                if offline:
+                    raise RuntimeError(f"Offline mode: no cached data for {symbol} {interval}")
                 logger.warning("Cache miss for %s %s — falling back to API", symbol, interval)
                 return fetch_klines_range(symbol, interval, start_ms, end_ms)
             self._memory[key] = df_disk
@@ -186,6 +194,11 @@ class KlineCache:
         sliced = df[(df["timestamp"] >= start_ts) & (df["timestamp"] < end_ts)].copy()
 
         if sliced.empty:
+            if offline:
+                raise RuntimeError(
+                    f"Offline mode: empty slice for {symbol} {interval} "
+                    f"[{start_ts} – {end_ts}]"
+                )
             logger.debug("Cache miss (empty slice) for %s — falling back to API", symbol)
             return fetch_klines_range(symbol, interval, start_ms, end_ms)
 

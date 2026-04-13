@@ -15,13 +15,25 @@ SKIP_SYNC=false
 SYNC_ARGS=""
 RESEARCH_ARGS="--all --max-per-family 5 --days 180"
 
-# Parse arguments
+# Parse arguments — forward --days/--pairs/--quality-pairs to BOTH sync and research
+PREV_ARG=""
 for arg in "$@"; do
     case "$arg" in
         --skip-sync) SKIP_SYNC=true ;;
-        --days|--pairs|--quality-pairs|--families|--max-per-family|--interval|--db-path)
-            RESEARCH_ARGS="$RESEARCH_ARGS $arg" ;;
-        *) RESEARCH_ARGS="$RESEARCH_ARGS $arg" ;;
+        --days|--pairs|--quality-pairs)
+            SYNC_ARGS="$SYNC_ARGS $arg"
+            RESEARCH_ARGS="$RESEARCH_ARGS $arg"
+            PREV_ARG="shared" ;;
+        --families|--max-per-family|--interval|--db-path)
+            RESEARCH_ARGS="$RESEARCH_ARGS $arg"
+            PREV_ARG="research" ;;
+        *)
+            # Route the value following a flag to the right target(s)
+            case "$PREV_ARG" in
+                shared) SYNC_ARGS="$SYNC_ARGS $arg"; RESEARCH_ARGS="$RESEARCH_ARGS $arg" ;;
+                *) RESEARCH_ARGS="$RESEARCH_ARGS $arg" ;;
+            esac
+            PREV_ARG="" ;;
     esac
 done
 

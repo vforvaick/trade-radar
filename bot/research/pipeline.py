@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from functools import partial
 from typing import Optional
 
 import numpy as np
@@ -338,8 +339,9 @@ class ResearchPipeline:
             )
 
         candidates = self.generate_candidates(families, max_per_family)
-        stage1_survivors = self.run_stage1(candidates, kline_provider=cache.get)
-        stage2_survivors = self.run_stage2(stage1_survivors, kline_provider=cache.get)
+        provider = partial(cache.get, offline=True) if offline else cache.get
+        stage1_survivors = self.run_stage1(candidates, kline_provider=provider)
+        stage2_survivors = self.run_stage2(stage1_survivors, kline_provider=provider)
 
         self.tracker.finish_experiment(
             self.run_id,
@@ -402,10 +404,11 @@ class ResearchPipeline:
             )
 
         candidates = self.generate_candidates(families, max_per_family)
-        stage1_survivors = self.run_stage1(candidates, kline_provider=cache.get)
-        stage2_survivors = self.run_stage2(stage1_survivors, kline_provider=cache.get)
-        stage3_survivors = self.run_stage3(stage2_survivors, mc_iterations, kline_provider=cache.get)
-        result = self.run_stage4(stage3_survivors, kline_provider=cache.get)
+        provider = partial(cache.get, offline=True) if offline else cache.get
+        stage1_survivors = self.run_stage1(candidates, kline_provider=provider)
+        stage2_survivors = self.run_stage2(stage1_survivors, kline_provider=provider)
+        stage3_survivors = self.run_stage3(stage2_survivors, mc_iterations, kline_provider=provider)
+        result = self.run_stage4(stage3_survivors, kline_provider=provider)
 
         self.tracker.finish_experiment(
             self.run_id,

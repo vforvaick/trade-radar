@@ -303,6 +303,27 @@ class TestGet:
         assert ("ETHUSDT", "1h") in cache._memory
         assert ("ETHUSDT", "4h") in cache._memory
 
+    @patch("bot.research.data_cache.fetch_klines_range")
+    def test_get_offline_raises_on_miss(self, mock_fetch, cache):
+        """Offline mode raises RuntimeError instead of API fallback on cache miss."""
+        with pytest.raises(RuntimeError, match="Offline mode: no cached data"):
+            cache.get("NOPE", "1h", 0, 100000, offline=True)
+        mock_fetch.assert_not_called()
+
+    @patch("bot.research.data_cache.fetch_klines_range")
+    def test_get_offline_raises_on_empty_slice(self, mock_fetch, cache, cache_dir):
+        """Offline mode raises RuntimeError on empty slice."""
+        base_ms = int(pd.Timestamp("2024-06-01").timestamp() * 1000)
+        df = _make_klines(base_ms, 24)
+        df.to_parquet(cache_dir / "ETHUSDT_1h.parquet", index=False)
+
+        start_ms = base_ms - 100 * _MS_PER_HOUR
+        end_ms = base_ms - 50 * _MS_PER_HOUR
+
+        with pytest.raises(RuntimeError, match="Offline mode: empty slice"):
+            cache.get("ETHUSDT", "1h", start_ms, end_ms, offline=True)
+        mock_fetch.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # Stats tests

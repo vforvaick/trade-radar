@@ -20,3 +20,4 @@ research_experiments.db
 1000
 bt3_cached.py
 data/research_cache/
+state_monitor_cache.db
