@@ -26,11 +26,20 @@ def _verify_tls() -> bool:
     return raw not in {"0", "false", "no", "off"}
 
 
+_RATE_LIMIT_CODES = {429, 418}
+_MAX_RETRIES = 5
+_BASE_BACKOFF = 1.0  # seconds
+_MAX_BACKOFF = 60.0
+
+
 def fetch_klines(symbol: str, interval: str = "1h",
                  limit: int = 500, start_time: int = None,
                  end_time: int = None, use_cache: bool = True) -> pd.DataFrame:
     """
     Fetch OHLCV klines from Binance Futures.
+
+    Retries on rate limits (429/418) and connection errors with
+    exponential backoff: 1s, 2s, 4s, 8s, 16s (capped at 60s).
 
     Returns DataFrame with columns:
         timestamp, open, high, low, close, volume
@@ -52,8 +61,41 @@ def fetch_klines(symbol: str, interval: str = "1h",
     if end_time:
         params["endTime"] = end_time
 
-    resp = requests.get(url, params=params, verify=_verify_tls(), timeout=15)
-    resp.raise_for_status()
+    last_exc = None
+    for attempt in range(_MAX_RETRIES + 1):
+        try:
+            resp = requests.get(url, params=params, verify=_verify_tls(), timeout=15)
+            if resp.status_code in _RATE_LIMIT_CODES:
+                delay = min(_BASE_BACKOFF * (2 ** attempt), _MAX_BACKOFF)
+                logger.warning(
+                    "Rate limited (%d) fetching %s — retry %d/%d in %.0fs",
+                    resp.status_code, symbol, attempt + 1, _MAX_RETRIES, delay,
+                )
+                if attempt < _MAX_RETRIES:
+                    time.sleep(delay)
+                    continue
+                resp.raise_for_status()  # final attempt, raise
+            resp.raise_for_status()
+            break
+        except requests.exceptions.HTTPError:
+            raise  # non-rate-limit HTTP errors propagate immediately
+        except (requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout,
+                ConnectionError, OSError) as e:
+            last_exc = e
+            if attempt < _MAX_RETRIES:
+                delay = min(_BASE_BACKOFF * (2 ** attempt), _MAX_BACKOFF)
+                logger.warning(
+                    "Connection error fetching %s: %s — retry %d/%d in %.0fs",
+                    symbol, e, attempt + 1, _MAX_RETRIES, delay,
+                )
+                time.sleep(delay)
+                continue
+            raise
+    else:
+        if last_exc:
+            raise last_exc
+
     data = resp.json()
 
     if isinstance(data, dict) and "error" in data:
