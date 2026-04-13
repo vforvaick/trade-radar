@@ -1780,3 +1780,56 @@ Win rate: Momentum 36→47%, DualMA 34→39%, HiddenGem 30→38%.
 **Fix:** Added `logging.basicConfig(level=logging.INFO, format=..., stream=sys.stdout)` at top of `bot/main_multi.py`. Commit `d3f65bb`.
 
 **Impact:** regime_params application, warnings, and errors now visible in VPS logs via `journalctl -u cryptopass.service`.
+
+### §22d Phase 5 Research Pipeline Results (Session 11f)
+
+**Run:** `exp-2026-04-12-093633` — 117 generated → 31 Stage 1 → **17 Stage 2 survivors** (562.6 min, MacBook local).
+
+**Command:** `uv run python run_research.py --all --max-per-family 5 --days 180`
+
+**Note:** This was the first full research run after 12 bug fixes (Session 9 calculation audit). All PnL formulas, leverage, fees, and TP cascade math are now correct. Previous research runs (exp-2026-04-07, exp-2026-04-09) used buggy math and their results are not comparable.
+
+#### 17 Stage 2 Survivors (ranked by Sharpe)
+
+| Rank | Family | Conf | Sharpe | PF | Med Ret | +Folds | Indicators |
+|---|---|---|---|---|---|---|---|
+| 1 | hidden_gem_variant | 55 | **2.06** | 1.025 | +2.4% | 3/4 | EMA + BB + Volume |
+| 2 | hidden_gem_variant | 60 | **2.06** | 1.025 | +2.4% | 3/4 | EMA + BB + Volume |
+| 3 | hidden_gem_variant | 65 | **2.02** | 1.025 | +2.4% | 3/4 | EMA + BB + Volume |
+| 4 | hidden_gem_variant | 70 | 1.93 | 1.098 | +3.5% | 3/4 | EMA + BB + Volume |
+| 5 | rsi_momentum | 50 | 1.75 | 1.002 | +1.1% | 2/4 | EMA + RSI + RSI Div |
+| 6 | rsi_momentum | 55 | 1.75 | 0.973 | +0.0% | 2/4 | EMA + RSI + RSI Div |
+| 7 | hidden_gem_variant | 55 | 1.67 | 1.055 | +3.9% | 3/4 | EMA + BB + Volume (vol=2.0) |
+| 8 | rsi_momentum | 65 | 1.44 | 1.134 | +0.9% | 2/4 | EMA + RSI + RSI Div |
+| 9 | rsi_momentum | 50 | 1.30 | 1.005 | +1.4% | 2/4 | EMA + RSI + RSI Div (vol=2.0) |
+| 10 | rsi_momentum | 60 | 1.29 | 1.027 | +1.9% | 3/4 | EMA + RSI + RSI Div |
+| 11 | rsi_bb_reversal | 60 | 1.12 | **1.195** | +1.2% | **4/4** | RSI + BB + Volume |
+| 12 | rsi_bb_reversal | 55 | 1.12 | **1.195** | +1.2% | **4/4** | RSI + BB + Volume |
+| 13 | rsi_bb_reversal | 65 | 0.89 | **1.368** | +1.8% | **4/4** | RSI + BB + Volume |
+| 14 | pressure_flow_short | 65 | 0.62 | **1.545** | +0.9% | 2/4 | EMA + Pressure + Candle (SHORT_ONLY) |
+| 15 | pressure_flow_short | 65 | 0.62 | **1.545** | +0.9% | 2/4 | EMA + Pressure + Candle (SHORT_ONLY) |
+| 16 | pressure_flow_short | 60 | 0.60 | **1.439** | +0.7% | 2/4 | EMA + Pressure + Candle (SHORT_ONLY) |
+| 17 | pressure_flow_short | 60 | 0.60 | **1.439** | +0.7% | 2/4 | EMA + Pressure + Candle (SHORT_ONLY) |
+
+#### Family Summary
+
+| Family | Variants | Best Sharpe | Avg Sharpe | Avg PF | Avg Med Ret | Assessment |
+|---|---|---|---|---|---|---|
+| **hidden_gem_variant** | 5 | **2.06** | 1.95 | 1.045 | +2.9% | 🟢 Best risk-adj, but PF barely >1. BB(18)+EMA(8/45)+Vol |
+| **rsi_momentum** | 5 | 1.75 | 1.51 | 1.028 | +1.1% | 🟡 High Sharpe but low PF. Only 2/4 folds positive |
+| **rsi_bb_reversal** | 3 | 1.12 | 1.04 | **1.253** | +1.4% | 🟢 **All 4 folds positive**. Best consistency. BB(15,1.5σ)+RSI(10) |
+| **pressure_flow_short** | 4 | 0.62 | 0.61 | **1.492** | +0.8% | 🟡 Highest PF but SHORT_ONLY, low Sharpe. Niche downtrend strategy |
+
+#### Key Insights
+
+1. **Selectivity Principle confirmed again** — all 17 survivors use exactly 3 active indicators. Zero survivors use 4+ indicators.
+2. **hidden_gem_variant dominates Sharpe** but has marginal PF (1.02-1.10). High Sharpe comes from low volatility rather than large returns.
+3. **rsi_bb_reversal is the most consistent** — only family with ALL 4 regime folds positive. Lower Sharpe but higher PF (1.2-1.4). This is the mean-reversion counterpart we've been looking for.
+4. **pressure_flow_short validates PressureReader thesis** — SHORT_ONLY pressure-based strategies work. PF 1.4-1.5 is excellent. Pairs well with LONG_ONLY trend-followers.
+5. **Stage 3 (Monte Carlo) and Stage 4 (orthogonality) were NOT run** — these survivors need robustness testing before promotion to paper trading.
+
+#### Next Steps
+
+- Run Stage 3+4 on the 17 survivors to filter for robustness and portfolio orthogonality
+- Top candidates for promotion: rsi_bb_reversal (consistency), hidden_gem_variant conf=70 (highest PF in family), pressure_flow_short conf=65 (SHORT_ONLY niche)
+- Consider running a fresh pipeline now that regime_params and all 12 bug fixes are deployed
