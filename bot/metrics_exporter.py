@@ -11,7 +11,10 @@ import time
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from bot.sqlite_utils import sqlite_connection
+try:
+    from bot.sqlite_utils import sqlite_connection
+except ModuleNotFoundError:  # Script mode: `python bot/metrics_exporter.py`
+    from sqlite_utils import sqlite_connection
 
 
 DB_PATH = os.environ.get("CRYPTOPASS_STATE_DB", "state.db")
