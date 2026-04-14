@@ -2,7 +2,66 @@
 
 > Living document. Updated after every iteration cycle.
 > Purpose: avoid repeating mistakes, build on proven insights, explore new lineages with context.
-> Last updated: 2026-04-12 (Session 11e — §21 Per-passport regime optimization)
+> Last updated: 2026-04-14 (Session 12 — §22 Full Passport Expansion)
+
+---
+
+## §22 — Session 12: Full Passport Expansion (2026-04-14)
+
+### What Changed
+
+1. **Scorer registry refactor (`bot/scorer.py`)** — Rewrote from hardcoded 10 indicators to a `INDICATOR_REGISTRY` dict pattern supporting 23 indicators. Extended indicators (donchian, OBV, stochastic, williams, supertrend, keltner, vwap, pivot_points, ADX, CCI, CMF, ichimoku, dual_ma) default to weight=0.0 and are opt-in via passport `config_overrides`. Existing 10-indicator passports work without any changes — fully backward-compatible.
+
+2. **Extended scorer cleanup (`bot/research/extended_scorer.py`)** — Now imports `INDICATOR_REGISTRY` directly from `bot.scorer` instead of maintaining its own duplicate registry. Eliminates dual-registry drift risk permanently.
+
+3. **Re-enabled 17 disabled passports** — All passports disabled in the triage commit (9f8b289) are now re-enabled. Safety net: confidence cap (80), regime gating, and position limits prevent runaway losses. Pumpradar re-enabled: HiddenGem, Sniper, VolumeKing, Momentum, Dynamic, Reversal (6). Research re-enabled: BalancedSelective, BollingerBreakout v1/v2/v3, DonchianBreakout, DualMA, MinimalEdge, OBVTrend, PureTrend, TrendConfirm, TrendMomentum (11).
+
+4. **12 research winners promoted** — Phase 4 walk-forward survivors promoted to paper trading. New passports: RSIMomentumGen2, PressureFlowShort, RSIBBReversal, HiddenGemGen2, PivotBounce, StochReversal, VWAPDeviation, WilliamsReversal, SupertrendFollow, DonchianBreakoutGen2, KeltnerBreakout, OBVTrendGen2.
+
+5. **7 Gen2 enhanced forks** — Big-loss passports forked into enhanced variants applying the selectivity principle. Each Gen2 has a documented thesis change from its parent: DynamicGen2 (8→3 indicators), MomentumGen2 (8→3, ema+rsi+pressure), BollingerBreakoutGen4 (raised threshold + regime gate), TrendMomentumGen2 (dropped MACD), DualMAGen2 (added BB context), MinimalEdgeGen2 (added candle timing), PureTrendGen2 (added supertrend).
+
+### Selectivity Principle Preserved
+
+All 19 new passports use 2–3 active indicators. No exceptions. Gen2 forks explicitly document their indicator reduction as the thesis change. The selectivity principle remains the single most important rule — see §2.
+
+### Key Technical Decisions
+
+| Decision | Rationale |
+|---|---|
+| Registry pattern over hardcoded dict | Enables opt-in extended indicators without changing scorer logic for existing passports |
+| Extended scorer imports from production registry | Single source of truth — no drift between research and live scoring |
+| Re-enable all 17 disabled passports | Confidence cap (80) + regime gating + CTP make re-enabling safe. Triage was too aggressive. |
+| Gen2 forks as separate passports | Audit trail preserved; parents can be compared live vs Gen2 over same time window |
+| `active_regimes: null` for research winners | Research didn't optimize per-regime; null = scan all regimes (safest default) |
+
+### Test Suite Growth
+
+| State | Count |
+|---|---|
+| Pre-expansion (Session 11f) | 697 tests |
+| Post-expansion (Session 12) | **889 passed, 60 skipped, 0 failed** |
+| Delta | +192 tests |
+
+New test coverage: passport schema validation for 19 new passports, registry pattern compatibility, extended_scorer import chain, scorer backward-compat with old 8-key indicator weight dicts.
+
+### Risk Assessment
+
+48→45 active passports is aggressive. Three layers of safety:
+1. **Regime gating** — Gen2 forks only scan in TREND_UP/TREND_DOWN; ~40% of market time ignored
+2. **Confidence cap (80)** — Prevents overconfident entries after INDICATOR_REGISTRY extended scoring
+3. **Position limits** — MAX_OPEN_POSITIONS_PER_SYMBOL=1 caps per-symbol overexposure
+
+Research winners with low/zero median return (OBVTrendGen2 +0.0%, SupertrendFollow +0.9%) are included for diversification and Sharpe contribution — very high Sharpe (2.06, 2.21) means consistent small gains over erratic big ones.
+
+### Session 12 Commits
+
+| SHA | Change |
+|---|---|
+| `9966e9d` | refactor: scorer.py registry pattern with 23 indicators |
+| `2f9871a` | refactor: extended_scorer imports from production registry |
+| `adbfc2c` | feat: re-enable all 17 disabled passports |
+| `91ad436` | feat: promote 12 research winners + fork 7 big-loss passports |
+| `b9a5141` | fix: add missing regime_params safety params to Gen2 passports |
 
 ---
 

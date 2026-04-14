@@ -1,7 +1,8 @@
 # Passport Version Registry
 
 > **Session 7 (2026-04-06):** All passports reset to v1.0 fresh start under Cryptopass.
-> Directory: `passports/pumpradar/` (7 OG) + `passports/cryptopass-research/` (15 custom)
+> **Session 12 (2026-04-14):** 19 new passports added (12 research winners + 7 Gen2 forks). 17 disabled passports re-enabled. Total: 45 active passports.
+> Directory: `passports/pumpradar/` (7 OG) + `passports/cryptopass-research/` (38 custom)
 > Initial equity: $500 per passport. PnL now includes leverage multiplier + trading fees.
 
 > Auto-maintained alongside passport JSON configs.
@@ -202,7 +203,252 @@ All 26 passports now have thesis-driven `regime_params` for per-regime behavior 
 
 ---
 
-## Rollback Instructions
+## Session 12 — Full Passport Expansion (2026-04-14)
+
+### Re-enablement of 17 Disabled Passports
+
+All passports disabled by triage commit `9f8b289` are now re-enabled. Safety net: confidence cap (80) + regime gating + `MAX_OPEN_POSITIONS_PER_SYMBOL=1`.
+
+| Passport | Category | Re-enable Rationale |
+|----------|----------|---------------------|
+| Pumpradar HiddenGem | Trend-Following | Confidence cap prevents overtrade; regime gate filters choppy regime |
+| Pumpradar Sniper | Trend-Following | Same as HiddenGem |
+| Pumpradar VolumeKing | Trend-Following | Same as HiddenGem |
+| Pumpradar Momentum | Trend-Following | v0.2 improved -11.0% (vs v0.1 -21.8%); acceptable risk |
+| Pumpradar Dynamic | Trend-Following | v0.2 improved -11.1% (vs v0.1 -27.1%); acceptable risk |
+| Pumpradar Reversal | Mean-Reversion | v0.4 has regime gating + threshold 85; controlled exposure |
+| BalancedSelective | Hybrid | Previously stable; regime gating added |
+| BollingerBreakout | Breakout | Phase 4 champion: +23.3% 180d walk-forward |
+| BollingerBreakoutV2 | Breakout | Sharpe=2.70; different threshold variant |
+| BollingerBreakoutV3 | Breakout | Sharpe=1.22; different threshold variant |
+| DonchianBreakout | Breakout | Borderline 90d: +0.56%, PF=1.016; regime gate provides downside protection |
+| DualMA | Trend-Following | Gen2 fork provides control comparison; re-enable both |
+| MinimalEdge | Trend-Following | Gen2 fork provides control comparison; re-enable both |
+| OBVTrend | Trend-Following | Gen2 fork provides control comparison; re-enable both |
+| PureTrend | Trend-Following | Gen2 fork provides control comparison; re-enable both |
+| TrendConfirm | Trend-Following | Regime-gated; acceptable risk |
+| TrendMomentum | Trend-Following | Gen2 fork provides control comparison; re-enable both |
+
+### New Passports — 12 Research Winners
+
+Phase 4 walk-forward (180d, quality pairs) survivors promoted to paper trading. All use 2–3 active indicators (selectivity principle preserved).
+
+#### 📈 RSIMomentumGen2 (`rsi_momentum_gen2.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Phase 4 winner. RSI position(2.0) + RSI divergence(1.5) + EMA context(0.5). 180d median: +6.6%, PF=1.51, Sharpe=1.52. Folds: [+10.2%, +3.0%]. Active regimes: null (all). Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Research Phase 4, `rsi_momentum` family
+- **Indicators:** rsi_position(2.0), rsi_divergence(1.5), ema_trend(0.5)
+- **Thesis:** RSI momentum + divergence confirmation as primary; EMA as lightweight trend context
+- **Active Regimes:** All (null)
+
+#### 🔻 PressureFlowShort (`pressure_flow_short.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Phase 4 winner. Pressure(2.5) + candle_direction(1.5) + EMA(1.0). SHORT_ONLY. 180d median: +4.1%, PF=1.92, Sharpe=0.75. Folds: [-1.1%, +9.3%]. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Research Phase 4, `pressure_flow_short` family (added in Session 9)
+- **Indicators:** pressure(2.5), candle_direction(1.5), ema_trend(1.0)
+- **Thesis:** Sustained selling pressure + bearish candle confirmation. SHORT_ONLY direction bias.
+- **Active Regimes:** All (null)
+
+#### 🔄 RSIBBReversal (`rsi_bb_reversal.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Phase 4 winner. RSI(2.0) + BB(2.0) + Volume(1.0). Mean-reversion. 180d median: +3.8%, PF=1.33, Sharpe=0.96. Folds: [+3.4%, +4.2%]. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Research Phase 4, RSI+BB reversal family
+- **Indicators:** rsi_position(2.0), bb_position(2.0), volume_spike(1.0)
+- **Thesis:** RSI oversold/overbought at Bollinger Band extremes with volume confirmation
+- **Active Regimes:** All (null)
+
+#### 💎 HiddenGemGen2 (`hidden_gem_gen2.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Phase 4 winner. EMA(1.0) + BB(1.0) + Volume(2.0). Tuned params: EMA(8/45), BB(18), vol_thresh=1.5x. 180d median: +3.0%, PF=1.11, Sharpe=1.36. Folds: [-4.0%, +10.0%]. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Research Phase 4, enhanced HiddenGem; parent: HiddenGem v0.1 (EMA+BB+Vol selectivity)
+- **Indicators:** ema_trend(1.0), bb_position(1.0), volume_spike(2.0)
+- **Thesis:** Same 3-indicator combo as parent HiddenGem but with research-optimized EMA(8/45) and BB(18) periods
+- **Active Regimes:** All (null)
+
+#### 📍 PivotBounce (`pivot_bounce.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Phase 4 winner. Pivot(2.0) + BB(1.5) + RSI(1.0). 180d median: +2.3%, PF=2.06, Sharpe=1.28. Folds: [-1.7%, +6.4%]. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Research Phase 4, new family (uses extended `pivot_points` indicator)
+- **Indicators:** pivot_points(2.0), bb_position(1.5), rsi_position(1.0)
+- **Thesis:** Enter near classical S1/S2 or R1/R2 pivot levels with RSI + BB confirmation
+- **Active Regimes:** All (null)
+
+#### 🌀 StochReversal (`stoch_reversal.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Phase 4 winner. StochRSI(2.5) + RSI(1.5) + BB(1.0). 180d median: +2.3%, PF=2.06, Sharpe=1.28. Folds: [-1.7%, +6.4%]. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Research Phase 4, new family (uses extended `stochrsi` indicator)
+- **Indicators:** stochrsi(2.5), rsi_position(1.5), bb_position(1.0)
+- **Thesis:** StochRSI crossover from oversold/overbought as primary signal with RSI + BB confirmation
+- **Active Regimes:** All (null)
+
+#### 📊 VWAPDeviation (`vwap_deviation_strat.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Phase 4 winner. VWAP(2.5) + BB(1.5) + RSI(1.0). 180d median: +2.3%, PF=2.06, Sharpe=1.28. Folds: [-1.7%, +6.4%]. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Research Phase 4, new family (uses extended `vwap_deviation` indicator)
+- **Indicators:** vwap_deviation(2.5), bb_position(1.5), rsi_position(1.0)
+- **Thesis:** Mean-reversion when price deviates >1.5σ from rolling VWAP
+- **Active Regimes:** All (null)
+
+#### 📉 WilliamsReversal (`williams_reversal.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Phase 4 winner. Williams%R(2.5) + RSI(1.5) + BB(1.0). 180d median: +2.3%, PF=2.06, Sharpe=1.28. Folds: [-1.7%, +6.4%]. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Research Phase 4, new family (uses extended `williams_r` indicator)
+- **Indicators:** williams_r(2.5), rsi_position(1.5), bb_position(1.0)
+- **Thesis:** Williams %R extremes (<-80 LONG, >-20 SHORT) with RSI + BB confirmation
+- **Active Regimes:** All (null)
+
+#### 🚀 SupertrendFollow (`supertrend_follow.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Phase 4 winner. Supertrend(3.0) + EMA(1.5). Low return but very high Sharpe. 180d median: +0.9%, PF=1.02, Sharpe=2.06. Folds: [-2.5%, +4.3%]. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Research Phase 4, new family (uses extended `supertrend` indicator)
+- **Indicators:** supertrend(3.0), ema_trend(1.5)
+- **Thesis:** ATR-based Supertrend flip as direction signal with EMA trend confirmation. Consistent small gains.
+- **Active Regimes:** All (null)
+
+#### 🔔 DonchianBreakoutGen2 (`donchian_breakout_gen2.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Phase 4 winner. Donchian(2.5) + EMA(1.5) + Volume(1.0). 180d median: +0.6%, PF=1.01, Sharpe=2.30. Folds: [-3.8%, +4.9%]. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Research Phase 4; parent: DonchianBreakout v0.1 (marginal 90d, +0.56%)
+- **Indicators:** donchian(2.5), ema_trend(1.5), volume_spike(1.0)
+- **Thesis:** Donchian channel breakout using research-built indicator (vs OG's approximate EMA gate)
+- **Active Regimes:** All (null)
+
+#### 📐 KeltnerBreakout (`keltner_breakout.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Phase 4 winner. Keltner(2.5) + EMA(1.0) + Volume(2.0). 180d median: +0.6%, PF=1.01, Sharpe=2.30. Folds: [-3.8%, +4.9%]. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Research Phase 4, new family (uses extended `keltner` indicator)
+- **Indicators:** keltner(2.5), ema_trend(1.0), volume_spike(2.0)
+- **Thesis:** Keltner channel breakout with EMA + volume confirmation. Volatility-based channel vs BB's std-dev channel.
+- **Active Regimes:** All (null)
+
+#### 📶 OBVTrendGen2 (`obv_trend_gen2.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Phase 4 winner. OBV(2.5) + EMA(1.5) + Volume(1.0). Breakeven median, very high Sharpe. 180d median: +0.0%, PF=1.00, Sharpe=2.21. Folds: [-4.4%, +4.4%]. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Research Phase 4; parent: OBVTrend v0.1 (-11.45% 90d, disabled)
+- **Indicators:** obv_trend(2.5), ema_trend(1.5), volume_spike(1.0)
+- **Thesis:** OBV linear regression trend signal (research indicator) vs OG's simple OBV>EMA signal
+- **Active Regimes:** All (null); needs regime tuning in future session
+
+---
+
+### New Passports — 7 Gen2 Enhanced Forks
+
+Big-loss passports forked into Gen2 variants applying the selectivity principle. Each Gen2 documents its thesis change from the parent.
+
+#### ⚡ DynamicGen2 (`dynamic_gen2.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Enhanced fork of Pumpradar Dynamic. 8→3 indicators (selectivity). EMA(1.0)+BB(1.5)+Vol(2.0). Regime-gated TREND_UP/DOWN. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Fork of Pumpradar Dynamic (`dynamic_exit.json`)
+- **Thesis change:** Parent had all 8 indicators active = diluted confidence = low WR. Gen2 applies selectivity: 3 indicators only.
+- **Indicators:** ema_trend(1.0), bb_position(1.5), volume_spike(2.0)
+- **Active Regimes:** TREND_UP (LONG_ONLY), TREND_DOWN (SHORT_ONLY, conf+4, risk=0.3%)
+
+#### 💨 MomentumGen2 (`momentum_gen2.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Enhanced fork of Pumpradar Momentum. 8→3 indicators. EMA(1.5)+RSI(2.0)+Pressure(1.5). TREND_UP/DOWN. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Fork of Pumpradar Momentum (`momentum.json`)
+- **Thesis change:** Parent v0.2 used EMA(2.0) alone as primary. Gen2 adds RSI momentum + pressure flow — momentum + flow confirmation combo.
+- **Indicators:** ema_trend(1.5), rsi_position(2.0), pressure(1.5)
+- **Active Regimes:** TREND_UP (LONG_ONLY), TREND_DOWN (SHORT_ONLY, conf+4, risk=0.3%)
+
+#### 🎯 BollingerBreakoutGen4 (`bollinger_breakout_gen4.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Enhanced fork of BollingerBreakout v1/v2/v3. All 3 prior versions negative. Gen4: conf=65, BB(20,2.0σ)+Vol(1.5)+Pressure(1.5). Regime-gated. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Fork of BollingerBreakout v1/v2/v3
+- **Thesis change:** v1/v2/v3 used BB(15,1.5σ) breakout — too tight. Gen4 switches to standard BB(20,2.0σ) for cleaner breakouts. Adds regime gating for TREND_UP/DOWN/HIGH_VOL_CHOP.
+- **Indicators:** bb_position(2.0), volume_spike(1.5), pressure(1.5)
+- **Active Regimes:** TREND_UP (LONG_ONLY), TREND_DOWN (SHORT_ONLY, conf+4, risk=0.3%), HIGH_VOL_CHOP (conf+4, risk=0.3%)
+
+#### 🌊 TrendMomentumGen2 (`trend_momentum_gen2.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Enhanced fork of TrendMomentum. Dropped MACD, kept EMA(2.0)+RSI(2.0). TREND_UP/DOWN. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Fork of TrendMomentum (`trend_momentum.json`)
+- **Thesis change:** Parent used EMA+MACD+RSI. MACD is noisy on 1H. Gen2 drops MACD entirely — cleaner 2-indicator momentum signal.
+- **Indicators:** ema_trend(2.0), rsi_position(2.0)
+- **Active Regimes:** TREND_UP (LONG_ONLY), TREND_DOWN (SHORT_ONLY, conf+4, risk=0.3%)
+
+#### ✌️ DualMAGen2 (`dual_ma_gen2.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Enhanced fork of DualMA Crossover. Added BB(1.0) for mean-reversion context. EMA(1.5)+BB(1.0)+Vol(1.5). TREND_UP/DOWN. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Fork of DualMA Crossover (`dual_ma.json`)
+- **Thesis change:** Parent used only EMA+Volume (90d: -8.96%, WR=29.9%). Gen2 adds BB as mean-reversion context — avoids chasing trend entries at Bollinger extremes.
+- **Indicators:** ema_trend(1.5), bb_position(1.0), volume_spike(1.5)
+- **Active Regimes:** TREND_UP (LONG_ONLY), TREND_DOWN (SHORT_ONLY, conf+4, risk=0.3%)
+
+#### 🎲 MinimalEdgeGen2 (`minimal_edge_gen2.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Enhanced fork of MinimalEdge. Added candle_direction(1.0) for entry timing. EMA(1.5)+Vol(1.5)+Candle(1.0). TREND_UP/DOWN. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Fork of MinimalEdge (`minimal_edge.json`)
+- **Thesis change:** Parent uses EMA+Volume (2 indicators). Gen2 adds candle_direction as timing filter — tests whether 3 indicators with entry timing beat 2 without.
+- **Indicators:** ema_trend(1.5), volume_spike(1.5), candle_direction(1.0)
+- **Active Regimes:** TREND_UP (LONG_ONLY), TREND_DOWN (SHORT_ONLY, conf+4, risk=0.3%)
+
+#### 🎋 PureTrendGen2 (`pure_trend_gen2.json`)
+
+| Version | Date | Description |
+|---------|------|-------------|
+| v1.0 | 2026-04-14 | Enhanced fork of PureTrend. Added Supertrend(2.5) for ATR-based confirmation. EMA(1.5)+Supertrend(2.5). TREND_UP/DOWN. Status: New — awaiting paper trade validation. |
+
+- **Lineage:** Fork of PureTrend (`pure_trend.json`)
+- **Thesis change:** Parent is EMA-only (1 effective indicator, minimal edge). Gen2 adds Supertrend — ATR-based trend confirmation that adapts to volatility, providing a second independent signal source.
+- **Indicators:** ema_trend(1.5), supertrend(2.5)
+- **Active Regimes:** TREND_UP (LONG_ONLY), TREND_DOWN (SHORT_ONLY, conf+4, risk=0.3%)
+
+---
 
 ```bash
 # See any passport at a prior version
