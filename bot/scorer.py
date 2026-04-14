@@ -122,6 +122,10 @@ def score_confluence(df, btc_trend="Sideways"):
     else:
         return _no_signal("No directional consensus")
 
+    # Cap raw confidence to prevent late-entry false consensus
+    confidence_cap = getattr(config, 'CONFIDENCE_CAP', 100)
+    raw_confidence = min(raw_confidence, confidence_cap)
+
     # Apply BTC trend filter
     btc_weight = config.BTC_TREND_WEIGHTS.get(btc_trend, 1.0)
     confidence = raw_confidence * btc_weight

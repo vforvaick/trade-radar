@@ -55,10 +55,11 @@ def test_h1_uptrend_uses_config_weight_not_hardcoded():
          patch.object(config, "COUNTER_TREND_PENALTY", no_penalty):
         result = extended_scorer.score_extended(df, weights, btc_trend="TREND_UP", confidence_threshold=0.0)
 
-    # raw_confidence = 100.0 when all votes LONG on a single-indicator weight
-    # with config.BTC_TREND_WEIGHTS["TREND_UP"] = 0.8 → confidence = 80.0
+    # raw_confidence is capped at config.CONFIDENCE_CAP (default 80) before BTC weight applied
+    # with config.BTC_TREND_WEIGHTS["TREND_UP"] = 0.8 → confidence = cap * 0.8 = 64.0
+    cap = getattr(config, 'CONFIDENCE_CAP', 100)
     assert result["go"] is True
-    assert abs(result["confidence"] - 100.0 * config.BTC_TREND_WEIGHTS["TREND_UP"]) < 0.1
+    assert abs(result["confidence"] - min(cap, 100.0) * config.BTC_TREND_WEIGHTS["TREND_UP"]) < 0.1
     assert result["confidence"] != pytest.approx(115.0, abs=0.1), "H1 bug: old hardcoded 1.15 weight still in use"
 
 
@@ -73,7 +74,8 @@ def test_h1_downtrend_uses_config_weight():
          patch.object(config, "COUNTER_TREND_PENALTY", no_penalty):
         result = extended_scorer.score_extended(df, weights, btc_trend="TREND_DOWN", confidence_threshold=0.0)
 
-    expected = min(100.0, 100.0 * config.BTC_TREND_WEIGHTS["TREND_DOWN"])
+    cap = getattr(config, 'CONFIDENCE_CAP', 100)
+    expected = min(100.0, cap * config.BTC_TREND_WEIGHTS["TREND_DOWN"])
     assert abs(result["confidence"] - expected) < 0.1
 
 

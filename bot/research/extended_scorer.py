@@ -122,6 +122,10 @@ def score_extended(
     else:
         return _no_signal("No directional consensus")
 
+    # Cap raw confidence to prevent late-entry false consensus
+    confidence_cap = getattr(config, 'CONFIDENCE_CAP', 100)
+    raw_confidence = min(raw_confidence, confidence_cap)
+
     # BTC trend filter — use live config weights, clamp result to [0, 100]
     confidence = min(100.0, max(0.0, raw_confidence * config.BTC_TREND_WEIGHTS.get(btc_trend, 1.0)))
 

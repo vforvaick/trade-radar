@@ -215,7 +215,7 @@ class TestRegimeParamsOverlay:
             runner.run_scan_cycle()
 
             assert config.CONFIDENCE_THRESHOLD == original_threshold
-            assert config.MAX_OPEN_POSITIONS_PER_PASSPORT == 50
+            assert config.MAX_OPEN_POSITIONS_PER_PASSPORT == 5
 
     def test_regime_params_empty_dict_uses_config_overrides_only(self):
         """Empty regime_params means only config_overrides apply."""

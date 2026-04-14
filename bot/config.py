@@ -39,6 +39,7 @@ PRESSURE_THRESHOLD = 60  # > 60% = directional signal
 
 # Minimum score to generate a signal (0-100%)
 CONFIDENCE_THRESHOLD = 54
+CONFIDENCE_CAP = 80  # Cap raw confidence to prevent late-entry false consensus
 
 # Indicator weights (equal by default, tunable)
 INDICATOR_WEIGHTS = {
@@ -82,7 +83,7 @@ TP3_CLOSE_PCT = 0.10
 
 RISK_PER_TRADE_PCT = 0.5   # % of equity risked per trade (keeps max SL loss ~3% at 7x leverage)
 MAX_SIMULTANEOUS = 999     # effectively unlimited for paper trading
-MAX_OPEN_POSITIONS_PER_PASSPORT = 50
+MAX_OPEN_POSITIONS_PER_PASSPORT = 5
 MAX_OPEN_POSITIONS_PER_SYMBOL = 1
 INITIAL_EQUITY = 500.0     # for backtesting
 TRADING_FEE_PCT = 0.04     # Binance taker fee per side (0.04%), so 0.08% round-trip

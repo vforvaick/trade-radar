@@ -64,7 +64,9 @@ def test_volume_spike_is_counted_once_in_confidence(monkeypatch):
     result = score_confluence(_frame())
 
     assert result["go"] is True
-    assert result["confidence"] == 100.0
+    # Raw confidence is capped at CONFIDENCE_CAP (default 80) before BTC weight applied
+    cap = getattr(config, 'CONFIDENCE_CAP', 100)
+    assert result["confidence"] == min(100.0, cap)
 
 
 def test_reversal_mode_uses_neutral_for_neutral_rsi_vote(monkeypatch):
