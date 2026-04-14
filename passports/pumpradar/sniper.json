@@ -1,8 +1,8 @@
 {
   "name": "Pumpradar Sniper",
   "emoji": "\ud83c\udfaf",
-  "enabled": false,
-  "version": "0.4",
+  "enabled": true,
+  "version": "0.5",
   "changelog": [
     {
       "version": "0.1",
@@ -42,6 +42,11 @@
         "max_dd_pct": null,
         "note": "identical to v0.1 params \u2014 expect similar to v0.1 +26.0%"
       }
+    },
+    {
+      "version": "0.5",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "Ultra-selective: HiddenGem weights but only fires at 70%+ confidence",

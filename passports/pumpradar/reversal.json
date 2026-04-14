@@ -1,8 +1,8 @@
 {
   "name": "Pumpradar Reversal",
   "emoji": "\ud83d\udd04",
-  "enabled": false,
-  "version": "0.4",
+  "enabled": true,
+  "version": "0.5",
   "changelog": [
     {
       "version": "0.1",
@@ -35,6 +35,11 @@
       "date": "2026-04-07",
       "git_sha": "pending",
       "description": "Add BTC_TREND_WEIGHTS: Uptrend 1.0 \u2014 mean-reversion strategies don't depend on BTC direction, remove the 0.8 penalty during bull markets"
+    },
+    {
+      "version": "0.5",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "Mean reversion strategy kept disabled in production until Tasks 2, 3, and 7 land; quarantine this passport until regime filters and drawdown controls are fixed.",

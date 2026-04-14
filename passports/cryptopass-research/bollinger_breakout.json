@@ -1,8 +1,8 @@
 {
   "name": "BollingerBreakout",
-  "enabled": false,
+  "enabled": true,
   "emoji": "\ud83d\udca5",
-  "version": "0.2",
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.1",
@@ -19,6 +19,11 @@
         "profit_factor": 2.77,
         "note": "Stage 2 walk-forward: median_ret=23.3%, avg_sharpe=1.69. Best Phase 4 candidate. Quality pairs, 180d."
       }
+    },
+    {
+      "version": "0.3",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "Bollinger Band breakout with volume + pressure confirmation. Tighter bands (1.5\u03c3 vs default 2.0\u03c3) detect earlier breakouts. Volume spike confirms institutional participation. Pressure (bid/ask imbalance) confirms directional commitment. Research Stage 2 survivor with Sharpe 1.69.",

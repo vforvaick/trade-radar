@@ -1,8 +1,8 @@
 {
   "name": "BollingerBreakoutV3",
-  "enabled": false,
+  "enabled": true,
   "emoji": "\ud83d\udca5",
-  "version": "0.2",
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.1",
@@ -14,6 +14,11 @@
         "sharpe": 1.22,
         "note": "Stage 2 walk-forward: median_ret=+1.2%, avg_sharpe=1.22."
       }
+    },
+    {
+      "version": "0.3",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "Bollinger Band breakout variant 3: same tight bands (1.5\u03c3) as v2, but higher confidence threshold (55) filters for only the strongest setups. Phase 4 Stage 2 survivor.",

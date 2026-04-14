@@ -1,8 +1,8 @@
 {
   "name": "Donchian Breakout",
-  "enabled": false,
+  "enabled": true,
   "emoji": "\ud83d\udd14",
-  "version": "0.2",
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.1",
@@ -24,6 +24,11 @@
         "max_dd": 17.71,
         "verdict": "DISABLED \u2014 marginal PF=1.016 insufficient to enable. Lowest MaxDD of the 3 (17.71%) is promising. Re-test in trending market regime before enabling."
       }
+    },
+    {
+      "version": "0.3",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "20-period Donchian channel breakout. Price above 20-day high = LONG, below 20-day low = SHORT. EMA trend gate (weight=1) filters choppy breakouts. Volume spike confirms conviction.",

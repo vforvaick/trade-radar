@@ -1,8 +1,8 @@
 {
   "name": "DualMA Crossover",
-  "enabled": false,
+  "enabled": true,
   "emoji": "\ud83d\udcc8",
-  "version": "0.2",
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.1",
@@ -24,6 +24,11 @@
         "max_dd": 24.93,
         "verdict": "DISABLED \u2014 unprofitable in choppy Jan-Apr 2026. Pure EMA crossover generates too many whipsaw entries without additional filters."
       }
+    },
+    {
+      "version": "0.3",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "Pure EMA(10/20) dual MA crossover + volume confirmation. Fast/Mid EMA alignment drives signal; slow EMA (50) provides trend context. All other indicators zeroed \u2014 selectivity is the edge.",

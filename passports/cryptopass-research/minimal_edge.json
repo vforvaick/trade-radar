@@ -1,8 +1,8 @@
 {
   "name": "MinimalEdge",
   "emoji": "\ud83c\udfaf",
-  "enabled": false,
-  "version": "0.2",
+  "enabled": true,
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.1",
@@ -17,6 +17,11 @@
         "profit_factor": 1.0,
         "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Barely profitable 90d. EMA+Vol ultra-selective."
       }
+    },
+    {
+      "version": "0.3",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "Ultra-minimal: EMA trend + volume spike only. Follows proven profitable pattern of fewer indicators. Thesis: only trade when trend aligns AND volume confirms.",

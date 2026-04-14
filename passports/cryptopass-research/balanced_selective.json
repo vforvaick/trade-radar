@@ -1,8 +1,8 @@
 {
   "name": "BalancedSelective",
   "emoji": "\u2696\ufe0f",
-  "enabled": false,
-  "version": "0.2",
+  "enabled": true,
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.1",
@@ -17,6 +17,11 @@
         "profit_factor": 0.97,
         "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Negative 90d. EMA+BB+RSI all weights dilute signal."
       }
+    },
+    {
+      "version": "0.3",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "Balanced selective: EMA trend + BB position + RSI momentum. 3-indicator approach following the proven selective pattern. Thesis: combining trend, range, and momentum covers more market conditions.",

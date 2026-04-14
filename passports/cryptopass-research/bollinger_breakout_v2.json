@@ -1,8 +1,8 @@
 {
   "name": "BollingerBreakoutV2",
-  "enabled": false,
+  "enabled": true,
   "emoji": "\ud83d\udca5",
-  "version": "0.2",
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.1",
@@ -14,6 +14,11 @@
         "sharpe": 2.7,
         "note": "Stage 2 walk-forward: median_ret=+2.1%, avg_sharpe=2.70. Highest Sharpe in Phase 4."
       }
+    },
+    {
+      "version": "0.3",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "Bollinger Band breakout variant 2: tight bands (1.5\u03c3) + volume spike + pressure confirmation. Lower confidence threshold (50) allows more entries than v1 (55). Phase 4 Stage 2 survivor \u2014 highest Sharpe (2.70).",
