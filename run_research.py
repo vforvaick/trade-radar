@@ -57,6 +57,8 @@ def main():
                         help="Experiment database path")
     parser.add_argument("--offline", action="store_true",
                         help="Skip connectivity check and prefetch; use local cache only")
+    parser.add_argument("--full-4stage", action="store_true",
+                        help="Run full 4-stage pipeline (S1→S2→S3→S4) instead of 2-stage")
     args = parser.parse_args()
 
     families = None
@@ -96,11 +98,24 @@ def main():
     )
 
     start = time.time()
-    survivors = pipeline.run_full(
-        families=families,
-        max_per_family=args.max_per_family,
-        offline=args.offline,
-    )
+    if args.full_4stage:
+        logger.info("Running full 4-stage pipeline (S1→S2→S3→S4)...")
+        result = pipeline.run_full_4stage(
+            families=families,
+            max_per_family=args.max_per_family,
+            mc_iterations=50,
+            offline=args.offline,
+        )
+        survivors = []
+        if result:
+            logger.info("Stage 4 result: %d selected, portfolio Sharpe=%.2f",
+                         len(result.selected_passport_ids), result.portfolio_sharpe)
+    else:
+        survivors = pipeline.run_full(
+            families=families,
+            max_per_family=args.max_per_family,
+            offline=args.offline,
+        )
     elapsed = time.time() - start
 
     logger.info("=" * 60)
