@@ -130,6 +130,9 @@ def _make_runner_with_signals(signals, config_overrides):
     runner.state_store = MagicMock()
     runner.state_store.save_position.return_value = 1
     runner.regime_logger = MagicMock()
+    runner.circuit_breaker = MagicMock()
+    runner.circuit_breaker.should_kill.return_value = False
+    runner._notifier = None
     runner._last_digest_date = None
     return runner, passport
 

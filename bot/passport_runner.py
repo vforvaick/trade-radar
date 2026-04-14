@@ -17,6 +17,7 @@ from bot.position_manager import PositionManager, Position
 from bot.data_fetcher import fetch_klines
 from bot.state_store import StateStore
 from bot.regime_logger import RegimeLogger
+from bot.risk.circuit_breaker import CircuitBreaker
 
 
 logger = logging.getLogger(__name__)
@@ -61,6 +62,9 @@ class PassportRunner:
         self._notifier = None
         self.state_store = StateStore()
         self.regime_logger = RegimeLogger(self.state_store)
+        self.circuit_breaker = CircuitBreaker(
+            kill_threshold_pct=getattr(config, "KILL_SWITCH_THRESHOLD", 0.30)
+        )
         self._last_digest_date = None
         self.passports = self._load_passports(passport_dir)
         self.scanner = Scanner(interval=interval, limit=100)
@@ -234,6 +238,27 @@ class PassportRunner:
                     f"\n[{passport.emoji} {passport.name}] Scan disabled; monitoring restored positions only.",
                     flush=True,
                 )
+                continue
+
+            # === CIRCUIT BREAKER: kill passport if drawdown exceeds threshold ===
+            override_threshold = passport.config_overrides.get("KILL_SWITCH_THRESHOLD")
+            if self.circuit_breaker.should_kill(
+                passport.name,
+                current_equity=passport.equity,
+                initial_equity=getattr(config, "INITIAL_EQUITY", 500),
+                override_threshold=override_threshold,
+            ):
+                logger.warning(
+                    "⛔ %s %s KILLED by circuit breaker (equity $%.2f)",
+                    passport.emoji, passport.name, passport.equity,
+                )
+                if self._notifier:
+                    self._notifier.send_error(
+                        f"⛔ KILL SWITCH: {passport.emoji} {passport.name}\n"
+                        f"Equity: ${passport.equity:.2f}\n"
+                        f"Drawdown: {((getattr(config, 'INITIAL_EQUITY', 500) - passport.equity) / getattr(config, 'INITIAL_EQUITY', 500) * 100):.1f}%\n"
+                        f"Trading DISABLED for this passport."
+                    )
                 continue
 
             # === HARD GATE: skip passport if current regime not in active_regimes ===
