@@ -5,6 +5,8 @@ from dataclasses import asdict
 from datetime import datetime
 from typing import Optional
 
+from bot.sqlite_utils import sqlite_connection
+
 
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -32,7 +34,7 @@ class StateStore:
 
     def _init_db(self):
         """Initialize SQLite database with required tables."""
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite_connection(self.db_path) as conn:
             cursor = conn.cursor()
             
             # Table for open and closed positions
@@ -96,7 +98,7 @@ class StateStore:
         sig_dict = asdict(signal)
         signal_json = json.dumps(sig_dict, default=_json_default)
         
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite_connection(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 INSERT INTO positions (passport_name, symbol, signal_json, equity_at_entry, risk_amount, tg_msg_id)
@@ -124,7 +126,7 @@ class StateStore:
         
         query = f"UPDATE positions SET {', '.join(set_clauses)} WHERE id = ?"
         
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite_connection(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(query, tuple(values))
             conn.commit()
@@ -138,7 +140,7 @@ class StateStore:
             query += " AND passport_name = ?"
             params = (passport_name,)
             
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite_connection(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute(query, params)
@@ -148,7 +150,7 @@ class StateStore:
 
     def save_equity(self, passport_name: str, equity: float):
         """Save current equity snapshot."""
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite_connection(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 INSERT INTO equity_snapshots (passport_name, equity)
@@ -158,7 +160,7 @@ class StateStore:
 
     def get_last_equity(self, passport_name: str) -> Optional[float]:
         """Get the most recent equity snapshot for a passport."""
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite_connection(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT equity FROM equity_snapshots
@@ -173,7 +175,7 @@ class StateStore:
         """Log a trade event/closure."""
         trade_json = json.dumps(trade_data, default=_json_default)
         
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite_connection(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 INSERT INTO trade_log (passport_name, trade_data_json)
@@ -184,7 +186,7 @@ class StateStore:
     def save_equity_v2(self, passport_name: str, realized_equity: float, unrealized_pnl: float, open_positions: int):
         """Save equity snapshot with unrealized PnL breakdown."""
         total = realized_equity + unrealized_pnl
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite_connection(self.db_path) as conn:
             conn.execute(
                 "INSERT INTO equity_snapshots_v2 (passport_name, realized_equity, unrealized_pnl, total_equity, open_positions) VALUES (?,?,?,?,?)",
                 (passport_name, realized_equity, unrealized_pnl, total, open_positions),
@@ -192,7 +194,7 @@ class StateStore:
 
     def get_equity_history_v2(self, passport_name: str, limit: int = 100) -> list[dict]:
         """Get recent equity snapshots with unrealized PnL for a passport."""
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite_connection(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             rows = conn.execute(
                 "SELECT * FROM equity_snapshots_v2 WHERE passport_name=? ORDER BY timestamp DESC LIMIT ?",
@@ -202,7 +204,7 @@ class StateStore:
 
     def get_signal_message_id(self, symbol: str, passport_name: str) -> Optional[int]:
         """Find the telegram message ID associated with an active signal."""
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite_connection(self.db_path) as conn:
             cursor = conn.cursor()
             # Try to get the latest open position for this symbol/passport
             cursor.execute('''
@@ -226,7 +228,7 @@ class StateStore:
 
     def load_active_message_ids(self) -> dict:
         """Load all active signal message IDs for Notifier."""
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite_connection(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT symbol, passport_name, tg_msg_id FROM positions 

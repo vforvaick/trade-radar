@@ -2,7 +2,56 @@
 
 > Living document. Updated after every iteration cycle.
 > Purpose: avoid repeating mistakes, build on proven insights, explore new lineages with context.
-> Last updated: 2026-04-14 (Session 12 — §22 Full Passport Expansion)
+> Last updated: 2026-04-14 (Session 14 — §24 SQLite WAL hotfix)
+
+---
+
+## §24 — Session 14: SQLite WAL Hotfix for Production Lock Contention (2026-04-14)
+
+### Root Cause
+
+Production was crashing with:
+
+- `sqlite3.OperationalError: database is locked`
+- stack trace: `main_multi.py -> PassportRunner.update_all_positions() -> StateStore.update_position() -> conn.commit()`
+
+This was **not** a random transient. Root cause was:
+
+1. `cryptopass.service` and `cryptopass-metrics.service` both accessed the same `state.db`
+2. SQLite was still running in **`journal_mode=delete`**
+3. Metrics exporter runs large read queries (`positions`, `trade_log`, `equity_snapshots_v2`) on a separate process
+4. In DELETE mode, long readers can block writers
+5. Bot writes position updates every loop, so `update_position()` occasionally hit the reader lock and the whole service crashed/restarted
+
+Extra evidence:
+
+- VPS `PRAGMA journal_mode` returned `delete`
+- `lsof state.db` showed the long-lived metrics exporter process holding multiple open FDs on `state.db`
+- A simple `SELECT COUNT(*) FROM positions` on VPS sometimes took ~5.7s, showing real contention
+
+### Fix
+
+- Added `bot/sqlite_utils.py` shared helper
+- All runtime `state.db` connections now use:
+  - `PRAGMA journal_mode=WAL`
+  - `PRAGMA synchronous=NORMAL`
+  - `PRAGMA busy_timeout=30000`
+  - explicit connection close via context manager
+- Metrics exporter and daily report now use **read-only** SQLite connections
+- StateStore and RegimeLogger now share the same connection policy
+
+### Why This Fix Works
+
+`WAL` mode allows readers and writers to coexist. The metrics exporter can scan historical rows while the trading bot continues committing position updates. `busy_timeout=30000` adds a second safety layer for short lock bursts instead of crashing immediately.
+
+### Regression Coverage
+
+New regression tests in `tests/test_sqlite_runtime.py`:
+
+1. writable connections enable `WAL`
+2. a reader transaction does **not** block a writer transaction
+
+Post-fix suite: **935 passed, 60 skipped**
 
 ---
 

@@ -93,6 +93,15 @@ class TestDailyReportBuilder:
         report = builder.build()
         assert "No passport data" in report or "Daily Report" in report
 
+    def test_missing_tables_returns_no_data(self, tmp_path):
+        db_path = str(tmp_path / "missing.db")
+        sqlite3.connect(db_path).close()
+
+        builder = DailyReportBuilder(state_db_path=db_path, initial_equity=500.0)
+        report = builder.build()
+
+        assert "No passport data" in report
+
     def test_report_sorted_by_pnl(self, mock_state_db):
         builder = DailyReportBuilder(state_db_path=mock_state_db, initial_equity=500.0)
         data = builder.get_passport_summaries()

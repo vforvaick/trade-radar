@@ -11,6 +11,8 @@ import time
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+from bot.sqlite_utils import sqlite_connection
+
 
 DB_PATH = os.environ.get("CRYPTOPASS_STATE_DB", "state.db")
 PORT = int(os.environ.get("CRYPTOPASS_METRICS_PORT", "9103"))
@@ -29,7 +31,7 @@ class MetricsCache:
         lines = []
 
         try:
-            with sqlite3.connect(DB_PATH) as conn:
+            with sqlite_connection(DB_PATH, readonly=True) as conn:
                 conn.row_factory = sqlite3.Row
 
                 # --- Per-passport equity (isolated: table may not exist yet) ---

@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from bot.state_store import StateStore
+from bot.sqlite_utils import sqlite_connection
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class RegimeLogger:
 
     def _ensure_tables(self):
         """Create regime logging tables if they don't exist."""
-        with sqlite3.connect(self.state_store.db_path) as conn:
+        with sqlite_connection(self.state_store.db_path) as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS regime_snapshots (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,7 +69,7 @@ class RegimeLogger:
     def log_scan(self, regime: str, metadata: dict,
                  total_signals: int, total_opened: int):
         """Log per-scan regime snapshot."""
-        with sqlite3.connect(self.state_store.db_path) as conn:
+        with sqlite_connection(self.state_store.db_path) as conn:
             conn.execute(
                 """INSERT INTO regime_snapshots
                    (regime, btc_price, adx, ret_30d, realized_vol,
@@ -94,7 +95,7 @@ class RegimeLogger:
                    btc_weight: float, was_executed: bool,
                    skip_reason: Optional[str] = None):
         """Log per-signal regime tag."""
-        with sqlite3.connect(self.state_store.db_path) as conn:
+        with sqlite_connection(self.state_store.db_path) as conn:
             conn.execute(
                 """INSERT INTO signal_regime_log
                    (regime, passport_name, symbol, direction,
@@ -110,7 +111,7 @@ class RegimeLogger:
 
     def tag_trade_regime(self, event: str, trade_id: int, regime: str):
         """Tag a trade with current regime (event='open' or 'close')."""
-        with sqlite3.connect(self.state_store.db_path) as conn:
+        with sqlite_connection(self.state_store.db_path) as conn:
             conn.execute(
                 "INSERT INTO trade_regime_tags (trade_id, event, regime) VALUES (?, ?, ?)",
                 (trade_id, event, regime),
@@ -118,7 +119,7 @@ class RegimeLogger:
 
     def generate_daily_digest(self) -> str:
         """Generate daily regime report text for Telegram."""
-        with sqlite3.connect(self.state_store.db_path) as conn:
+        with sqlite_connection(self.state_store.db_path, readonly=True) as conn:
             conn.row_factory = sqlite3.Row
 
             latest = conn.execute(
