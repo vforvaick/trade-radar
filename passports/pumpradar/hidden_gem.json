@@ -1,7 +1,7 @@
 {
   "name": "Pumpradar HiddenGem",
   "emoji": "\ud83d\udc8e",
-  "enabled": true,
+  "enabled": false,
   "version": "0.4",
   "changelog": [
     {

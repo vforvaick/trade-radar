@@ -1,6 +1,6 @@
 {
   "name": "BollingerBreakout",
-  "enabled": true,
+  "enabled": false,
   "emoji": "\ud83d\udca5",
   "version": "0.2",
   "changelog": [

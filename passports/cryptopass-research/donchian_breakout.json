@@ -1,6 +1,6 @@
 {
   "name": "Donchian Breakout",
-  "enabled": true,
+  "enabled": false,
   "emoji": "\ud83d\udd14",
   "version": "0.2",
   "changelog": [

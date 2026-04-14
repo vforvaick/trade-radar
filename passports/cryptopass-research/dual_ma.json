@@ -1,6 +1,6 @@
 {
   "name": "DualMA Crossover",
-  "enabled": true,
+  "enabled": false,
   "emoji": "\ud83d\udcc8",
   "version": "0.2",
   "changelog": [

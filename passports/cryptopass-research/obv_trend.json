@@ -1,6 +1,6 @@
 {
   "name": "OBV Trend",
-  "enabled": true,
+  "enabled": false,
   "emoji": "\ud83c\udf0a",
   "version": "0.2",
   "changelog": [
