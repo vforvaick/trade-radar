@@ -45,10 +45,13 @@
       "DIRECTION_BIAS": "LONG_ONLY"
     },
     "TREND_DOWN": {
-      "DIRECTION_BIAS": "SHORT_ONLY"
+      "DIRECTION_BIAS": "SHORT_ONLY",
+      "CONFIDENCE_THRESHOLD": 69,
+      "RISK_PER_TRADE_PCT": 0.3
     },
     "HIGH_VOL_CHOP": {
-      "CONFIDENCE_THRESHOLD": 70
+      "CONFIDENCE_THRESHOLD": 69,
+      "RISK_PER_TRADE_PCT": 0.3
     }
   }
 }

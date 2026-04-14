@@ -42,7 +42,8 @@
     },
     "TREND_DOWN": {
       "DIRECTION_BIAS": "SHORT_ONLY",
-      "CONFIDENCE_THRESHOLD": 65
+      "CONFIDENCE_THRESHOLD": 64,
+      "RISK_PER_TRADE_PCT": 0.3
     }
   }
 }
