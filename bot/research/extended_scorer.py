@@ -1,46 +1,15 @@
-"""Extended scorer with 21-indicator registry for the Strategy Research Engine.
+"""Extended scorer for the Strategy Research Engine.
 
-Extends the original 8 indicators from bot/scorer.py with 13 new indicators
-from bot/research/indicators.py.
+Thin wrapper around the production scorer's registry. Delegates indicator
+computation to the shared INDICATOR_REGISTRY defined in bot.scorer, which
+contains all 23 indicators (10 production + 13 extended).
 """
 from __future__ import annotations
 
 from typing import Optional
 
 from bot import config
-from bot import indicators as orig_ind
-from bot.research import indicators as new_ind
-
-
-# Registry: name → callable(df) → (direction, value)
-INDICATOR_REGISTRY: dict[str, callable] = {
-    # Original 8 from scorer.py
-    "ema_trend": lambda df: orig_ind.calc_ema_trend(df),
-    "macd_signal": lambda df: orig_ind.calc_macd(df),
-    "rsi_position": lambda df: orig_ind.calc_rsi_signal(df),
-    "rsi_divergence": lambda df: (orig_ind.detect_rsi_divergence(df), 50.0),
-    "bb_position": lambda df: orig_ind.calc_bollinger(df),
-    "volume_spike": lambda df: (
-        "LONG" if orig_ind.calc_volume_spike(df)[0] else None,
-        orig_ind.calc_volume_spike(df)[1],
-    ),
-    "pressure": lambda df: orig_ind.calc_pressure(df),
-    "candle_direction": lambda df: (orig_ind.calc_candle_direction(df), 50.0),
-    # New 13 from research/indicators.py
-    "stochrsi": new_ind.calc_stochrsi,
-    "obv_trend": new_ind.calc_obv_trend,
-    "ichimoku": new_ind.calc_ichimoku,
-    "vwap_deviation": new_ind.calc_vwap_deviation,
-    "keltner": new_ind.calc_keltner,
-    "donchian": new_ind.calc_donchian,
-    "heikin_ashi": new_ind.calc_heikin_ashi,
-    "williams_r": new_ind.calc_williams_r,
-    "cci": new_ind.calc_cci,
-    "mfi": new_ind.calc_mfi,
-    "hull_ma": new_ind.calc_hull_ma,
-    "supertrend": new_ind.calc_supertrend,
-    "pivot_points": new_ind.calc_pivot_points,
-}
+from bot.scorer import INDICATOR_REGISTRY
 
 
 def score_extended(
