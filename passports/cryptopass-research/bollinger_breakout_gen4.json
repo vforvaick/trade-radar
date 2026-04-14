@@ -1,0 +1,54 @@
+{
+  "name": "BollingerBreakoutGen4",
+  "emoji": "\ud83c\udfaf",
+  "enabled": true,
+  "version": "1.0",
+  "changelog": [
+    {
+      "version": "1.0",
+      "date": "2026-04-14",
+      "description": "Enhanced fork of BollingerBreakout v1/v2/v3. All 3 prior versions negative. Gen4 raises threshold and adds regime gating."
+    }
+  ],
+  "description": "Enhanced BB Breakout: 3 prior versions all negative. Gen4 raises threshold to 65 and adds regime gating.",
+  "lineage": {
+    "parent": "BollingerBreakout v1/v2/v3",
+    "generation": 4
+  },
+  "config_overrides": {
+    "CONFIDENCE_THRESHOLD": 65,
+    "BB_PERIOD": 20,
+    "BB_STD": 2.0,
+    "VOLUME_SPIKE_THRESHOLD": 2.0,
+    "USE_ATR_EXITS": false,
+    "USE_TRAILING_STOP": false,
+    "MAX_OPEN_POSITIONS_PER_PASSPORT": 50,
+    "MAX_OPEN_POSITIONS_PER_SYMBOL": 1,
+    "INDICATOR_WEIGHTS": {
+      "ema_trend": 0.0,
+      "macd_signal": 0.0,
+      "rsi_position": 0.0,
+      "rsi_divergence": 0.0,
+      "bb_position": 2.0,
+      "volume_spike": 1.5,
+      "pressure": 1.5,
+      "candle_direction": 0.0
+    }
+  },
+  "active_regimes": [
+    "TREND_UP",
+    "TREND_DOWN",
+    "HIGH_VOL_CHOP"
+  ],
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "TREND_DOWN": {
+      "DIRECTION_BIAS": "SHORT_ONLY"
+    },
+    "HIGH_VOL_CHOP": {
+      "CONFIDENCE_THRESHOLD": 70
+    }
+  }
+}

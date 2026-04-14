@@ -1,0 +1,48 @@
+{
+  "name": "PureTrendGen2",
+  "emoji": "\ud83c\udf8b",
+  "enabled": true,
+  "version": "1.0",
+  "changelog": [
+    {
+      "version": "1.0",
+      "date": "2026-04-14",
+      "description": "Enhanced fork of PureTrend. Added supertrend for ATR-based confirmation."
+    }
+  ],
+  "description": "Enhanced PureTrend: added supertrend (ATR-based) for confirmation. EMA determines direction, supertrend confirms momentum.",
+  "lineage": {
+    "parent": "PureTrend",
+    "generation": 2
+  },
+  "config_overrides": {
+    "CONFIDENCE_THRESHOLD": 55,
+    "USE_ATR_EXITS": false,
+    "USE_TRAILING_STOP": false,
+    "MAX_OPEN_POSITIONS_PER_PASSPORT": 50,
+    "MAX_OPEN_POSITIONS_PER_SYMBOL": 1,
+    "INDICATOR_WEIGHTS": {
+      "ema_trend": 1.5,
+      "macd_signal": 0.0,
+      "rsi_position": 0.0,
+      "rsi_divergence": 0.0,
+      "bb_position": 0.0,
+      "volume_spike": 0.0,
+      "pressure": 0.0,
+      "candle_direction": 0.0,
+      "supertrend": 2.5
+    }
+  },
+  "active_regimes": [
+    "TREND_UP",
+    "TREND_DOWN"
+  ],
+  "regime_params": {
+    "TREND_UP": {
+      "DIRECTION_BIAS": "LONG_ONLY"
+    },
+    "TREND_DOWN": {
+      "DIRECTION_BIAS": "SHORT_ONLY"
+    }
+  }
+}
