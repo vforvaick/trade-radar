@@ -1,8 +1,8 @@
 {
   "name": "TrendMomentum",
   "emoji": "\ud83d\ude84",
-  "enabled": false,
-  "version": "0.2",
+  "enabled": true,
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.1",
@@ -17,6 +17,11 @@
         "profit_factor": 1.02,
         "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Marginally profitable 90d. EMA+RSI+MACD combo."
       }
+    },
+    {
+      "version": "0.3",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "EMA trend + RSI momentum + MACD confirmation. Reference: 151 Strategies S2. Thesis: multiple trend-aligned indicators reduce false signals in trending markets.",

@@ -1,0 +1,35 @@
+{
+  "name": "PressureFlowShort",
+  "emoji": "\ud83d\udd3b",
+  "enabled": true,
+  "version": "1.0",
+  "changelog": [
+    {
+      "version": "1.0",
+      "date": "2026-04-14",
+      "description": "Research Phase 4 winner promoted to paper trading. 180d walk-forward: +4.1% median return, PF=1.92, Sharpe=0.75. Folds: [-1.1, 9.3]."
+    }
+  ],
+  "description": "SHORT-only pressure flow. Research winner: +4.1% median return, PF=1.92. Uses pressure + candle direction with EMA context. SHORT_ONLY direction bias.",
+  "config_overrides": {
+    "CONFIDENCE_THRESHOLD": 65,
+    "VOLUME_SPIKE_THRESHOLD": 2.0,
+    "DIRECTION_BIAS": "SHORT_ONLY",
+    "USE_ATR_EXITS": false,
+    "USE_TRAILING_STOP": false,
+    "MAX_OPEN_POSITIONS_PER_PASSPORT": 50,
+    "MAX_OPEN_POSITIONS_PER_SYMBOL": 1,
+    "INDICATOR_WEIGHTS": {
+      "ema_trend": 1.0,
+      "macd_signal": 0.0,
+      "rsi_position": 0.0,
+      "rsi_divergence": 0.0,
+      "bb_position": 0.0,
+      "volume_spike": 0.0,
+      "pressure": 2.5,
+      "candle_direction": 1.5
+    }
+  },
+  "active_regimes": null,
+  "regime_params": {}
+}

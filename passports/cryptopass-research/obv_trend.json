@@ -1,8 +1,8 @@
 {
   "name": "OBV Trend",
-  "enabled": false,
+  "enabled": true,
   "emoji": "\ud83c\udf0a",
-  "version": "0.2",
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.1",
@@ -24,6 +24,11 @@
         "max_dd": 27.93,
         "verdict": "DISABLED \u2014 unprofitable, highest trade count (149) but worst WR (28.2%). OBV signal too noisy as primary indicator without stronger trend filter."
       }
+    },
+    {
+      "version": "0.3",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "OBV-primary trend passport. OBV > EMA(20) = buying pressure (LONG), OBV < EMA(20) = selling pressure (SHORT). EMA trend confirms direction. No RSI/MACD dilution.",

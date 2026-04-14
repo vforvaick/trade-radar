@@ -1,8 +1,8 @@
 {
   "name": "TrendConfirm",
   "emoji": "\u2705",
-  "enabled": false,
-  "version": "0.2",
+  "enabled": true,
+  "version": "0.3",
   "changelog": [
     {
       "version": "0.1",
@@ -17,6 +17,11 @@
         "profit_factor": 0.95,
         "note": "90d (Jan-Apr 2026), 10 pairs, avg equal-weight. Negative 90d. EMA+MACD+Vol underperforms in chop."
       }
+    },
+    {
+      "version": "0.3",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "Triple-confirmed trend: EMA+MACD+Volume must agree. Reference: combination of S1+S3. Thesis: requiring 3 aligned trend signals eliminates most whipsaws.",

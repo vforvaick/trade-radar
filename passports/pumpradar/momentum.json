@@ -1,8 +1,8 @@
 {
   "name": "Pumpradar Momentum",
   "emoji": "\ud83d\ude80",
-  "enabled": false,
-  "version": "0.3",
+  "enabled": true,
+  "version": "0.4",
   "changelog": [
     {
       "version": "0.1",
@@ -29,6 +29,11 @@
         "max_dd_pct": 73.6,
         "note": "IMPROVED +19.5pp: ema weight boost + threshold 60 reduced overtrading. MaxDD worsened 66\u219274% \u2014 watch in live"
       }
+    },
+    {
+      "version": "0.4",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "Standard trend-following with optimized 2x volume filter (Rank #2 baseline)",

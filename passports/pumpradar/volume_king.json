@@ -1,8 +1,8 @@
 {
   "name": "Pumpradar VolumeKing",
   "emoji": "\ud83d\udce2",
-  "enabled": false,
-  "version": "0.4",
+  "enabled": true,
+  "version": "0.5",
   "changelog": [
     {
       "version": "0.1",
@@ -42,6 +42,11 @@
         "max_dd_pct": null,
         "note": "identical to v0.1 params \u2014 expect similar to v0.1 +9.1%"
       }
+    },
+    {
+      "version": "0.5",
+      "date": "2026-04-14",
+      "description": "Re-enabled with confidence cap (80) + regime gating protection. Fresh start $500 equity."
     }
   ],
   "description": "Volume-first thesis: 3x volume weight, trend + candle for confirmation, everything else muted",

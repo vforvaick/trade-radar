@@ -1,4 +1,4 @@
-"""Tests for the extended 21-indicator scorer."""
+"""Tests for the extended scorer (now delegates to production registry)."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -34,6 +34,10 @@ def test_empty_weights_no_signal():
     assert score_extended(make_ohlcv(200), weights={})["direction"] is None
 
 
-def test_all_21_indicators_registered():
+def test_registry_contains_all_production_indicators():
+    """Registry now comes from bot.scorer (23 indicators), superset of old 21."""
     from bot.research.extended_scorer import INDICATOR_REGISTRY
-    assert len(INDICATOR_REGISTRY) == 21
+    from bot.scorer import INDICATOR_REGISTRY as PROD_REGISTRY
+    # Extended registry IS the production registry — same object
+    assert set(INDICATOR_REGISTRY.keys()) == set(PROD_REGISTRY.keys())
+    assert len(INDICATOR_REGISTRY) >= 21  # at least as many as before
