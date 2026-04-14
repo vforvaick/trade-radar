@@ -15,7 +15,9 @@ from bot.research import indicators as ext_ind
 
 def _vol_spike_signal(df):
     spike, ratio = indicators.calc_volume_spike(df)
-    return ("LONG" if spike else None, ratio)
+    # "SPIKE" is a neutral sentinel — vol_spike is NON_DIRECTIONAL (boosts dominant side).
+    # Never records a false directional claim in signals_detail.
+    return ("SPIKE" if spike else None, ratio)
 
 
 INDICATOR_REGISTRY: dict[str, callable] = {
