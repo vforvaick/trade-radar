@@ -241,6 +241,7 @@ class PassportRunner:
                 continue
 
             # === CIRCUIT BREAKER: kill passport if drawdown exceeds threshold ===
+            already_killed = self.circuit_breaker.is_killed(passport.name)
             override_threshold = passport.config_overrides.get("KILL_SWITCH_THRESHOLD")
             if self.circuit_breaker.should_kill(
                 passport.name,
@@ -248,17 +249,18 @@ class PassportRunner:
                 initial_equity=getattr(config, "INITIAL_EQUITY", 500),
                 override_threshold=override_threshold,
             ):
-                logger.warning(
-                    "⛔ %s %s KILLED by circuit breaker (equity $%.2f)",
-                    passport.emoji, passport.name, passport.equity,
-                )
-                if self._notifier:
-                    self._notifier.send_error(
-                        f"⛔ KILL SWITCH: {passport.emoji} {passport.name}\n"
-                        f"Equity: ${passport.equity:.2f}\n"
-                        f"Drawdown: {((getattr(config, 'INITIAL_EQUITY', 500) - passport.equity) / getattr(config, 'INITIAL_EQUITY', 500) * 100):.1f}%\n"
-                        f"Trading DISABLED for this passport."
+                if not already_killed:
+                    logger.warning(
+                        "⛔ %s %s KILLED by circuit breaker (equity $%.2f)",
+                        passport.emoji, passport.name, passport.equity,
                     )
+                    if self._notifier:
+                        self._notifier.send_error(
+                            f"⛔ KILL SWITCH: {passport.emoji} {passport.name}\n"
+                            f"Equity: ${passport.equity:.2f}\n"
+                            f"Drawdown: {((getattr(config, 'INITIAL_EQUITY', 500) - passport.equity) / getattr(config, 'INITIAL_EQUITY', 500) * 100):.1f}%\n"
+                            f"Trading DISABLED for this passport."
+                        )
                 continue
 
             # === HARD GATE: skip passport if current regime not in active_regimes ===

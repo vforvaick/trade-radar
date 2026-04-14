@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import sys
 from dataclasses import dataclass, field
@@ -129,7 +130,7 @@ class GoToMarketScorecard:
     """Evaluates passport readiness for real-money deployment."""
 
     def __init__(self, gate_overrides: Optional[dict] = None):
-        self.gates = GATE_DEFINITIONS.copy()
+        self.gates = copy.deepcopy(GATE_DEFINITIONS)
         if gate_overrides:
             for gate in self.gates:
                 if gate["name"] in gate_overrides:
@@ -231,12 +232,14 @@ class GoToMarketScorecard:
         metrics["paper_pnl"] = (row["equity"] - initial) if row else 0
 
         cur = state_conn.execute("""
-            SELECT MIN(realized_pnl) as worst_loss, equity_at_entry
+            SELECT realized_pnl, equity_at_entry
             FROM positions WHERE passport_name = ? AND status != 'OPEN'
+              AND equity_at_entry > 0
+            ORDER BY ABS(realized_pnl) / equity_at_entry DESC LIMIT 1
         """, (passport_name,))
         row = cur.fetchone()
-        if row and row["worst_loss"] is not None and row["equity_at_entry"]:
-            metrics["max_single_loss_pct"] = abs(row["worst_loss"]) / row["equity_at_entry"] * 100
+        if row and row["realized_pnl"] is not None and row["equity_at_entry"]:
+            metrics["max_single_loss_pct"] = abs(row["realized_pnl"]) / row["equity_at_entry"] * 100
         else:
             metrics["max_single_loss_pct"] = 0
 
