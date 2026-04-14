@@ -10,7 +10,8 @@ def _reset_config():
     """Snapshot and restore config for each test."""
     original = {}
     keys = ['CONFIDENCE_CAP', 'CONFIDENCE_THRESHOLD', 'BTC_TREND_WEIGHTS',
-            'COUNTER_TREND_PENALTY', 'INDICATOR_WEIGHTS', 'LEVERAGE_TIERS']
+            'COUNTER_TREND_PENALTY', 'INDICATOR_WEIGHTS', 'LEVERAGE_TIERS',
+            'MAX_OPEN_POSITIONS_PER_PASSPORT', 'MAX_OPEN_POSITIONS_PER_SYMBOL']
     for k in keys:
         if hasattr(config, k):
             original[k] = getattr(config, k)
@@ -107,17 +108,17 @@ class TestConfidenceCap:
 
 
 class TestPositionLimitReduced:
-    """Tests for MAX_OPEN_POSITIONS_PER_PASSPORT = 5."""
+    """Tests for MAX_OPEN_POSITIONS_PER_PASSPORT = 50 (strategy maximizer — no artificial caps)."""
 
-    def test_default_limit_is_5(self):
-        """Default MAX_OPEN_POSITIONS_PER_PASSPORT should be 5."""
-        assert config.MAX_OPEN_POSITIONS_PER_PASSPORT == 5
+    def test_default_limit_is_50(self):
+        """Default MAX_OPEN_POSITIONS_PER_PASSPORT should be 50."""
+        assert config.MAX_OPEN_POSITIONS_PER_PASSPORT == 50
 
     def test_position_manager_respects_limit(self):
-        """PositionManager.can_open() should block after 5 positions."""
+        """PositionManager.can_open() should block after hitting limit."""
         from bot.position_manager import PositionManager
         from bot.signals import Signal
-        config.MAX_OPEN_POSITIONS_PER_PASSPORT = 5
+        config.MAX_OPEN_POSITIONS_PER_PASSPORT = 5  # use small limit for test speed
         config.MAX_OPEN_POSITIONS_PER_SYMBOL = 0  # no per-symbol limit for this test
         pm = PositionManager()
         # Open 5 positions
