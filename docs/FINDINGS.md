@@ -1934,3 +1934,39 @@ uv run python run_research.py --offline --all --max-per-family 5 --days 180
 ```
 
 **Test suite:** 687 passed, 30 skipped (14 new tests added)
+
+---
+
+## §23 Session 13 — Exhaustive Exploration & Go-to-Market Framework (2026-04-14)
+
+### What We Built
+
+1. **Family Verdict Tracker** (`bot/research/verdict_tracker.py`) — SQLite-backed tracker for exploration progress per strategy family. Classifies families into Tier A (strong), Tier B (promising), Tier C (dead) based on Stage 2 survivor counts.
+
+2. **Exhaustive Exploration Runner** (`scripts/exhaust_exploration.py`) — Tier-based research orchestrator:
+   - Tier C: Last-chance round (10 combos/family) → retire if still 0 S2
+   - Tier B: Sample 20 additional combos
+   - Tier A: Complete full parameter grid + Stage 3+4
+
+3. **Go-to-Market Scorecard** (`bot/deploy/go_to_market.py`) — 10-gate automated checker:
+   - Gates 1-7: Backtest (return >15%, PF >1.3, MaxDD <40%, 50+ trades, WR >35%, MC robust, orthogonal)
+   - Gates 8-10: Paper trading (30d minimum, positive PnL, no catastrophe)
+
+4. **Circuit Breaker** (`bot/risk/circuit_breaker.py`) — Kill switch at 30% drawdown, integrated into PassportRunner scan cycle. Disables passport, sends Telegram alert.
+
+5. **Daily Telegram Report** (`bot/reporting/daily_report.py`) — Automated daily summary of all passport PnL, trade stats, and alerts.
+
+### Family Classification (from research DB)
+
+| Tier | Families | S2 Survivors | Status |
+|------|---------|-------------|--------|
+| A (Strong) | rsi_momentum(15), hidden_gem_variant(10), rsi_bb_reversal(8), pressure_flow_short(8), bollinger_breakout(7) | 48 | Deep exploration |
+| B (Promising) | vwap_deviation(5), pivot_bounce(5), keltner_breakout(5), williams_reversal(3), supertrend_follow(3), stochastic_reversal(3), sniper_variant(3), obv_trend(3), donchian_breakout(3), balanced_all(2) | 35 | Sample + evaluate |
+| C (Dead) | 13 families (mfi_flow, pressure_reader, ema_crossover, etc.) | 0 | Last-chance → retire |
+
+### Decisions
+
+- Real money: $100/passport, max 3 passports, no auto-scale
+- Kill switch: 30% drawdown = auto-disable
+- Paper minimum: 30 days + all 10 gates
+- Retirement: ≥40 tested + 0 S2 survivors (after last-chance) = RETIRED
